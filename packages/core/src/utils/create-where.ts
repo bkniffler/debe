@@ -11,5 +11,10 @@ export function createWhere<T>(where: T[] | T): any[] {
 
 export function createWhereId<T>(id: T[] | T): any[] {
   id = ensureArray(id);
-  return [id.length ? `WHERE 'id' IN (?)` : '', ...id];
+  if (id.length === 0) {
+    return [''];
+  } else if (id.length === 1) {
+    return [`WHERE id = ?`, id[0]];
+  }
+  return [`WHERE id IN (?)`, ...id];
 }

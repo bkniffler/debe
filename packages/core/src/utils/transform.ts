@@ -1,13 +1,16 @@
 import { IDBItem } from '@sqlight/types';
-export function transform(includeBody: boolean) {
+export function transform(columns: string[]) {
   return (item: IDBItem) => {
     if (!item) {
       return item;
     }
-    const { id, rev, json } = item;
-    if (includeBody) {
-      return { id, rev, ...JSON.parse(json) };
-    }
-    return { id, rev };
+    const newObj = columns.reduce((state, key) => {
+      if (key === 'json') {
+        return { ...state, ...JSON.parse(item.json) };
+      }
+      state[key] = item[key];
+      return state;
+    }, {});
+    return newObj;
   };
 }

@@ -1,4 +1,4 @@
-export function toISO(date?: Date) {
+export function toISO(date?: Date | null) {
   if (!date) {
     return undefined;
   }

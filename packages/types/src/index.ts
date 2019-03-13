@@ -3,7 +3,8 @@ export interface IOptions {
 }
 export interface IModel {
   name: string;
-  index: string[];
+  index?: string[];
+  columns?: string[];
 }
 export interface IItem {
   id: string;

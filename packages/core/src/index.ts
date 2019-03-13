@@ -26,6 +26,13 @@ l.enable();
 const log = createLog('sqlight');
 const logPad = '----';
 
+const defaultColumns = [
+  'id TEXT PRIMARY KEY',
+  'rev TEXT',
+  'del TEXT',
+  'json JSON'
+];
+
 export function sqlight(
   db: IDB,
   dbSchema: IModel[],
@@ -65,10 +72,13 @@ export function sqlight(
   }
   // CREATE_TABLE
   function createTable(model: IModel) {
-    const { name, index } = model;
+    const { name, index = [], columns = [] } = model;
     return db.transaction(exec => {
       let sql = [
-        `CREATE TABLE IF NOT EXISTS "${name}" (id TEXT PRIMARY KEY, rev TEXT, del TEXT, json JSON)`
+        `CREATE TABLE IF NOT EXISTS "${name}" (${[
+          ...defaultColumns,
+          ...columns
+        ].join(', ')})`
       ];
       sql.push(`CREATE INDEX IF NOT EXISTS "${name}_rev" ON "${name}" (rev)`);
       sql.push(`CREATE INDEX IF NOT EXISTS "${name}_del" ON "${name}" (del)`);
@@ -107,11 +117,13 @@ export function sqlight(
       offset = undefined,
       includeBody = true
     } = queryArgs;
-    const [whereStatement, ...args] = id
-      ? createWhereId(id)
-      : createWhere(where);
+    const [whereStatement, ...args] =
+      id && typeof id === 'string' ? createWhereId(id) : createWhere(where);
+    const columns = [...defaultColumns, ...(model.columns || [])].map(
+      x => x.split(' ')[0]
+    );
     const sql = `
-      ${createSelect(model.index, queryType === 'count')}
+      ${createSelect(columns, model.index || [], queryType === 'count')}
       FROM "${model.name}" 
       ${whereStatement}
       ${createOrderBy(orderBy)}
@@ -124,7 +136,7 @@ export function sqlight(
     const fetch = () =>
       db
         .transaction((exec, resolve) => {
-          const t = transform(includeBody);
+          const t = transform(includeBody ? columns : ['id', 'rev']);
           if (queryType === 'count') {
             exec(sql, ...args, (r: any) => resolve(r[0]['COUNT(id)']));
           } else if (queryType === 'get') {
@@ -163,25 +175,51 @@ export function sqlight(
       if (!Array.isArray(value)) {
         value = [value];
       }
-      const statement = `INSERT INTO "${
-        model.name
-      }" (id, rev, del, json) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET rev=excluded.rev, del=excluded.del, json=json_patch(json, excluded.json)`;
+
+      const columns = [...defaultColumns, ...(model.columns || [])].map(
+        x => x.split(' ')[0]
+      );
+      const statement = `INSERT INTO "${model.name}" (${columns.join(
+        ', '
+      )}) VALUES (${columns
+        .map(() => '?')
+        .join(', ')}) ON CONFLICT(id) DO UPDATE SET ${columns
+        .filter(x => x !== 'id')
+        .map(key => {
+          return key === 'json'
+            ? 'json=json_patch(json, excluded.json)'
+            : `${key}=excluded.${key}`;
+        })
+        .join(', ')}`;
 
       const rowIds = await db.transaction<[string, string][]>(
         (exec, resolve) => {
           value
             .filter((x: IItem) => x)
             .map((item: IItem) => {
-              const { id, rev, del, ...rest } = item;
-              const args = [
-                id || generate(),
-                new Date().getTime() / 1000 + '',
-                del || undefined,
-                JSON.stringify(rest)
-              ];
+              const obj = Object.keys(item).reduce(
+                (state: any, key: string) => {
+                  if (columns.indexOf(key) !== -1) {
+                    if (key === 'rev') {
+                      return;
+                    }
+                    state[key] = item[key];
+                  } else {
+                    state.json[key] = item[key];
+                  }
+                  return state;
+                },
+                {
+                  id: generate(),
+                  rev: new Date().getTime() / 1000 + '',
+                  json: {}
+                }
+              );
+              obj.json = JSON.stringify(obj.json);
+              const args = columns.map(key => obj[key]);
               logAndExplain(model, 'insert', statement, args, options.explain);
               exec(statement, ...args, (x: any) =>
-                resolve([x.lastInsertRowid || '__', id || '__'])
+                resolve([x.lastInsertRowid || '__', item.id || '__'])
               );
             });
         }
