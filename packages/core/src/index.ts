@@ -1,4 +1,4 @@
-export * from './types';
+export * from '@sqlight/types';
 export * from './common';
 import { EventEmitter } from 'events';
 import { IDB, generate, createLog, log as l } from './common';
@@ -20,7 +20,7 @@ import {
   IItem,
   IListenerCallback,
   ISQLightClient
-} from './types';
+} from '@sqlight/types';
 l.enable();
 const log = createLog('sqlight');
 const logPad = '----';

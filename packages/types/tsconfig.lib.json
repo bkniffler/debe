@@ -5,6 +5,6 @@
     "rootDir": "src",
     "outDir": "lib"
   },
-  "references": [{ "path": "../types/tsconfig.lib.json" }],
+  "references": [],
   "include": ["src"]
 }

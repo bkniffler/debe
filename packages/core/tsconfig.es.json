@@ -6,6 +6,6 @@
     "outDir": "es",
     "module": "esnext"
   },
-  "references": [],
+  "references": [{ "path": "../types/tsconfig.es.json" }],
   "include": ["src"]
 }

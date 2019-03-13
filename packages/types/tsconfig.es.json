@@ -3,8 +3,9 @@
   "compilerOptions": {
     "baseUrl": "./",
     "rootDir": "src",
-    "outDir": "lib"
+    "outDir": "es",
+    "module": "esnext"
   },
-  "references": [{ "path": "../types/tsconfig.lib.json" }],
+  "references": [],
   "include": ["src"]
 }
