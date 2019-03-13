@@ -35,59 +35,17 @@
 ### Local
 
 ```jsx
-createBroker(broker => {
-  // Add a local service
-  broker.local('calculator', service => {
-    service.addMethod('multiply', (x1, x2) => x1 * x2);
-  });
-  // Add a local client
-  broker.client(async client => {
-    const service = client.use('calculator');
-    try {
-      console.log(await service.multiply(2, 3));
-    } catch (err) {
-      console.log(err);
-    }
-  });
-});
-```
-
-### Socket
-
-```jsx
-const port = 9999;
-
-createBroker(
-  broker => {
-    console.log('Broker is listening');
-  },
+const schema = [
   {
-    plugins: [
-      pluginSocketBroker({
-        port
-      })
-    ]
+    name: 'lorem',
+    index: ['hallo', 'hallo2']
   }
-);
-
-// Add a remote service
-createSocketService('calculator', 'http://localhost:9999', service => {
-  service.addMethod('multiply', (x1, x2) => x1 * x2);
-});
-
-// Add a remote client
-createSocketClient('http://localhost:9999', async client => {
-  const service = client.use('local-calculator');
-  try {
-    console.log(await service.multiply(2, 3));
-  } catch (err) {
-    console.log(err);
-  }
-});
-```
-
-### React
-
-```jsx
-export default () => {};
+];
+const dbDir = join(__dirname, '.temp/db.db');
+async function() {
+  const db = sqlight(betterSQLite3(dbDir), schema);
+  await db.insert('lorem', { hallo: 'ok' });
+  await db.insert('lorem', { hallo: 'ok2' });
+  const result = await db.all('lorem', {});
+};
 ```

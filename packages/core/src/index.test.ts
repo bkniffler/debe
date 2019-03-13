@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
-import { sqlight, generate } from './index';
+import { sqlight, generate, toISO } from './index';
 import { betterSQLite3 } from '@sqlight/better-sqlite3';
 
 const schema = [
@@ -24,6 +24,12 @@ test('simple', async () => {
   await db.insert('lorem', { hallo: 'ok2' });
   const result = await db.all('lorem', {});
   expect(result.length).toBe(2);
+});
+
+test('time', () => {
+  const date = new Date();
+  expect(toISO(date)).toBe(date.toISOString());
+  expect(toISO(null)).toBe(undefined);
 });
 
 test('complex', async () => {

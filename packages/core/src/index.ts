@@ -1,4 +1,5 @@
 export * from '@sqlight/types';
+export * from './utils';
 export * from './common';
 import { EventEmitter } from 'events';
 import { IDB, generate, createLog, log as l } from './common';
