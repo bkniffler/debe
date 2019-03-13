@@ -1,1 +1,1 @@
-# @sqlight/core
+# @sqlight/types
