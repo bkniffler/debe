@@ -38,7 +38,7 @@
     "shortid": "^2.2.14",
     "uuid": "^3.3.2"
   },
-  "gitHead": "df3b3e2bfbdb5665fde85365938e8154593104f3",
+  "gitHead": "211d7101a8996772023fc54acddd07c6c719b71a",
   "devDependencies": {
     "@types/better-sqlite3": "^5.2.2",
     "better-sqlite3": "^5.4.0"
