@@ -18,6 +18,7 @@ const getDBDir = () => join(dbDir, generate() + '.db');
 
 test('automerge', async () => {
   const db = sqlight(betterSQLite3(getDBDir()), schema);
+  await db.insert('lorem', { hallo: 'ok', id: '1' });
   const edit = sqlightAutomerge(db);
   await edit('lorem', '1', doc => {
     doc.goa = 'mpu';

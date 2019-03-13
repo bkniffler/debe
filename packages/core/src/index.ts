@@ -215,6 +215,7 @@ export function sqlight(
                   json: {}
                 }
               );
+              obj.id = obj.id + '';
               obj.json = JSON.stringify(obj.json);
               const args = columns.map(key => obj[key]);
               logAndExplain(model, 'insert', statement, args, options.explain);
