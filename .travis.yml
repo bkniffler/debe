@@ -1,0 +1,15 @@
+language: node_js
+node_js:
+  - "10"
+
+sudo: false
+
+cache: yarn
+
+install:
+  - yarn
+  - yarn bootstrap
+
+script:
+  - yarn test --collect-coverage
+  - yarn coverage

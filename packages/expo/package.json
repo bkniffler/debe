@@ -1,0 +1,38 @@
+{
+  "name": "@sqlight/expo",
+  "version": "1.0.0-alpha.2",
+  "sideEffects": false,
+  "license": "MIT",
+  "main": "lib",
+  "esnext": "es",
+  "module": "es",
+  "types": "lib/index.d.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "rpc",
+    "service",
+    "proxy",
+    "websocket",
+    "socket",
+    "electron",
+    "ipc",
+    "realtime",
+    "react-native",
+    "react"
+  ],
+  "author": "Benjamin Kniffler <bkniffler@me.com>",
+  "bugs": {
+    "url": "https://github.com/bkniffler/sqlight"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bkniffler/sqlight.git"
+  },
+  "dependencies": {
+    "@sqlight/core": "^1.0.0-alpha.2"
+  },
+  "gitHead": "2c6e5b6e973f62a78670407eb8022c9c56dfccc7",
+  "devDependencies": {}
+}

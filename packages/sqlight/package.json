@@ -1,0 +1,33 @@
+{
+  "name": "sqlight",
+  "version": "1.0.0-alpha.2",
+  "sideEffects": false,
+  "license": "MIT",
+  "main": "lib",
+  "esnext": "es",
+  "module": "es",
+  "types": "lib/index.d.js",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "sqlite",
+    "database",
+    "electron",
+    "react-native",
+    "react"
+  ],
+  "author": "Benjamin Kniffler <bkniffler@me.com>",
+  "bugs": {
+    "url": "https://github.com/bkniffler/sqlight"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bkniffler/sqlight.git"
+  },
+  "dependencies": {
+    "@sqlight/core": "^1.0.0-alpha.2",
+    "@sqlight/expo": "^1.0.0-alpha.2",
+    "@sqlight/better-sqlite3": "^1.0.0-alpha.2"
+  }
+}

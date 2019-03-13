@@ -1,0 +1,10 @@
+{
+  "extends": "../tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@sqlight/*": ["./*/src/index.ts"]
+    }
+  },
+  "exclude": ["**/*.test.ts", "**/*.test.tsx"]
+}
