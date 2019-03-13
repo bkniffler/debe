@@ -5,6 +5,10 @@
     "rootDir": "src",
     "outDir": "lib"
   },
-  "references": [],
+  "references": [
+    { "path": "../core/tsconfig.lib.json" },
+    { "path": "../better-sqlite3/tsconfig.lib.json" },
+    { "path": "../types/tsconfig.lib.json" }
+  ],
   "include": ["src"]
 }
