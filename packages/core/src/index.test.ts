@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
-import { sqlight, generate } from '@sqlight/core';
+import { sqlight, generate } from './index';
 import { betterSQLite3 } from '@sqlight/better-sqlite3';
 
 const schema = [
