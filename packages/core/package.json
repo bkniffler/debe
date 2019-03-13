@@ -1,6 +1,6 @@
 {
   "name": "@sqlight/core",
-  "version": "1.0.0-alpha.6",
+  "version": "1.0.0-alpha.7",
   "sideEffects": false,
   "license": "MIT",
   "main": "lib",
@@ -31,7 +31,7 @@
     "url": "https://github.com/bkniffler/sqlight.git"
   },
   "dependencies": {
-    "@sqlight/types": "^1.0.0-alpha.6",
+    "@sqlight/types": "^1.0.0-alpha.7",
     "@types/shortid": "^0.0.29",
     "@types/uuid": "^3.4.4",
     "colors": "^1.3.3",
