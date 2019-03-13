@@ -1,6 +1,6 @@
 {
   "name": "@sqlight/expo",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "sideEffects": false,
   "license": "MIT",
   "main": "lib",
@@ -31,7 +31,7 @@
     "url": "https://github.com/bkniffler/sqlight.git"
   },
   "dependencies": {
-    "@sqlight/core": "^1.0.0-alpha.2"
+    "@sqlight/core": "^1.0.0-alpha.3"
   },
   "gitHead": "df3b3e2bfbdb5665fde85365938e8154593104f3"
 }
