@@ -42,14 +42,14 @@ export interface ISQLightClient {
   addSchema: (model: IModel) => Promise<any>;
   insert: <T = IItem>(model: string, item: T) => Promise<T>;
   del: (model: string, param: IAllQuery) => Promise<void>;
-  all: <T>(model: string, param: IAllQuery) => Promise<T[]>;
-  allSubscription: <T>(
+  all: <T = IItem>(model: string, param: IAllQuery) => Promise<T[]>;
+  allSubscription: <T = IItem>(
     model: string,
     param: IAllQuery,
     cb: IObserverCallback<T[]>
   ) => () => void;
-  get: <T>(model: string, param: IAllQuery) => Promise<T>;
-  getSubscription: <T>(
+  get: <T = IItem>(model: string, param: IAllQuery) => Promise<T>;
+  getSubscription: <T = IItem>(
     model: string,
     param: IAllQuery,
     cb: IObserverCallback<T>
