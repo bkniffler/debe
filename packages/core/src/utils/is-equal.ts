@@ -1,4 +1,4 @@
-import { IItem } from '../types';
+import { IItem } from '@sqlight/types';
 
 export function isEqual(rowsA: IItem[] | IItem, rowsB: IItem[] | IItem) {
   if (rowsA === rowsB) {

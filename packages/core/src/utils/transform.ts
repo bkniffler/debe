@@ -1,4 +1,4 @@
-import { IDBItem } from '../types';
+import { IDBItem } from '@sqlight/types';
 export function transform(includeBody: boolean) {
   return (item: IDBItem) => {
     if (!item) {
