@@ -986,24 +986,12 @@
   dependencies:
     "@babel/types" "^7.3.0"
 
-"@types/better-sqlite3@^5.2.2":
-  version "5.2.2"
-  resolved "https://registry.yarnpkg.com/@types/better-sqlite3/-/better-sqlite3-5.2.2.tgz#72e9e8adb47f4087bbe31c2d13581c1bf3012a6b"
-  integrity sha512-521elE5qUplSLZYYR/h0P6J5saY+IYXs5na8eSmiqukiVrkxyJJC0PYrIfvTe+fYTiYbPa2w3/AeYfoGVv/hSA==
-  dependencies:
-    "@types/integer" "*"
-
 "@types/fs-extra@^5.0.5":
   version "5.0.5"
   resolved "https://registry.yarnpkg.com/@types/fs-extra/-/fs-extra-5.0.5.tgz#080d90a792f3fa2c5559eb44bd8ef840aae9104b"
   integrity sha512-w7iqhDH9mN8eLClQOYTkhdYUOSpp25eXxfc6VbFOGtzxW34JcvctH2bKjj4jD4++z4R5iO5D+pg48W2e03I65A==
   dependencies:
     "@types/node" "*"
-
-"@types/integer@*":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@types/integer/-/integer-1.0.0.tgz#f5b313876012fad0afeb5318f03cb871064eb33e"
-  integrity sha512-3viiRKLoSP2Qr78nMoQjkDc0fan4BgmpOyV1+1gKjE8wWXo3QQ78WItO6f9WuBf3qe3ymDYhM65oqHTOZ0rFxw==
 
 "@types/istanbul-lib-coverage@^1.1.0":
   version "1.1.0"

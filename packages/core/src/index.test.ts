@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
 import { sqlight, generate } from '@sqlight/core';
-import { betterSQLite3 } from './index';
+import { betterSQLite3 } from '@sqlight/better-sqlite3';
 
 const schema = [
   {
@@ -13,7 +13,7 @@ const schema = [
     index: ['hallo', 'hallo2']
   }
 ];
-const dbDir = join(__dirname, '../../../.temp/better-sqlite3');
+const dbDir = join(__dirname, '../../../.temp/sqlight');
 removeSync(dbDir);
 ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');

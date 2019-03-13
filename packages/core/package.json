@@ -41,7 +41,7 @@
   },
   "gitHead": "37e16f2e21ef0b726e671a06a8c42c9c6c71ceaf",
   "devDependencies": {
-    "@types/better-sqlite3": "^5.2.2",
+    "@sqlight/better-sqlite3": "^1.0.0-alpha.7",
     "better-sqlite3": "^5.4.0"
   }
 }
