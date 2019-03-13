@@ -42,11 +42,23 @@ test('complex', async () => {
   );
   await db.insert('lorem', { hallo: 'ok' });
   await db.insert('lorem', { hallo: 'ok', id: 1 });
-  await db.insert('lorem', { hallo: 'ok', id: 2 });
+  await db.insert('lorem', { hallo: 'ok3', id: 2 });
   await db.insert('lorem', { hallo: 'ok2', hallo2: 'ok', id: 1 });
   await db.insert('lorem', { hallo2: 'ok55', id: 1 });
   const all = await db.all('lorem', {});
+  const all2 = await db.all('lorem', {
+    limit: 1,
+    where: ['hallo2 = ?', 'ok55']
+  });
+  const all3 = await db.all('lorem', {
+    limit: 1,
+    where: ['hallo = ?', 'ok3']
+  });
   expect(all.length).toBe(3);
+  expect(all2.length).toBe(1);
+  expect(all3.length).toBe(1);
+  expect(all2[0] ? all2[0]['hallo2'] : '').toBe('ok55');
+  expect(all3[0] ? all3[0]['hallo'] : '').toBe('ok3');
   expect(listenerResult).toBeTruthy();
   expect(listenerResult2).toBeTruthy();
   expect(listenerResult && listenerResult.length).toBe(1);

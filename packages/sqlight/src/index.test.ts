@@ -1,5 +1,5 @@
 import * as all from './index';
 
-test('sqlight', async () => {
+test('sqlight', () => {
   expect(all).toBeTruthy();
 });

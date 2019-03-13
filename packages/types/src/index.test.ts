@@ -1,5 +1,5 @@
 import * as types from './index';
 
-test('types', async () => {
+test('types', () => {
   expect(types).toBeTruthy();
 });
