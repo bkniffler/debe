@@ -3,10 +3,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@sqlight/types": ["./types/src/index.ts"],
-      "@sqlight/core": ["./core/src/index.ts"],
-      "@sqlight/expo": ["./expo/src/index.ts"],
-      "@sqlight/better-sqlite3": ["./better-sqlite3/src/index.ts"]
+      "@sqlight/*": ["./*/src/index.ts"]
     }
   },
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "node_modules"]

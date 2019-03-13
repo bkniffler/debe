@@ -25,7 +25,7 @@
     "docs": "docsify serve docs",
     "netlify": "yarn build && cd example/react && yarn && yarn build",
     "bootstrap": "lerna bootstrap",
-    "build": "run-p ts:*",
+    "build": "yarn bootstrap && run-p ts:*",
     "dev": "run-p \"ts:* -- --watch\"",
     "ts:es": "tsc --build ./packages/sqlight/tsconfig.es.json",
     "ts:lib": "tsc --build ./packages/sqlight/tsconfig.lib.json",

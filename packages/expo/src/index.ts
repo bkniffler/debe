@@ -1,7 +1,7 @@
 import { extractCallback, IDB } from '@sqlight/core';
-const SQLite = require('expo').SQLite;
 
 export function expoSqlite(dbPath: string): IDB {
+  const SQLite = require('expo').SQLite;
   const db = SQLite.openDatabase(dbPath);
   return {
     close: db.close,

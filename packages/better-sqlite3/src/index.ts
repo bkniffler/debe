@@ -1,7 +1,7 @@
 import { extractCallback, IDB } from '@sqlight/core';
-const sqlite3 = require('better-sqlite3');
 
 export function betterSQLite3(dbPath: string): IDB {
+  const sqlite3 = require('better-sqlite3');
   const db = sqlite3(dbPath, {});
   return {
     close: db.close,
