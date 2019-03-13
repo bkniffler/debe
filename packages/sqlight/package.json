@@ -26,8 +26,8 @@
     "url": "https://github.com/bkniffler/sqlight.git"
   },
   "dependencies": {
+    "@sqlight/better-sqlite3": "^1.0.0-alpha.2",
     "@sqlight/core": "^1.0.0-alpha.2",
-    "@sqlight/expo": "^1.0.0-alpha.2",
-    "@sqlight/better-sqlite3": "^1.0.0-alpha.2"
+    "@sqlight/expo": "^1.0.0-alpha.2"
   }
 }
