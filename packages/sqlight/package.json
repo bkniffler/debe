@@ -1,6 +1,6 @@
 {
   "name": "sqlight",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "sideEffects": false,
   "license": "MIT",
   "main": "lib",
@@ -26,9 +26,9 @@
     "url": "https://github.com/bkniffler/sqlight.git"
   },
   "dependencies": {
-    "@sqlight/better-sqlite3": "^1.0.0-alpha.4",
-    "@sqlight/core": "^1.0.0-alpha.4",
-    "@sqlight/expo": "^1.0.0-alpha.4"
+    "@sqlight/better-sqlite3": "^1.0.0-alpha.5",
+    "@sqlight/core": "^1.0.0-alpha.5",
+    "@sqlight/expo": "^1.0.0-alpha.5"
   },
   "gitHead": "37e16f2e21ef0b726e671a06a8c42c9c6c71ceaf"
 }
