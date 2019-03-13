@@ -29,5 +29,6 @@
     "@sqlight/better-sqlite3": "^1.0.0-alpha.2",
     "@sqlight/core": "^1.0.0-alpha.2",
     "@sqlight/expo": "^1.0.0-alpha.2"
-  }
+  },
+  "gitHead": "df3b3e2bfbdb5665fde85365938e8154593104f3"
 }
