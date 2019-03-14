@@ -1,6 +1,10 @@
 import { IItem } from '@sqlight/types';
 
-export function isEqual(rowsA: IItem[] | IItem, rowsB: IItem[] | IItem) {
+export function isEqual(
+  rowsA: IItem[] | IItem,
+  rowsB: IItem[] | IItem,
+  revisionField: string
+) {
   if (rowsA === rowsB) {
     return true;
   }
@@ -8,7 +12,7 @@ export function isEqual(rowsA: IItem[] | IItem, rowsB: IItem[] | IItem) {
     return false;
   }
   function extrapolate(item: IItem) {
-    return `${item.id}|${item.rev}`;
+    return `${item.id}|${item[revisionField]}`;
   }
   function isEqualSingle(itemA: IItem, itemB: IItem) {
     if (itemA === itemB) {

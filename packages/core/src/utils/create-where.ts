@@ -1,10 +1,12 @@
 import { ensureArray } from './ensure-array';
 
-export function createWhere<T>(where: T[] | T): any[] {
+export function createWhere<T>(where: T[] | T, removedField: string): any[] {
   where = ensureArray(where);
   const [clause, ...args] = where;
   return [
-    clause ? `WHERE ${clause} AND del IS NULL` : 'WHERE del IS NULL',
+    clause
+      ? `WHERE ${clause} AND ${removedField} IS NULL`
+      : `WHERE ${removedField} IS NULL`,
     ...args
   ];
 }

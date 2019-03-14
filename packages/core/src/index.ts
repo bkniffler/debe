@@ -11,7 +11,8 @@ import {
   createWhere,
   transform,
   isEqual,
-  createWhereId
+  createWhereId,
+  toISO
 } from './utils';
 import {
   IModel,
@@ -26,11 +27,15 @@ l.enable();
 const log = createLog('sqlight');
 const logPad = '----';
 
+const idField = 'id';
+const bodyField = 'json';
+const removedField = 'del';
+const revisionField = 'rev';
 const defaultColumns = [
-  'id TEXT PRIMARY KEY',
-  'rev TEXT',
-  'del TEXT',
-  'json JSON'
+  `${idField} TEXT PRIMARY KEY`,
+  `${revisionField} TEXT`,
+  `${removedField} TEXT`,
+  `${bodyField} JSON`
 ];
 
 export function sqlight(
@@ -80,12 +85,16 @@ export function sqlight(
           ...columns
         ].join(', ')})`
       ];
-      sql.push(`CREATE INDEX IF NOT EXISTS "${name}_rev" ON "${name}" (rev)`);
-      sql.push(`CREATE INDEX IF NOT EXISTS "${name}_del" ON "${name}" (del)`);
+      sql.push(
+        `CREATE INDEX IF NOT EXISTS "${name}_${revisionField}" ON "${name}" (${revisionField})`
+      );
+      sql.push(
+        `CREATE INDEX IF NOT EXISTS "${name}_${removedField}" ON "${name}" (${removedField})`
+      );
       index.forEach((field: string) => {
         // db.prepare(`CREATE INDEX ${name}_${field} ON ${name} (${field})`).run();
         sql.push(
-          `CREATE INDEX IF NOT EXISTS "${name}_${field}" ON "${name}" (json_extract(json, '$.${field}'))`
+          `CREATE INDEX IF NOT EXISTS "${name}_${field}" ON "${name}" (json_extract(${bodyField}, '$.${field}'))`
         );
       });
       if (verbose) {
@@ -96,9 +105,9 @@ export function sqlight(
     });
   }
 
-  function del(model: IModel, { id = undefined }: IAllQuery) {
-    return insert(model, { id, del: new Date().toISOString() } as any).then(
-      x => {}
+  function remove(model: IModel, { id = undefined }: IAllQuery) {
+    return insert(model, { id, [removedField]: toISO(new Date()) } as any).then(
+      () => {}
     );
   }
   // ALL
@@ -119,12 +128,19 @@ export function sqlight(
       additionalColumns = []
     } = queryArgs;
     const [whereStatement, ...args] =
-      id && typeof id === 'string' ? createWhereId(id) : createWhere(where);
+      id && typeof id === 'string'
+        ? createWhereId(id)
+        : createWhere(where, removedField);
     const columns = [...defaultColumns, ...additionalColumns].map(
       x => x.split(' ')[0]
     );
     const sql = `
-      ${createSelect(columns, model.index || [], queryType === 'count')}
+      ${createSelect(
+        columns,
+        model.index || [],
+        bodyField,
+        queryType === 'count'
+      )}
       FROM "${model.name}" 
       ${whereStatement}
       ${createOrderBy(orderBy)}
@@ -137,7 +153,10 @@ export function sqlight(
     const fetch = () =>
       db
         .transaction((exec, resolve) => {
-          const t = transform(includeBody ? columns : ['id', 'rev']);
+          const t = transform(
+            includeBody ? columns : ['id', revisionField],
+            bodyField
+          );
           if (queryType === 'count') {
             exec(sql, ...args, (r: any) => resolve(r[0]['COUNT(id)']));
           } else if (queryType === 'get') {
@@ -153,7 +172,7 @@ export function sqlight(
         let isInitial = lastResult === undefined;
         let newValue = await fetch();
         // Check is results changed
-        if (isEqual(lastResult, newValue)) {
+        if (isEqual(lastResult, newValue, revisionField)) {
           return;
         }
         lastResult = newValue || null;
@@ -187,8 +206,8 @@ export function sqlight(
         .join(', ')}) ON CONFLICT(id) DO UPDATE SET ${columns
         .filter(x => x !== 'id')
         .map(key => {
-          return key === 'json'
-            ? 'json=json_patch(json, excluded.json)'
+          return key === bodyField
+            ? `${bodyField}=json_patch(${bodyField}, excluded.${bodyField})`
             : `${key}=excluded.${key}`;
         })
         .join(', ')}`;
@@ -201,27 +220,27 @@ export function sqlight(
               const obj = Object.keys(item).reduce(
                 (state: any, key: string) => {
                   if (columns.indexOf(key) !== -1) {
-                    if (key === 'rev') {
+                    if (key === revisionField) {
                       return;
                     }
                     state[key] = item[key] || state[key];
                   } else {
-                    state.json[key] = item[key];
+                    state[bodyField][key] = item[key];
                   }
                   return state;
                 },
                 {
-                  id: generate(),
-                  rev: new Date().getTime() / 1000 + '',
-                  json: {}
+                  [idField]: generate(),
+                  [revisionField]: new Date().getTime() / 1000 + '',
+                  [bodyField]: {}
                 }
               );
-              obj.id = obj.id + '';
-              obj.json = JSON.stringify(obj.json);
+              obj[idField] = obj[idField] + '';
+              obj[bodyField] = JSON.stringify(obj[bodyField]);
               const args = columns.map(key => obj[key]);
               logAndExplain(model, 'insert', statement, args, options.explain);
               exec(statement, ...args, (x: any) =>
-                resolve([x.lastInsertRowid || '__', item.id || '__'])
+                resolve([x.lastInsertRowid || '__', item[idField] || '__'])
               );
             });
         }
@@ -230,7 +249,7 @@ export function sqlight(
         model,
         {
           where: [
-            `rowid IN (?) OR id IN (?)`,
+            `rowid IN (?) OR ${idField} IN (?)`,
             rowIds.map(x => x[0]).join(', '),
             rowIds.map(x => x[1]).join(', ')
           ]
@@ -245,7 +264,7 @@ export function sqlight(
             change: value[index],
             oldValue: undefined,
             properties: Object.keys(value[index]),
-            type: value[index].id ? 'UPDATE' : 'CREATE'
+            type: value[index][idField] ? 'UPDATE' : 'CREATE'
           });
         }
       });
@@ -272,7 +291,7 @@ export function sqlight(
       return createTable(schema);
     },
     insert: (model, item) => insert(getModel(model), item as any),
-    del: (model: string, param) => del(getModel(model), param),
+    remove: (model: string, param) => remove(getModel(model), param),
     all: (model, param) => query(getModel(model), param, 'all') as any,
     allSubscription: (model, param, cb) =>
       query(getModel(model), param, 'all', cb) as any,

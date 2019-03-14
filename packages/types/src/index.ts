@@ -53,7 +53,7 @@ export interface ISQLightClient {
     model: string,
     item: T & IInsertItem
   ) => Promise<T & IGetItem>;
-  del: (model: string, param: IAllQuery) => Promise<void>;
+  remove: (model: string, param: IAllQuery) => Promise<void>;
   all: <T = IItem>(
     model: string,
     param: IAllQuery

@@ -32,6 +32,18 @@ test('time', () => {
   expect(toISO(null)).toBe(undefined);
 });
 
+test('remove', async () => {
+  const db = sqlight(betterSQLite3(getDBDir()), schema);
+  await db.insert('lorem', { hallo: 'ok' });
+  const item = await db.insert('lorem', { hallo: 'ok2' });
+  await db.remove('lorem', { id: item.id });
+  const result = await db.all('lorem', {});
+  const deletedItem = await db.get('lorem', { id: item.id });
+  expect(result.length).toBe(1);
+  expect(deletedItem).toBeTruthy();
+  expect(deletedItem.del).toBeTruthy();
+});
+
 test('complex', async () => {
   const db = sqlight(betterSQLite3(getDBDir()), schema);
   let listenerResult: any;

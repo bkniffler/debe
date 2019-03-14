@@ -30,7 +30,7 @@ export function sqlightAutomerge(client: ISQLightClient) {
         }
       }
       const originalChanges = (item ? item.changes : 0) || 0;
-      const wasDel = item ? item.del : false;
+      const wasDel = item ? item.isRemoved : undefined;
       let doc;
       if (item && item.automerge) {
         doc = Automerge.load(item.automerge);
@@ -41,7 +41,7 @@ export function sqlightAutomerge(client: ISQLightClient) {
       doc = Automerge.change(doc, (doc: any) => {
         if (item && !item.automerge) {
           Object.keys(item).forEach(key => {
-            if (key === 'id' || key === 'rev' || key === 'del') {
+            if (key === 'id' || key === 'revision' || key === 'isRemoved') {
               return;
             }
             if (item[key] !== undefined && item[key] !== null) {
@@ -58,7 +58,7 @@ export function sqlightAutomerge(client: ISQLightClient) {
       item.changes = originalChanges + 1;
       item.id = id;
       if (wasDel) {
-        item.del = true;
+        item.isRemoved = wasDel;
       }
       item.automerge = Automerge.save(doc);
       item = await client.insert(table, item);
