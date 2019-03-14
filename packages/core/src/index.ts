@@ -204,7 +204,7 @@ export function sqlight(
                     if (key === 'rev') {
                       return;
                     }
-                    state[key] = item[key];
+                    state[key] = item[key] || state[key];
                   } else {
                     state.json[key] = item[key];
                   }

@@ -1,12 +1,23 @@
-import { ISQLightClient } from '@sqlight/types';
+import { ISQLightClient, IItem, IGetItem } from '@sqlight/types';
 const Automerge = require('automerge');
 
 export function sqlightAutomerge(client: ISQLightClient) {
-  async function edit<T = any>(
+  async function edit<T = IItem>(
+    table: string,
+    cb: (doc: T & IGetItem) => void
+  ): Promise<T & IGetItem>;
+  async function edit<T = IItem>(
     table: string,
     id: string | undefined,
-    cb: (doc: T) => void
-  ): Promise<T> {
+    cb: (doc: T & IGetItem) => void
+  ): Promise<T & IGetItem>;
+  async function edit<T = IItem>(
+    table: string,
+    idOrCb: string | undefined | ((doc: T & IGetItem) => void),
+    cbOrUndefined?: (doc: T & IGetItem) => void
+  ) {
+    const id = typeof idOrCb === 'string' ? idOrCb : undefined;
+    const cb = typeof idOrCb === 'string' ? cbOrUndefined : idOrCb;
     try {
       let item: any;
       if (id) {
@@ -38,7 +49,9 @@ export function sqlightAutomerge(client: ISQLightClient) {
             }
           });
         }
-        cb(doc);
+        if (cb) {
+          cb(doc);
+        }
       });
       const history = Automerge.getHistory(doc);
       item = JSON.parse(JSON.stringify(history[history.length - 1].snapshot));
@@ -48,8 +61,7 @@ export function sqlightAutomerge(client: ISQLightClient) {
         item.del = true;
       }
       item.automerge = Automerge.save(doc);
-      await client.insert(table, item);
-      console.log(item);
+      item = await client.insert(table, item);
       return item;
     } catch (err) {
       return Promise.reject(err);

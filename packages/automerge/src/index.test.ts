@@ -24,12 +24,14 @@ interface ILorem {
 test('automerge', async () => {
   const db = sqlight(betterSQLite3(getDBDir()), schema);
   const edit = sqlightAutomerge(db);
-  await db.insert<ILorem>('lorem', { hallo: 'ok', id: '1' });
-  await edit<ILorem>('lorem', '1', doc => {
+  const item = await edit<ILorem>('lorem', doc => {
     doc.goa = 'mpu';
   });
-  await edit<ILorem>('lorem', '1', doc => {
+  await edit<ILorem>('lorem', item.id, doc => {
     doc.goa2 = 'mpu2';
   });
-  console.log(await db.get<ILorem>('lorem', { id: '1' }));
+  const final = await db.all<ILorem>('lorem', {});
+  expect(final.length).toBe(1);
+  expect(final[0].goa).toBe('mpu');
+  expect(final[0].goa2).toBe('mpu2');
 });
