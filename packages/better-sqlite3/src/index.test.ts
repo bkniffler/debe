@@ -41,10 +41,10 @@ test('complex', async () => {
     items => (listenerResult2 = items)
   );
   await db.insert('lorem', { hallo: 'ok' });
-  await db.insert('lorem', { hallo: 'ok', id: 1 });
-  await db.insert('lorem', { hallo: 'ok', id: 2 });
-  await db.insert('lorem', { hallo: 'ok2', hallo2: 'ok', id: 1 });
-  await db.insert('lorem', { hallo2: 'ok55', id: 1 });
+  await db.insert('lorem', { hallo: 'ok', id: '1' });
+  await db.insert('lorem', { hallo: 'ok', id: '2' });
+  await db.insert('lorem', { hallo: 'ok2', hallo2: 'ok', id: '1' });
+  await db.insert('lorem', { hallo2: 'ok55', id: '1' });
   const all = await db.all('lorem', {});
   expect(all.length).toBe(3);
   expect(listenerResult).toBeTruthy();
