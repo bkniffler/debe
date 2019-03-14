@@ -21,7 +21,8 @@ import {
   IAllQuery,
   IItem,
   IListenerCallback,
-  ISQLightClient
+  ISQLightClient,
+  ISQLightClientUse
 } from '@sqlight/types';
 l.enable();
 const log = createLog('sqlight');
@@ -289,6 +290,18 @@ export function sqlight(
       instance.schema.push(schema);
       _schema[schema.name] = schema;
       return createTable(schema);
+    },
+    use: <T = IItem>(model: string) => {
+      return new Proxy<any>(
+        {},
+        {
+          get: function(t: string, methodName: string) {
+            return (...args: [any]) => {
+              return instance[methodName](model, ...args);
+            };
+          }
+        }
+      ) as ISQLightClientUse<T>;
     },
     insert: (model, item) => insert(getModel(model), item as any),
     remove: (model: string, param) => remove(getModel(model), param),

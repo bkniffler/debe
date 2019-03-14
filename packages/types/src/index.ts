@@ -80,4 +80,24 @@ export interface ISQLightClient {
   removeListener: (model: string, cb: IListenerCallback) => void;
   removeAllListeners: (model?: string) => void;
   close: () => void;
+  use: <T = IItem>(model: string) => ISQLightClientUse<T>;
+}
+
+export interface ISQLightClientUse<T = IItem> {
+  schema: IModel;
+  insert: (item: T & IInsertItem) => Promise<T & IGetItem>;
+  remove: (param: IAllQuery) => Promise<void>;
+  all: (param: IAllQuery) => Promise<(T & IGetItem)[]>;
+  allSubscription: (param: IAllQuery, cb: IObserverCallback<T[]>) => () => void;
+  get: (param: IAllQuery) => Promise<T & IGetItem>;
+  getSubscription: (param: IAllQuery, cb: IObserverCallback<T>) => () => void;
+  count: (param: IAllQuery) => Promise<number>;
+  countSubscription: (
+    param: IAllQuery,
+    cb: IObserverCallback<number>
+  ) => () => void;
+  countListeners: () => number;
+  addListener: (cb: IListenerCallback) => void;
+  removeListener: (cb: IListenerCallback) => void;
+  removeAllListeners: () => void;
 }

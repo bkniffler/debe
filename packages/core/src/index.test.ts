@@ -24,6 +24,22 @@ test('simple', async () => {
   expect(count).toBe(2);
 });
 
+test('simple2', async () => {
+  interface ILorem {
+    goa?: string;
+    goa2?: string;
+    hallo?: string;
+  }
+  const db = sqlight(betterSQLite3(getDBDir()), schema);
+  const lorem = db.use<ILorem>('lorem');
+  await lorem.insert({ hallo: 'ok' });
+  await lorem.insert({ hallo: 'ok2' });
+  const result = await lorem.all({});
+  const count = await lorem.count({});
+  expect(result.length).toBe(2);
+  expect(count).toBe(2);
+});
+
 test('time', () => {
   const date = new Date();
   expect(toISO(date)).toBe(date.toISOString());

@@ -23,11 +23,11 @@ interface ILorem {
 }
 test('automerge', async () => {
   const db = sqlight(betterSQLite3(getDBDir()), schema);
-  const edit = sqlightAutomerge(db);
-  const item = await edit<ILorem>('lorem', doc => {
+  const automerge = sqlightAutomerge(db);
+  const item = await automerge<ILorem>('lorem', doc => {
     doc.goa = 'mpu';
   });
-  await edit<ILorem>('lorem', item.id, doc => {
+  await automerge<ILorem>('lorem', item.id, doc => {
     doc.goa2 = 'mpu2';
   });
   const final = await db.all<ILorem>('lorem', {});
