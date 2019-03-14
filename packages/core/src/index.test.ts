@@ -7,10 +7,6 @@ const schema = [
   {
     name: 'lorem',
     index: ['hallo', 'hallo2']
-  },
-  {
-    name: 'lorem2',
-    index: ['hallo', 'hallo2']
   }
 ];
 const dbDir = join(__dirname, '../../../.temp/sqlight');
@@ -23,7 +19,9 @@ test('simple', async () => {
   await db.insert('lorem', { hallo: 'ok' });
   await db.insert('lorem', { hallo: 'ok2' });
   const result = await db.all('lorem', {});
+  const count = await db.count('lorem', {});
   expect(result.length).toBe(2);
+  expect(count).toBe(2);
 });
 
 test('time', () => {
