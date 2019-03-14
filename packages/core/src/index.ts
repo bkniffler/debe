@@ -115,11 +115,12 @@ export function sqlight(
       orderBy = [],
       limit = undefined,
       offset = undefined,
-      includeBody = true
+      includeBody = true,
+      additionalColumns = []
     } = queryArgs;
     const [whereStatement, ...args] =
       id && typeof id === 'string' ? createWhereId(id) : createWhere(where);
-    const columns = [...defaultColumns, ...(model.columns || [])].map(
+    const columns = [...defaultColumns, ...additionalColumns].map(
       x => x.split(' ')[0]
     );
     const sql = `

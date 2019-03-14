@@ -2,15 +2,18 @@ import { ISQLightClient } from '@sqlight/types';
 const Automerge = require('automerge');
 
 export function sqlightAutomerge(client: ISQLightClient) {
-  return async function edit(
+  async function edit<T = any>(
     table: string,
     id: string | undefined,
-    cb: (doc: any) => void
-  ) {
+    cb: (doc: T) => void
+  ): Promise<T> {
     try {
       let item: any;
       if (id) {
-        item = await client.get(table, { id });
+        item = await client.get(table, {
+          id,
+          additionalColumns: ['automerge']
+        });
         if (!item) {
           return Promise.reject(new Error('Could not find item with id ' + id));
         }
@@ -46,9 +49,11 @@ export function sqlightAutomerge(client: ISQLightClient) {
       }
       item.automerge = Automerge.save(doc);
       await client.insert(table, item);
+      console.log(item);
       return item;
     } catch (err) {
       return Promise.reject(err);
     }
-  };
+  }
+  return edit;
 }

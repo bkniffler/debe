@@ -6,6 +6,13 @@ export interface IModel {
   index?: string[];
   columns?: string[];
 }
+export interface IInsertItem {
+  id?: string;
+}
+export interface IGetItem {
+  id: string;
+  rev: string;
+}
 export interface IItem {
   id: string;
   rev: string;
@@ -24,6 +31,7 @@ export interface IAllQuery {
   includeBody?: boolean;
   where?: string[] | string;
   orderBy?: string[] | string;
+  additionalColumns?: string[];
 }
 export interface IListenerObject {
   change: any;
@@ -41,15 +49,21 @@ export type IObserverCallback<T = IItem> = (
 export interface ISQLightClient {
   schema: IModel[];
   addSchema: (model: IModel) => Promise<any>;
-  insert: <T = IItem>(model: string, item: T) => Promise<T>;
+  insert: <T = IItem>(
+    model: string,
+    item: T & IInsertItem
+  ) => Promise<T & IGetItem>;
   del: (model: string, param: IAllQuery) => Promise<void>;
-  all: <T = IItem>(model: string, param: IAllQuery) => Promise<T[]>;
+  all: <T = IItem>(
+    model: string,
+    param: IAllQuery
+  ) => Promise<(T & IGetItem)[]>;
   allSubscription: <T = IItem>(
     model: string,
     param: IAllQuery,
     cb: IObserverCallback<T[]>
   ) => () => void;
-  get: <T = IItem>(model: string, param: IAllQuery) => Promise<T>;
+  get: <T = IItem>(model: string, param: IAllQuery) => Promise<T & IGetItem>;
   getSubscription: <T = IItem>(
     model: string,
     param: IAllQuery,
