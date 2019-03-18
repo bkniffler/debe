@@ -12,7 +12,8 @@ import {
   transform,
   isEqual,
   createWhereId,
-  toISO
+  toISO,
+  ensureArray
 } from './utils';
 import {
   IModel,
@@ -28,22 +29,41 @@ l.enable();
 const log = createLog('sqlight');
 const logPad = '----';
 
-const idField = 'id';
-const bodyField = 'json';
-const removedField = 'del';
-const revisionField = 'rev';
-const defaultColumns = [
-  `${idField} TEXT PRIMARY KEY`,
-  `${revisionField} TEXT`,
-  `${removedField} TEXT`,
-  `${bodyField} JSON`
-];
+function softDeletePlugin(db: ISQLightClient) {
+  return (action: string, payload: any) => {
+    if (action === 'remove') {
+      payload = toISO(new Date());
+      return payload;
+    }
+    if (action === 'prepareQuery') {
+      const where = ensureArray(payload.where);
+      where.push(`${removedField} IS NULL`);
+      payload.where = where;
+      return payload;
+    }
+    return payload;
+  };
+}
 
 export function sqlight(
   db: IDB,
   dbSchema: IModel[],
-  { verbose = false }: IOptions = {}
+  {
+    verbose = false,
+    additionalColumns: [],
+    idField = 'id',
+    bodyField = 'json',
+    removedField = 'del',
+    revisionField = 'rev'
+  }: IOptions = {}
 ) {
+  const defaultColumns = [
+    `${idField} TEXT PRIMARY KEY`,
+    `${revisionField} TEXT`,
+    `${removedField} TEXT`,
+    `${bodyField} JSON`
+  ];
+
   const ev = new EventEmitter();
 
   dbSchema.reduce((obj: any, model: any) => {

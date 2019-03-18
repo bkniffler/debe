@@ -24,7 +24,7 @@ test('simple', async () => {
   expect(count).toBe(2);
 });
 
-test('simple2', async () => {
+test('simple-use', async () => {
   interface ILorem {
     goa?: string;
     goa2?: string;

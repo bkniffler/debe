@@ -1,5 +1,10 @@
 export interface IOptions {
   verbose?: boolean;
+  additionalColumns?: string[];
+  idField?: string;
+  bodyField?: string;
+  removedField?: string;
+  revisionField?: string;
 }
 export interface IModel {
   name: string;
