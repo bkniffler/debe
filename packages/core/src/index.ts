@@ -12,13 +12,13 @@ import {
   transform,
   isEqual,
   createWhereId,
-  toISO,
-  ensureArray
+  toISO
 } from './utils';
 import {
   IModel,
   IObserverCallback,
   IOptions,
+  IInsertOptions,
   IAllQuery,
   IItem,
   IListenerCallback,
@@ -29,7 +29,7 @@ l.enable();
 const log = createLog('sqlight');
 const logPad = '----';
 
-function softDeletePlugin(db: ISQLightClient) {
+/*function softDeletePlugin(db: ISQLightClient) {
   return (action: string, payload: any) => {
     if (action === 'remove') {
       payload = toISO(new Date());
@@ -43,7 +43,7 @@ function softDeletePlugin(db: ISQLightClient) {
     }
     return payload;
   };
-}
+}*/
 
 export function sqlight(
   db: IDB,
@@ -199,6 +199,7 @@ export function sqlight(
         lastResult = newValue || null;
         cb(newValue || undefined, isInitial ? 'INITIAL' : 'CHANGE');
       };
+
       ev.addListener(model.name, listener);
       listener();
       return () => ev.removeListener(model.name, listener);
@@ -209,7 +210,7 @@ export function sqlight(
   function insert<T = IItem>(
     model: IModel,
     value: IItem[] | IItem,
-    options: any = {}
+    options: IInsertOptions = {}
   ): Promise<T> {
     return new Promise(async yay => {
       let wasArray = Array.isArray(value);
@@ -240,10 +241,10 @@ export function sqlight(
             .map((item: IItem) => {
               const obj = Object.keys(item).reduce(
                 (state: any, key: string) => {
+                  if (key === revisionField || key === idField) {
+                    return state;
+                  }
                   if (columns.indexOf(key) !== -1) {
-                    if (key === revisionField) {
-                      return;
-                    }
                     state[key] = item[key] || state[key];
                   } else {
                     state[bodyField][key] = item[key];
@@ -251,8 +252,11 @@ export function sqlight(
                   return state;
                 },
                 {
-                  [idField]: generate(),
-                  [revisionField]: new Date().getTime() / 1000 + '',
+                  [idField]: item.id || generate(),
+                  [revisionField]:
+                    options.keepRev && item.rev
+                      ? item.rev
+                      : new Date().getTime() / 1000 + '',
                   [bodyField]: {}
                 }
               );
@@ -285,7 +289,16 @@ export function sqlight(
             change: value[index],
             oldValue: undefined,
             properties: Object.keys(value[index]),
-            type: value[index][idField] ? 'UPDATE' : 'CREATE'
+            type: value[index][idField] ? 'UPDATE' : 'CREATE',
+            model: model.name
+          });
+          ev.emit('*', {
+            newValue,
+            change: value[index],
+            oldValue: undefined,
+            properties: Object.keys(value[index]),
+            type: value[index][idField] ? 'UPDATE' : 'CREATE',
+            model: model.name
           });
         }
       });
@@ -323,7 +336,8 @@ export function sqlight(
         }
       ) as ISQLightClientUse<T>;
     },
-    insert: (model, item) => insert(getModel(model), item as any),
+    insert: (model, item, options) =>
+      insert(getModel(model), item as any, options),
     remove: (model: string, param) => remove(getModel(model), param),
     all: (model, param) => query(getModel(model), param, 'all') as any,
     allSubscription: (model, param, cb) =>
@@ -336,11 +350,10 @@ export function sqlight(
       query(getModel(model), param, 'count', cb) as any,
     countListeners: (model: string) => ev.listenerCount(model || ''),
     addListener: (model: string, cb: IListenerCallback) =>
-      ev.addListener(getModel(model), cb),
+      ev.addListener(model, cb),
     removeListener: (model: string, cb: IListenerCallback) =>
-      ev.removeListener(getModel(model), cb),
-    removeAllListeners: (model?: string) =>
-      ev.removeAllListeners(model ? getModel(model) : undefined),
+      ev.removeListener(model, cb),
+    removeAllListeners: (model?: string) => ev.removeAllListeners(model),
     close: () => {
       db.close();
     }

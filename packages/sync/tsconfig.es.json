@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "rootDir": "src",
+    "outDir": "es",
+    "module": "esnext"
+  },
+  "references": [
+    { "path": "../core/tsconfig.es.json" },
+    { "path": "../better-sqlite3/tsconfig.es.json" },
+    { "path": "../types/tsconfig.es.json" }
+  ],
+  "include": ["src"]
+}

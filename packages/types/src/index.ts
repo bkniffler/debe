@@ -11,6 +11,10 @@ export interface IModel {
   index?: string[];
   columns?: string[];
 }
+export interface IInsertOptions {
+  explain?: boolean;
+  keepRev?: boolean;
+}
 export interface IInsertItem {
   id?: string;
 }
@@ -40,6 +44,7 @@ export interface IAllQuery {
 }
 export interface IListenerObject {
   change: any;
+  model: string;
   type: 'CREATE' | 'UPDATE' | 'DELETE';
   properties: string[];
   newValue: IItem;
@@ -56,7 +61,8 @@ export interface ISQLightClient {
   addSchema: (model: IModel) => Promise<any>;
   insert: <T = IItem>(
     model: string,
-    item: T & IInsertItem
+    item: T & IInsertItem,
+    options?: IInsertOptions
   ) => Promise<T & IGetItem>;
   remove: (model: string, param: IAllQuery) => Promise<void>;
   all: <T = IItem>(
@@ -90,7 +96,10 @@ export interface ISQLightClient {
 
 export interface ISQLightClientUse<T = IItem> {
   schema: IModel;
-  insert: (item: T & IInsertItem) => Promise<T & IGetItem>;
+  insert: (
+    item: T & IInsertItem,
+    options?: IInsertOptions
+  ) => Promise<T & IGetItem>;
   remove: (param: IAllQuery) => Promise<void>;
   all: (param: IAllQuery) => Promise<(T & IGetItem)[]>;
   allSubscription: (param: IAllQuery, cb: IObserverCallback<T[]>) => () => void;
