@@ -1,5 +1,5 @@
 {
-  "name": "@sqlight/core",
+  "name": "@debe/core",
   "version": "1.0.0-alpha.7",
   "sideEffects": false,
   "license": "MIT",
@@ -24,14 +24,14 @@
   ],
   "author": "Benjamin Kniffler <bkniffler@me.com>",
   "bugs": {
-    "url": "https://github.com/bkniffler/sqlight"
+    "url": "https://github.com/bkniffler/debe"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bkniffler/sqlight.git"
+    "url": "https://github.com/bkniffler/debe.git"
   },
   "dependencies": {
-    "@sqlight/types": "^1.0.0-alpha.7",
+    "@debe/types": "^1.0.0-alpha.7",
     "@types/shortid": "^0.0.29",
     "@types/uuid": "^3.4.4",
     "events": "^3.0.0",
@@ -40,7 +40,7 @@
   },
   "gitHead": "37e16f2e21ef0b726e671a06a8c42c9c6c71ceaf",
   "devDependencies": {
-    "@sqlight/better-sqlite3": "^1.0.0-alpha.7",
+    "@debe/better-sqlite3": "^1.0.0-alpha.7",
     "better-sqlite3": "^5.4.0"
   }
 }

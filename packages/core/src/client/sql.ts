@@ -1,20 +1,15 @@
 import {
-  SQLightEngine,
+  DebeEngine,
   IModelCreate,
   IModel,
-  ISQLightSQLEngineOptions
+  IDebeSQLEngineOptions
 } from './base';
 import { generate } from '../common';
 import { toISO, ensureArray } from '../utils';
-import {
-  IInsertOptions,
-  IAllQuery,
-  IGetItem,
-  IInsertItem
-} from '@sqlight/types';
+import { IInsertOptions, IAllQuery, IGetItem, IInsertItem } from '@debe/types';
 
-export abstract class SQLightSQLEngine extends SQLightEngine {
-  constructor(dbSchema: IModelCreate[], options?: ISQLightSQLEngineOptions) {
+export abstract class DebeSQLEngine extends DebeEngine {
+  constructor(dbSchema: IModelCreate[], options?: IDebeSQLEngineOptions) {
     super(dbSchema, options);
   }
 
@@ -44,13 +39,32 @@ export abstract class SQLightSQLEngine extends SQLightEngine {
     return 'TEXT';
   }
 
+  createInsertStatement(model: IModel, columns?: string[]) {
+    columns = columns || [...this.defaultColumns(), ...model.columns];
+    const base = `INSERT INTO "${model.name}" (${columns.join(
+      ', '
+    )}) VALUES (${columns.map(() => '?').join(', ')})`;
+    const conflict = columns
+      .filter(x => x !== this.idField)
+      .map(key => `${key}=EXCLUDED.${key}`)
+      .join(', ');
+    return `${base} ON CONFLICT(${this.idField}) DO UPDATE SET ${conflict}`;
+  }
+
+  /*createInsertStatement(model: IModel, columns?: string[]) {
+    columns = columns || [...this.defaultColumns(), ...model.columns];
+    return `INSERT INTO "${model.name}" (${columns.join(
+      ', '
+    )}) VALUES (${columns.map(() => '?').join(', ')})`;
+  }*/
+
   createTable(model: IModel) {
     return this.exec('', [
       `CREATE TABLE IF NOT EXISTS "${model.name}" (${[
         ...this.defaultColumns().map(
           field => `${field} ${this.getColumnType(field)}`
         ),
-        ...model.columns
+        ...model.columns.map(field => `${field} ${this.getColumnType(field)}`)
       ].join(', ')})`,
       this.createTableIndex(model.name, this.revField),
       this.createTableIndex(model.name, this.removedField),
@@ -64,7 +78,10 @@ export abstract class SQLightSQLEngine extends SQLightEngine {
   makeCount(statement: string): string {
     return `SELECT COUNT(*) AS count FROM (${statement}) AS src`;
   }
-  createSelect(columns: string[]): string {
+  createSelect(model: IModel, columns?: string[]): string {
+    if (!columns) {
+      columns = [...this.defaultColumns(), ...model.columns];
+    }
     return `SELECT ${columns.join(', ')}`;
   }
   createOffset(offset?: number): string {
@@ -103,7 +120,7 @@ export abstract class SQLightSQLEngine extends SQLightEngine {
         ? this.createWhereId(id)
         : this.createWhere(where, this.removedField);
     const sql = `
-      ${this.createSelect([...this.defaultColumns(), ...(model.index || [])])}
+      ${this.createSelect(model)}
       FROM "${model.name}" 
       ${whereStatement}
       ${this.createOrderBy(orderBy)}
@@ -111,12 +128,6 @@ export abstract class SQLightSQLEngine extends SQLightEngine {
       ${this.createOffset(offset)}
     `.trim();
     return [queryType === 'count' ? this.makeCount(sql) : sql, ...args];
-  }
-  createInsertStatement(model: IModel, columns?: string[]) {
-    columns = columns || [...this.defaultColumns(), ...model.columns];
-    return `INSERT INTO "${model.name}" (${columns.join(
-      ', '
-    )}) VALUES (${columns.map(() => '?').join(', ')})`;
   }
   createWhere(where: string[] | string, removedField: string): any[] {
     where = ensureArray(where);
@@ -137,41 +148,36 @@ export abstract class SQLightSQLEngine extends SQLightEngine {
     }
     return [`WHERE id IN (?)`, ...id];
   }
-  transform<T>(columns: string[], item: any) {
-    if (!item) {
-      return item;
-    }
-    return columns.reduce((state, key) => {
-      state[key] = item[key];
-      return state;
-    }, {}) as any;
-  }
-  transformForStorage(model: IModel, item: any, keepRev = false): [any, any] {
+  filterItem(model: IModel, item: any): [any, any] {
     const rest = {};
     return [
-      Object.keys(item).reduce(
-        (state: any, key: string) => {
-          if (key === this.revField || key === this.idField) {
-            return state;
-          }
-          if (
-            this.defaultColumns().indexOf(key) !== -1 ||
-            (model.columns || []).indexOf(key) !== -1
-          ) {
-            state[key] = item[key] || state[key];
-          } else {
-            rest[key] = item[key] || state[key];
-          }
-          return state;
-        },
-        {
-          [this.idField]: (item.id || generate()) + '',
-          [this.revField]:
-            keepRev && item.rev ? item.rev : new Date().getTime() / 1000 + ''
+      Object.keys(item).reduce((state: any, key: string) => {
+        if (
+          this.defaultColumns().indexOf(key) !== -1 ||
+          (model.columns || []).indexOf(key) !== -1
+        ) {
+          state[key] = item[key] || state[key];
+        } else {
+          rest[key] = item[key] || state[key];
         }
-      ),
+        return state;
+      }, {}),
       rest
     ];
+  }
+  transformForStorage(model: IModel, item: any, keepRev = false): any {
+    const [obj, rest] = this.filterItem(model, item);
+    if (!keepRev || !obj[this.revField]) {
+      obj[this.revField] = new Date().getTime() / 1000 + '';
+    }
+    if (!obj[this.idField]) {
+      obj[this.idField] = generate();
+    }
+    return [obj, rest];
+  }
+  transformFromStorage(model: IModel, item: any): any {
+    const [obj, rest] = this.filterItem(model, item);
+    return [obj, rest];
   }
   query<T>(
     model: IModel,
@@ -184,18 +190,15 @@ export abstract class SQLightSQLEngine extends SQLightEngine {
       queryType
     );
 
-    const columns = queryArgs.includeBody
-      ? [...this.defaultColumns(), ...model.columns]
-      : [this.idField, this.revField];
     if (queryType === 'count') {
       return this.exec<any>(sql, args, queryType);
     } else if (queryType === 'get') {
-      return this.exec<any>(sql, args, queryType).then((x: any) =>
-        this.transform(columns, x)
+      return this.exec<any>(sql, args, queryType).then(
+        (x: any) => this.transformFromStorage(model, x)[0]
       );
     } else {
       return this.exec<any>(sql, args, queryType).then(r =>
-        r.map((i: any) => this.transform(columns, i))
+        r.map((i: any) => this.transformFromStorage(model, i)[0])
       );
     }
   }
@@ -217,8 +220,8 @@ export abstract class SQLightSQLEngine extends SQLightEngine {
     const statement = this.createInsertStatement(model, columns);
     const ids: string[] = [];
     const items = value.map(item => {
-      const [obj] = this.transformForStorage(model, item, options.keepRev);
-      ids.push(obj.id);
+      const obj = this.transformForStorage(model, item, options.keepRev)[0];
+      ids.push(obj[this.idField]);
       return columns.map(key => obj[key]);
     });
     await this.exec(statement, items, 'insert');

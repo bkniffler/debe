@@ -1,1 +1,1 @@
-# @sqlight/core
+# @debe/core

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
-      "@sqlight/*": ["./*/src/index.ts"]
+      "@debe/*": ["./*/src/index.ts"]
     }
   },
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "node_modules"]

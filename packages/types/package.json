@@ -1,5 +1,5 @@
 {
-  "name": "@sqlight/types",
+  "name": "@debe/types",
   "version": "1.0.0-alpha.7",
   "sideEffects": false,
   "license": "MIT",
@@ -24,10 +24,10 @@
   ],
   "author": "Benjamin Kniffler <bkniffler@me.com>",
   "bugs": {
-    "url": "https://github.com/bkniffler/sqlight"
+    "url": "https://github.com/bkniffler/debe"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bkniffler/sqlight.git"
+    "url": "https://github.com/bkniffler/debe.git"
   }
 }

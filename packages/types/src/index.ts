@@ -44,12 +44,12 @@ export type IObserverCallback<T = IItem> = (
   reason: 'INITIAL' | 'CHANGE'
 ) => void;
 
-export interface ISQLightClient<TBase = IItem> {
+export interface IDebeClient<TBase = IItem> {
   // protected ev: EventEmitter()
   schema: any;
   destroy(): Promise<void>;
   connect(): Promise<any>;
-  use<T = IItem>(model: string): ISQLightClientUse<T>;
+  use<T = IItem>(model: string): IDebeClientUse<T>;
   insert<T = any>(
     model: string,
     value: (T & IInsertItem)[] | T & IInsertItem,
@@ -91,7 +91,7 @@ export interface ISQLightClient<TBase = IItem> {
   ): Promise<T> | (() => void);
 }
 
-export interface ISQLightClientUse<T> {
+export interface IDebeClientUse<T> {
   all(queryArgs: IAllQuery): Promise<T[]>;
   all(queryArgs: IAllQuery, cb?: IObserverCallback<T[]>): () => void;
   all(

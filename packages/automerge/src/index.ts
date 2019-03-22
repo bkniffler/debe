@@ -1,8 +1,8 @@
-import { IItem, IGetItem } from '@sqlight/types';
-import { SQLightClient } from '@sqlight/core';
+import { IItem, IGetItem } from '@debe/types';
+import { DebeClient } from '@debe/core';
 const Automerge = require('automerge');
 
-export function sqlightAutomerge(client: SQLightClient) {
+export function debeAutomerge(client: DebeClient) {
   async function edit<T = IItem>(
     table: string,
     cb: (doc: T & IGetItem) => void
@@ -30,7 +30,7 @@ export function sqlightAutomerge(client: SQLightClient) {
           return Promise.reject(new Error('Could not find item with id ' + id));
         }
       }
-      const originalChanges = (item ? item.changes : 0) || 0;
+      const originalChanges = parseInt((item ? item.changes : 0) || 0);
       const wasDel = item ? item.isRemoved : undefined;
       let doc;
       if (item && item.automerge) {

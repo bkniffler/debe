@@ -1,1 +1,1 @@
-# @sqlight/types
+# @debe/types

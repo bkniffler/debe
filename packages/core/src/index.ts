@@ -1,4 +1,4 @@
-export * from '@sqlight/types';
+export * from '@debe/types';
 export * from './utils';
 export * from './common';
 // import { createLog, log as l } from './common';
@@ -7,10 +7,10 @@ export * from './client/sql';
 export * from './client/sql-json';
 export * from './client/sqlite-json';
 /*l.enable();
-const log = createLog('sqlight');
+const log = createLog('debe');
 const logPad = '----';*/
 
-/*function softDeletePlugin(db: ISQLightClient) {
+/*function softDeletePlugin(db: IDebeClient) {
   return (action: string, payload: any) => {
     if (action === 'remove') {
       payload = toISO(new Date());

@@ -6,8 +6,8 @@ import {
   IItem,
   IGetItem,
   IInsertItem,
-  ISQLightClientUse
-} from '@sqlight/types';
+  IDebeClientUse
+} from '@debe/types';
 import { isEqual, ensureArray } from '../utils';
 
 export interface IDefaultColumns {
@@ -20,7 +20,7 @@ export interface IColumn {
   name: string;
   type: 'text' | 'number';
 }
-export interface ISQLightSQLEngineOptions {
+export interface IDebeSQLEngineOptions {
   verbose?: boolean;
   defaultColumnNames?: IDefaultColumns;
   additionalColumns?: IColumn[];
@@ -37,9 +37,9 @@ export interface IModel {
   columns: string[];
 }
 
-export class SQLightClient<TBase = IItem> {
-  engine: SQLightEngine;
-  constructor(engine: SQLightEngine) {
+export class DebeClient<TBase = IItem> {
+  engine: DebeEngine;
+  constructor(engine: DebeEngine) {
     this.engine = engine;
     // this.isReady = new Promise(yay => this.connect().then(yay));
   }
@@ -49,7 +49,7 @@ export class SQLightClient<TBase = IItem> {
   public connect() {
     return this.engine.connect();
   }
-  public use<T = IItem>(model: string): ISQLightClientUse<T> {
+  public use<T = IItem>(model: string): IDebeClientUse<T> {
     const proxy = this;
     return new Proxy<any>(
       {},
@@ -177,17 +177,17 @@ export class SQLightClient<TBase = IItem> {
 interface ISchema {
   [key: string]: IModel;
 }
-export abstract class SQLightEngine {
+export abstract class DebeEngine {
   ev = new EventEmitter();
   schema: ISchema;
-  options: ISQLightSQLEngineOptions;
+  options: IDebeSQLEngineOptions;
   defaultColumns() {
     return [this.idField, this.revField, this.removedField];
   }
 
   constructor(
     dbSchema: IModelCreate[],
-    options: ISQLightSQLEngineOptions = {}
+    options: IDebeSQLEngineOptions = {}
   ) {
     this.options = options;
     this.schema = dbSchema.reduce((obj: any, model: any) => {

@@ -1,23 +1,23 @@
-import { IModelCreate, IModel, ISQLightSQLEngineOptions } from './base';
-import { SQLightSQLJSONEngine } from './sql-json';
+import { IModelCreate, IDebeSQLEngineOptions, IModel } from './base';
+import { DebeSQLJSONEngine } from './sql-json';
 
-export interface ISQLightSQLiteJSONEngineOptions
-  extends ISQLightSQLEngineOptions {
+export interface IDebeSQLiteJSONEngineOptions extends IDebeSQLEngineOptions {
   dbPath: string;
 }
 
-export abstract class SQLightSQLiteJSONEngine extends SQLightSQLJSONEngine {
+export abstract class DebeSQLiteJSONEngine extends DebeSQLJSONEngine {
   constructor(
     dbSchema: IModelCreate[],
-    options?: ISQLightSQLiteJSONEngineOptions
+    options?: IDebeSQLiteJSONEngineOptions
   ) {
     super(dbSchema, options);
   }
 
-  createSelect(columns: string[]) {
-    const defaultColumns = columns.slice(0, this.defaultColumns().length);
-    const restColumns = columns.slice(this.defaultColumns().length);
-    return `${super.createSelect(defaultColumns)}, ${restColumns.map(
+  createSelect(model: IModel): string {
+    return `${super.createSelect(model, [
+      ...this.defaultColumns(),
+      ...model.columns
+    ])}, ${model.index.map(
       field => `json_extract(${this.bodyField}, '$.${field}') as '${field}'`
     )}`;
   }
@@ -33,7 +33,7 @@ export abstract class SQLightSQLiteJSONEngine extends SQLightSQLJSONEngine {
     }, '$.${field}'))`;
   }
 
-  createInsertStatement(model: IModel, columns?: string[]) {
+  /*createInsertStatement(model: IModel, columns?: string[]) {
     columns = columns || [...this.defaultColumns(), ...model.columns];
     const conflict = columns
       .filter(x => x !== this.idField)
@@ -48,5 +48,5 @@ export abstract class SQLightSQLiteJSONEngine extends SQLightSQLJSONEngine {
     return `${super.createInsertStatement(model, columns)} ON CONFLICT(${
       this.idField
     }) DO UPDATE SET ${conflict}`;
-  }
+  }*/
 }

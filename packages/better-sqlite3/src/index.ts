@@ -1,21 +1,21 @@
 import {
-  SQLightSQLiteJSONEngine,
-  ISQLightSQLiteJSONEngineOptions,
+  DebeSQLiteJSONEngine,
+  IDebeSQLiteJSONEngineOptions,
   IModelCreate,
-  SQLightClient
-} from '@sqlight/core';
+  DebeClient
+} from '@debe/core';
 
 export function createBetterSQLite3Client(
   dbSchema: IModelCreate[],
-  options: ISQLightSQLiteJSONEngineOptions
-): SQLightClient {
-  return new SQLightClient(new BetterSQLite3Engine(dbSchema, options));
+  options: IDebeSQLiteJSONEngineOptions
+): DebeClient {
+  return new DebeClient(new BetterSQLite3Engine(dbSchema, options));
 }
-export class BetterSQLite3Engine extends SQLightSQLiteJSONEngine {
+export class BetterSQLite3Engine extends DebeSQLiteJSONEngine {
   db: any;
   constructor(
     dbSchema: IModelCreate[],
-    options: ISQLightSQLiteJSONEngineOptions
+    options: IDebeSQLiteJSONEngineOptions
   ) {
     super(dbSchema, options);
     const sqlite3 = require('better-sqlite3');

@@ -1,5 +1,5 @@
-import { createLog, SQLightClient } from '@sqlight/core';
-import { IListenerCallback, IItem } from '@sqlight/types';
+import { createLog, DebeClient } from '@debe/core';
+import { IListenerCallback, IItem } from '@debe/types';
 import { IService } from '@service-tunnel/core';
 const log = createLog('sync');
 /*function createCache(onSubmit: (items: any[]) => Promise<void>, limit = 100) {
@@ -35,7 +35,7 @@ interface ISync {
   ) => () => void;
 }
 export function sync(
-  client: SQLightClient,
+  client: DebeClient,
   tables: string[],
   others: string[],
   where?: string[]

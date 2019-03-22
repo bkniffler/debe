@@ -1,8 +1,8 @@
-import { IModelCreate, IModel, ISQLightSQLEngineOptions } from './base';
-import { SQLightSQLEngine } from './sql';
+import { IModelCreate, IModel, IDebeSQLEngineOptions } from './base';
+import { DebeSQLEngine } from './sql';
 
-export abstract class SQLightSQLJSONEngine extends SQLightSQLEngine {
-  constructor(dbSchema: IModelCreate[], options?: ISQLightSQLEngineOptions) {
+export abstract class DebeSQLJSONEngine extends DebeSQLEngine {
+  constructor(dbSchema: IModelCreate[], options?: IDebeSQLEngineOptions) {
     super(dbSchema, options);
   }
 
@@ -21,17 +21,19 @@ export abstract class SQLightSQLJSONEngine extends SQLightSQLEngine {
     return super.getColumnType(field);
   }
 
-  transform(columns: string[], item: any) {
-    const { [this.bodyField]: body = {}, ...rest } = super.transform(
-      columns,
-      item
-    );
-    return { ...body, ...rest };
-  }
-
-  transformForStorage(model: IModel, item: any, keepRev = false): [any, any] {
-    const [obj, rest] = super.transformForStorage(model, item, keepRev);
+  transformForStorage(model: IModel, item: any): [any, any] {
+    const [obj, rest] = super.transformForStorage(model, item);
     obj[this.bodyField] = JSON.stringify(rest);
     return [obj, undefined];
+  }
+
+  transformFromStorage(model: IModel, item: any): [any, any] {
+    const [obj] = super.transformFromStorage(model, item);
+    const body =
+      obj[this.bodyField] && typeof obj[this.bodyField] === 'string'
+        ? JSON.parse(obj[this.bodyField])
+        : obj[this.bodyField];
+    delete obj[this.bodyField];
+    return [{ ...body, ...obj }, undefined];
   }
 }

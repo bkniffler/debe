@@ -1,1 +1,1 @@
-# @sqlight/expo
+# @debe/expo

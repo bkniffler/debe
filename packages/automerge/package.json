@@ -1,5 +1,5 @@
 {
-  "name": "@sqlight/automerge",
+  "name": "@debe/automerge",
   "version": "1.0.0-alpha.7",
   "sideEffects": false,
   "license": "MIT",
@@ -24,19 +24,19 @@
   ],
   "author": "Benjamin Kniffler <bkniffler@me.com>",
   "bugs": {
-    "url": "https://github.com/bkniffler/sqlight"
+    "url": "https://github.com/bkniffler/debe"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/bkniffler/sqlight.git"
+    "url": "https://github.com/bkniffler/debe.git"
   },
   "dependencies": {
-    "@sqlight/types": "^1.0.0-alpha.7",
+    "@debe/types": "^1.0.0-alpha.7",
     "automerge": "^0.10.0"
   },
   "devDependencies": {
-    "@sqlight/core": "^1.0.0-alpha.7",
-    "@sqlight/better-sqlite3": "^1.0.0-alpha.7",
+    "@debe/core": "^1.0.0-alpha.7",
+    "@debe/better-sqlite3": "^1.0.0-alpha.7",
     "better-sqlite3": "^5.4.0"
   }
 }

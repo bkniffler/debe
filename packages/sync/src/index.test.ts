@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
-import { generate, log, SQLightClient } from '@sqlight/core';
-import { createBetterSQLite3Client } from '@sqlight/better-sqlite3';
+import { generate, log, DebeClient } from '@debe/core';
+import { createBetterSQLite3Client } from '@debe/better-sqlite3';
 import { createBroker } from '@service-tunnel/core';
 import { sync } from './index';
 
@@ -24,8 +24,8 @@ interface ILorem {
 function prepare(
   cb: any,
   init: (
-    db1: SQLightClient,
-    db2: SQLightClient,
+    db1: DebeClient,
+    db2: DebeClient,
     forceSync: () => Promise<any>
   ) => Promise<void>
 ) {
@@ -44,10 +44,10 @@ function prepare(
     const db1 = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
     const db2 = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
     await Promise.all([db1.connect(), db2.connect()]);
-    const sync1 = sync(db1, ['lorem'], ['sqlight-sync2']);
-    const sync2 = sync(db2, ['lorem'], ['sqlight-sync1']);
-    const local1 = broker.local('sqlight-sync1', sync1.connect);
-    const local2 = broker.local('sqlight-sync2', sync2.connect);
+    const sync1 = sync(db1, ['lorem'], ['debe-sync2']);
+    const sync2 = sync(db2, ['lorem'], ['debe-sync1']);
+    const local1 = broker.local('debe-sync1', sync1.connect);
+    const local2 = broker.local('debe-sync2', sync2.connect);
     await init(db1, db2, sync1.forceSync);
     done(() => {
       local1();
@@ -57,7 +57,7 @@ function prepare(
 }
 
 test('sync:many', cb => {
-  prepare(cb, async (db1: SQLightClient, db2: SQLightClient, forceSync) => {
+  prepare(cb, async (db1: DebeClient, db2: DebeClient, forceSync) => {
     for (let x = 0; x < 100; x++) {
       db1.insert('lorem', { goa: 'a' + x });
       db2.insert('lorem', { goa: 'b' + x });
@@ -85,16 +85,16 @@ test('sync:delayed', cb => {
   const destroy = createBroker(async broker => {
     const db1 = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
     await db1.connect();
-    const sync1 = sync(db1, ['lorem'], ['sqlight-sync2']);
-    const local1 = broker.local('sqlight-sync1', sync1.connect);
+    const sync1 = sync(db1, ['lorem'], ['debe-sync2']);
+    const local1 = broker.local('debe-sync1', sync1.connect);
     for (let x = 0; x < 100; x++) {
       db1.insert('lorem', { goa: 'a' + x });
     }
     await new Promise(yay => setTimeout(yay, 5000));
     const db2 = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
     await db2.connect();
-    const sync2 = sync(db2, ['lorem'], ['sqlight-sync1']);
-    const local2 = broker.local('sqlight-sync2', sync2.connect);
+    const sync2 = sync(db2, ['lorem'], ['debe-sync1']);
+    const local2 = broker.local('debe-sync2', sync2.connect);
     await sync1.forceSync();
     const final2 = await db2.all<ILorem>('lorem', {});
     expect(final2.length).toBe(100);
@@ -123,7 +123,7 @@ test('sync:where', cb => {
     const dbMaster = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
     await dbMaster.connect();
     const syncMaster = sync(dbMaster, ['lorem'], []);
-    const localMaster = broker.local('sqlight-sync-master', syncMaster.connect);
+    const localMaster = broker.local('debe-sync-master', syncMaster.connect);
     await dbMaster.insert(
       'lorem',
       Array(100)
@@ -139,7 +139,7 @@ test('sync:where', cb => {
     const syncClient = sync(
       dbClient,
       ['lorem'],
-      ['sqlight-sync-master'],
+      ['debe-sync-master'],
       ['goa < ?', 'a50']
     );
     const localClient = broker.client(syncClient.connect);

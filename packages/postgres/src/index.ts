@@ -1,26 +1,27 @@
 import {
-  SQLightSQLJSONEngine,
+  DebeSQLJSONEngine,
   IModelCreate,
-  SQLightClient,
-  ISQLightSQLEngineOptions
-} from '@sqlight/core';
+  DebeClient,
+  IDebeSQLEngineOptions,
+  IModel
+} from '@debe/core';
 
 export function createPostgreSQLClient(
   connectionString: string,
   dbSchema: IModelCreate[],
-  options?: ISQLightSQLEngineOptions
-): SQLightClient {
-  return new SQLightClient(
+  options?: IDebeSQLEngineOptions
+): DebeClient {
+  return new DebeClient(
     new PostgreSQLEngine(dbSchema, connectionString, options)
   );
 }
 
-export class PostgreSQLEngine extends SQLightSQLJSONEngine {
+export class PostgreSQLEngine extends DebeSQLJSONEngine {
   pool: any;
   constructor(
     dbSchema: IModelCreate[],
     connectionString: string,
-    options?: ISQLightSQLEngineOptions
+    options?: IDebeSQLEngineOptions
   ) {
     super(dbSchema, options);
     const { Pool } = require('pg');
@@ -28,10 +29,11 @@ export class PostgreSQLEngine extends SQLightSQLJSONEngine {
       connectionString
     });
   }
-  createSelect(columns: string[]) {
-    const defaultColumns = columns.slice(0, this.defaultColumns().length);
-    const restColumns = columns.slice(this.defaultColumns().length);
-    return `${super.createSelect(defaultColumns)}, ${restColumns.map(
+  createSelect(model: IModel) {
+    return `${super.createSelect(model, [
+      ...this.defaultColumns(),
+      ...model.columns
+    ])}, ${model.index.map(
       field => `${this.bodyField} -> '${field}' AS ${field}`
     )}`;
   }
@@ -45,22 +47,6 @@ export class PostgreSQLEngine extends SQLightSQLJSONEngine {
       this.bodyField
     } ->> '${field}'))`;
   }
-  /*createInsertStatement(model: IModel, columns?: string[]) {
-    columns = columns || [...this.defaultColumns(), ...model.columns];
-    const conflict = columns
-      .filter(x => x !== this.idField)
-      .map(key =>
-        key === this.bodyField
-          ? `${this.bodyField}=json_patch(${this.bodyField}, excluded.${
-              this.bodyField
-            })`
-          : `${key}=excluded.${key}`
-      )
-      .join(', ');
-    return `${super.createInsertStatement(model, columns)} ON CONFLICT(${
-      this.idField
-    }) DO UPDATE SET ${conflict}`;
-  }*/
   async exec<T>(
     sql: string,
     args: any[],

@@ -1,4 +1,4 @@
-import { IItem } from '@sqlight/types';
+import { IItem } from '@debe/types';
 
 export function isEqual(
   rowsA: IItem[] | IItem,
