@@ -1,7 +1,8 @@
 import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
-import { sqlight, generate, toISO } from './index';
-import { betterSQLite3 } from '@sqlight/better-sqlite3';
+import { generate } from './index';
+import { createBetterSQLite3Client } from '@sqlight/better-sqlite3';
+import { toISO } from './utils';
 
 const schema = [
   {
@@ -15,11 +16,15 @@ ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');
 
 test('simple', async () => {
-  const db = sqlight(betterSQLite3(getDBDir()), schema);
+  const db = createBetterSQLite3Client(schema, {
+    dbPath: getDBDir()
+  });
+  await db.connect();
   await db.insert('lorem', { hallo: 'ok' });
   await db.insert('lorem', { hallo: 'ok2' });
-  const result = await db.all('lorem', {});
-  const count = await db.count('lorem', {});
+  const result = await db.all('lorem');
+  const count = await db.count('lorem');
+  expect(count).toBe(2);
   expect(result.length).toBe(2);
   expect(count).toBe(2);
 });
@@ -30,7 +35,10 @@ test('simple-use', async () => {
     goa2?: string;
     hallo?: string;
   }
-  const db = sqlight(betterSQLite3(getDBDir()), schema);
+  const db = createBetterSQLite3Client(schema, {
+    dbPath: getDBDir()
+  });
+  await db.connect();
   const lorem = db.use<ILorem>('lorem');
   await lorem.insert({ hallo: 'ok' });
   await lorem.insert({ hallo: 'ok2' });
@@ -47,27 +55,33 @@ test('time', () => {
 });
 
 test('remove', async () => {
-  const db = sqlight(betterSQLite3(getDBDir()), schema);
+  const db = createBetterSQLite3Client(schema, {
+    dbPath: getDBDir()
+  });
+  await db.connect();
   await db.insert('lorem', { hallo: 'ok' });
   const item = await db.insert('lorem', { hallo: 'ok2' });
-  await db.remove('lorem', { id: item.id });
+  await db.remove('lorem', item.id);
   const result = await db.all('lorem', {});
   const deletedItem = await db.get('lorem', { id: item.id });
   expect(result.length).toBe(1);
   expect(deletedItem).toBeTruthy();
-  expect(deletedItem.del).toBeTruthy();
+  expect(deletedItem[db.engine.removedField]).toBeTruthy();
 });
 
 test('complex', async () => {
-  const db = sqlight(betterSQLite3(getDBDir()), schema);
+  const db = createBetterSQLite3Client(schema, {
+    dbPath: getDBDir()
+  });
+  await db.connect();
   let listenerResult: any;
-  const close = await db.allSubscription(
+  const close = await db.all(
     'lorem',
     { limit: 1, orderBy: ['rev ASC'] },
     items => (listenerResult = items)
   );
   let listenerResult2: any;
-  const close2 = await db.allSubscription(
+  const close2 = await db.all(
     'lorem',
     { orderBy: ['rev ASC'] },
     items => (listenerResult2 = items)

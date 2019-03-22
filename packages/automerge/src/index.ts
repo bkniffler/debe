@@ -1,7 +1,8 @@
-import { ISQLightClient, IItem, IGetItem } from '@sqlight/types';
+import { IItem, IGetItem } from '@sqlight/types';
+import { SQLightClient } from '@sqlight/core';
 const Automerge = require('automerge');
 
-export function sqlightAutomerge(client: ISQLightClient) {
+export function sqlightAutomerge(client: SQLightClient) {
   async function edit<T = IItem>(
     table: string,
     cb: (doc: T & IGetItem) => void

@@ -1,6 +1,7 @@
-import { ISQLightClient, IListenerCallback, IItem } from '@sqlight/types';
+import { createLog, SQLightClient } from '@sqlight/core';
+import { IListenerCallback, IItem } from '@sqlight/types';
 import { IService } from '@service-tunnel/core';
-
+const log = createLog('sync');
 /*function createCache(onSubmit: (items: any[]) => Promise<void>, limit = 100) {
   let items: any[] = [];
   function submit() {
@@ -34,7 +35,7 @@ interface ISync {
   ) => () => void;
 }
 export function sync(
-  client: ISQLightClient,
+  client: SQLightClient,
   tables: string[],
   others: string[],
   where?: string[]
@@ -58,12 +59,14 @@ export function sync(
                   return;
                 }
                 const comp = state[item.id].localeCompare(item.rev);
+                delete state[item.id];
                 if (comp === -1) {
                   response.items.push(item);
                 } else if (comp === 1) {
                   response.request.push(item.id);
                 }
               });
+              Object.keys(state).forEach(x => response.request.push(x));
               return response;
             });
         }
@@ -79,8 +82,8 @@ export function sync(
           }
           emit(null, value.model, [value.newValue]);
         };
-        client.addListener(model || '*', listener);
-        return () => client.removeListener(model || '*', listener);
+        client.engine.ev.addListener(model || '*', listener);
+        return () => client.engine.ev.removeListener(model || '*', listener);
       });
 
       // LOgic
@@ -92,13 +95,26 @@ export function sync(
             where,
             orderBy: 'rev ASC'
           });
+          const stateObject = currentState.reduce((state, item) => {
+            state[item.id] = item.rev;
+            return state;
+          }, {});
+          log.info(
+            `Starting sync ${name}:${table}: ${
+              currentState.length
+            } initial items`
+          );
           const changes = await sync.initialFetchChanges(
             table,
-            currentState.reduce((state, item) => {
-              state[item.id] = item.rev;
-              return state;
-            }, {}),
+            stateObject,
             where
+          );
+          log.info(
+            `Remote sync state ${name}:${table}: ${
+              changes.items.length
+            } remote items to get, ${
+              changes.request.length
+            } remote items missing`
           );
           if (!cancels) {
             return;
@@ -114,9 +130,15 @@ export function sync(
           if (!cancels) {
             return;
           }
+          log.info(`Sync to ${name}:${table} is completed`);
           cancels.push(
             sync.listenToChanges(table, (err, model, changes) => {
               changes.forEach(x => (noRep[x.id] = x.rev));
+              log.info(
+                `Sync to ${name}:${table} reporting ${
+                  changes.length
+                } new change(s)`
+              );
               return client.insert(model, changes, { keepRev: true });
             })
           );

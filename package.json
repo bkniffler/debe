@@ -1,5 +1,5 @@
 {
-  "name": "sqlight-monorepo",
+  "name": "debe-monorepo",
   "private": true,
   "license": "MIT",
   "keywords": [
@@ -52,6 +52,7 @@
   },
   "jest": {
     "modulePathIgnorePatterns": [
+      "_old",
       ".cache"
     ],
     "globals": {

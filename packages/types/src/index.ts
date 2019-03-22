@@ -1,21 +1,9 @@
-export interface IOptions {
-  verbose?: boolean;
-  additionalColumns?: string[];
-  idField?: string;
-  bodyField?: string;
-  removedField?: string;
-  revisionField?: string;
-}
-export interface IModel {
-  name: string;
-  index?: string[];
-  columns?: string[];
-}
 export interface IInsertOptions {
   explain?: boolean;
   keepRev?: boolean;
 }
 export interface IInsertItem {
+  [k: string]: any;
   id?: string;
 }
 export interface IGetItem {
@@ -23,9 +11,9 @@ export interface IGetItem {
   rev: string;
 }
 export interface IItem {
+  [s: string]: any;
   id: string;
   rev: string;
-  [s: string]: any;
 }
 export interface IDBItem {
   id: string;
@@ -56,62 +44,75 @@ export type IObserverCallback<T = IItem> = (
   reason: 'INITIAL' | 'CHANGE'
 ) => void;
 
-export interface ISQLightClient {
-  schema: IModel[];
-  addSchema: (model: IModel) => Promise<any>;
-  insert: <T = IItem>(
+export interface ISQLightClient<TBase = IItem> {
+  // protected ev: EventEmitter()
+  schema: any;
+  destroy(): Promise<void>;
+  connect(): Promise<any>;
+  use<T = IItem>(model: string): ISQLightClientUse<T>;
+  insert<T = any>(
     model: string,
-    item: T & IInsertItem,
+    value: (T & IInsertItem)[] | T & IInsertItem,
     options?: IInsertOptions
-  ) => Promise<T & IGetItem>;
-  remove: (model: string, param: IAllQuery) => Promise<void>;
-  all: <T = IItem>(
+  ): Promise<T & IGetItem>;
+  remove<T = any>(model: string, query: IAllQuery): Promise<void>;
+  all<T = TBase>(model: string, queryArgs: IAllQuery): Promise<T[]>;
+  all<T = TBase>(
     model: string,
-    param: IAllQuery
-  ) => Promise<(T & IGetItem)[]>;
-  allSubscription: <T = IItem>(
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<T[]>
+  ): () => void;
+  all<T = TBase>(
     model: string,
-    param: IAllQuery,
-    cb: IObserverCallback<T[]>
-  ) => () => void;
-  get: <T = IItem>(model: string, param: IAllQuery) => Promise<T & IGetItem>;
-  getSubscription: <T = IItem>(
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<T[]>
+  ): Promise<T[]> | (() => void);
+  count(model: string, queryArgs: IAllQuery): Promise<number>;
+  count(
     model: string,
-    param: IAllQuery,
-    cb: IObserverCallback<T>
-  ) => () => void;
-  count: (model: string, param: IAllQuery) => Promise<number>;
-  countSubscription: (
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<number>
+  ): () => void;
+  count(
     model: string,
-    param: IAllQuery,
-    cb: IObserverCallback<number>
-  ) => () => void;
-  countListeners: (model: string) => number;
-  addListener: (model: string, cb: IListenerCallback) => void;
-  removeListener: (model: string, cb: IListenerCallback) => void;
-  removeAllListeners: (model?: string) => void;
-  close: () => void;
-  use: <T = IItem>(model: string) => ISQLightClientUse<T>;
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<number>
+  ): Promise<number> | (() => void);
+  get<T = TBase>(model: string, queryArgs: IAllQuery): Promise<T>;
+  get<T = TBase>(
+    model: string,
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<T>
+  ): () => void;
+  get<T = TBase>(
+    model: string,
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<T>
+  ): Promise<T> | (() => void);
 }
 
-export interface ISQLightClientUse<T = IItem> {
-  schema: IModel;
-  insert: (
-    item: T & IInsertItem,
+export interface ISQLightClientUse<T> {
+  all(queryArgs: IAllQuery): Promise<T[]>;
+  all(queryArgs: IAllQuery, cb?: IObserverCallback<T[]>): () => void;
+  all(
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<T[]>
+  ): Promise<T[]> | (() => void);
+  count(queryArgs: IAllQuery): Promise<number>;
+  count(queryArgs: IAllQuery, cb?: IObserverCallback<number>): () => void;
+  count(
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<number>
+  ): Promise<number> | (() => void);
+  get(queryArgs: IAllQuery): Promise<T>;
+  get(queryArgs: IAllQuery, cb?: IObserverCallback<T>): () => void;
+  get(
+    queryArgs: IAllQuery,
+    cb?: IObserverCallback<T>
+  ): Promise<T> | (() => void);
+  remove(query: IAllQuery): Promise<void>;
+  insert<T = any>(
+    value: (T & IInsertItem)[] | T & IInsertItem,
     options?: IInsertOptions
-  ) => Promise<T & IGetItem>;
-  remove: (param: IAllQuery) => Promise<void>;
-  all: (param: IAllQuery) => Promise<(T & IGetItem)[]>;
-  allSubscription: (param: IAllQuery, cb: IObserverCallback<T[]>) => () => void;
-  get: (param: IAllQuery) => Promise<T & IGetItem>;
-  getSubscription: (param: IAllQuery, cb: IObserverCallback<T>) => () => void;
-  count: (param: IAllQuery) => Promise<number>;
-  countSubscription: (
-    param: IAllQuery,
-    cb: IObserverCallback<number>
-  ) => () => void;
-  countListeners: () => number;
-  addListener: (cb: IListenerCallback) => void;
-  removeListener: (cb: IListenerCallback) => void;
-  removeAllListeners: () => void;
+  ): Promise<T & IGetItem>;
 }

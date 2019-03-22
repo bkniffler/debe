@@ -12,13 +12,14 @@ export function extractCallback(args: any[]): [Function | undefined, ...any[]] {
   }
 }
 
+export type ITransaction = <T = any>(
+  cb: (
+    exec: (statement: string, ...args: any[]) => any,
+    resolve: (value: any) => void
+  ) => void
+) => Promise<T>;
 export interface IDB {
-  transaction: <T = any>(
-    cb: (
-      exec: (statement: string, ...args: any[]) => any,
-      resolve: (value: any) => void
-    ) => void
-  ) => Promise<T>;
+  transaction: ITransaction;
   close: () => void;
 }
 

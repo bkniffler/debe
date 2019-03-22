@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
-import { sqlight, generate } from '@sqlight/core';
-import { betterSQLite3 } from './index';
+import { generate } from '@sqlight/core';
+import { createBetterSQLite3Client } from './index';
 
 const schema = [
   {
@@ -14,8 +14,11 @@ removeSync(dbDir);
 ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');
 
-test('simple', async () => {
-  const db = sqlight(betterSQLite3(getDBDir()), schema);
+test('sqlite3', async () => {
+  const db = createBetterSQLite3Client(schema, {
+    dbPath: getDBDir()
+  });
+  await db.connect();
   await db.insert('lorem', { hallo: 'ok' });
   await db.insert('lorem', { hallo: 'ok2' });
   const result = await db.all('lorem', {});

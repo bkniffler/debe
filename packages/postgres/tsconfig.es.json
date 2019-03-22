@@ -6,9 +6,6 @@
     "outDir": "es",
     "module": "esnext"
   },
-  "references": [
-    { "path": "../core/tsconfig.es.json" },
-    { "path": "../better-sqlite3/tsconfig.es.json" }
-  ],
+  "references": [{ "path": "../core/tsconfig.es.json" }],
   "include": ["src"]
 }

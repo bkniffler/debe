@@ -1,33 +1,59 @@
-import { extractCallback, IDB } from '@sqlight/core';
+import {
+  SQLightSQLiteJSONEngine,
+  ISQLightSQLiteJSONEngineOptions,
+  IModelCreate,
+  SQLightClient
+} from '@sqlight/core';
 
-export function betterSQLite3(dbPath: string): IDB {
-  const sqlite3 = require('better-sqlite3');
-  const db = sqlite3(dbPath, {});
-  return {
-    close: db.close,
-    transaction: cb => {
-      return new Promise((yay, nay) => {
-        try {
-          const results: any[] = [];
-          db.transaction(() => {
-            const exec = (statement: string, ...args: any[]) => {
-              const [callback, ...rest] = extractCallback(args);
-              const method = statement.indexOf('SELECT') === 0 ? 'all' : 'run';
-              const result = db.prepare(statement)[method](...rest);
-              if (callback) {
-                callback(result);
+export function createBetterSQLite3Client(
+  dbSchema: IModelCreate[],
+  options: ISQLightSQLiteJSONEngineOptions
+): SQLightClient {
+  return new SQLightClient(new BetterSQLite3Engine(dbSchema, options));
+}
+export class BetterSQLite3Engine extends SQLightSQLiteJSONEngine {
+  db: any;
+  constructor(
+    dbSchema: IModelCreate[],
+    options: ISQLightSQLiteJSONEngineOptions
+  ) {
+    super(dbSchema, options);
+    const sqlite3 = require('better-sqlite3');
+    this.db = sqlite3(options.dbPath, {});
+  }
+  destroy() {
+    this.db.close();
+  }
+  exec<T>(
+    sql: string,
+    args: any[],
+    type?: 'all' | 'get' | 'count' | 'insert'
+  ): Promise<T> {
+    return new Promise((yay, nay) => {
+      try {
+        this.db
+          .transaction(() => {
+            if (type === 'count') {
+              yay(this.db.prepare(sql).all(...args)[0].count);
+            } else if (type === 'get') {
+              yay(this.db.prepare(sql).get(...args));
+            } else if (type === 'all') {
+              yay(this.db.prepare(sql).all(...args));
+            } else if (type === 'insert') {
+              const prepare = this.db.prepare(sql);
+              yay(args.map(arg => prepare.run(arg)) as any);
+            } else {
+              if (sql) {
+                this.db.prepare(sql).run();
               }
-            };
-            const resolve = (value: any) => {
-              results.push(value);
-            };
-            cb(exec, resolve);
-          }).immediate();
-          yay(results as any);
-        } catch (err) {
-          nay(err);
-        }
-      });
-    }
-  };
+              args.forEach(arg => this.db.prepare(arg).run());
+              yay();
+            }
+          })
+          .immediate();
+      } catch (err) {
+        nay(err);
+      }
+    });
+  }
 }
