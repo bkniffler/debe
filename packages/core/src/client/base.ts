@@ -1,15 +1,18 @@
-import { EventEmitter } from 'events';
 import {
   IObserverCallback,
-  IInsertOptions,
-  IAllQuery,
+  IQuery,
   IItem,
   IGetItem,
   IInsertItem,
   IDebeClientUse
 } from '@debe/types';
 import { isEqual, ensureArray } from '../utils';
+import { Emitter } from '../common';
 
+export interface IInsertOptions {
+  explain?: boolean;
+  keepRev?: boolean;
+}
 export interface IDefaultColumns {
   id: string;
   rev: string;
@@ -37,10 +40,12 @@ export interface IModel {
   columns: string[];
 }
 
-export class DebeClient<TBase = IItem> {
+export class DebeClient<TBase = IItem> extends Emitter {
   engine: DebeEngine;
   constructor(engine: DebeEngine) {
+    super();
     this.engine = engine;
+    engine.proxyTo(this);
     // this.isReady = new Promise(yay => this.connect().then(yay));
   }
   public destroy() {
@@ -64,7 +69,7 @@ export class DebeClient<TBase = IItem> {
   }
   private query<T>(
     m: IModel | string,
-    queryArgs: IAllQuery = {},
+    queryArgs: IQuery = {},
     queryType: 'all' | 'get' | 'count',
     cb?: IObserverCallback<T>
   ): Promise<T> | (() => void) {
@@ -82,9 +87,9 @@ export class DebeClient<TBase = IItem> {
         cb((newValue || undefined) as any, isInitial ? 'INITIAL' : 'CHANGE');
       };
 
-      this.engine.ev.addListener(model.name, listener);
+      const unlisten = this.on(model.name, listener);
       listener();
-      return () => this.engine.ev.removeListener(model.name, listener);
+      return unlisten;
     } else {
       return this.engine.query(
         this.engine.getModel(model),
@@ -127,30 +132,30 @@ export class DebeClient<TBase = IItem> {
   // all
   public all<T = TBase>(
     model: string | IModel,
-    queryArgs?: IAllQuery
+    queryArgs?: IQuery
   ): Promise<(T & IGetItem)[]>;
   public all<T = TBase>(
     model: string | IModel,
-    queryArgs?: IAllQuery,
+    queryArgs?: IQuery,
     cb?: IObserverCallback<(T & IGetItem)[]>
   ): () => void;
   public all<T = TBase>(
     model: string | IModel,
-    queryArgs?: IAllQuery,
+    queryArgs?: IQuery,
     cb?: IObserverCallback<(T & IGetItem)[]>
   ): Promise<T[]> | (() => void) {
     return this.query<T[]>(model, queryArgs, 'all', cb);
   }
   // count
-  public count(model: string | IModel, queryArgs?: IAllQuery): Promise<number>;
+  public count(model: string | IModel, queryArgs?: IQuery): Promise<number>;
   public count(
     model: string | IModel,
-    queryArgs?: IAllQuery,
+    queryArgs?: IQuery,
     cb?: IObserverCallback<number>
   ): () => void;
   public count(
     model: string | IModel,
-    queryArgs?: IAllQuery,
+    queryArgs?: IQuery,
     cb?: IObserverCallback<number>
   ): Promise<number> | (() => void) {
     return this.query<number>(model, queryArgs, 'count', cb);
@@ -158,16 +163,16 @@ export class DebeClient<TBase = IItem> {
   // get
   public get<T = TBase>(
     model: string | IModel,
-    queryArgs?: IAllQuery
+    queryArgs?: IQuery
   ): Promise<T & IGetItem>;
   public get<T = TBase>(
     model: string | IModel,
-    queryArgs?: IAllQuery,
+    queryArgs?: IQuery,
     cb?: IObserverCallback<T & IGetItem>
   ): () => void;
   public get<T = TBase>(
     model: string | IModel,
-    queryArgs?: IAllQuery,
+    queryArgs?: IQuery,
     cb?: IObserverCallback<T & IGetItem>
   ): Promise<T> | (() => void) {
     return this.query<T>(model, queryArgs, 'get', cb);
@@ -177,20 +182,17 @@ export class DebeClient<TBase = IItem> {
 interface ISchema {
   [key: string]: IModel;
 }
-export abstract class DebeEngine {
-  ev = new EventEmitter();
+export abstract class DebeEngine extends Emitter {
   schema: ISchema;
   options: IDebeSQLEngineOptions;
   defaultColumns() {
     return [this.idField, this.revField, this.removedField];
   }
 
-  constructor(
-    dbSchema: IModelCreate[],
-    options: IDebeSQLEngineOptions = {}
-  ) {
+  constructor(schema: IModelCreate[], options: IDebeSQLEngineOptions = {}) {
+    super();
     this.options = options;
-    this.schema = dbSchema.reduce((obj: any, model: any) => {
+    this.schema = schema.reduce((obj: any, model: any) => {
       if (!model.columns) {
         model.columns = [];
       }
@@ -238,7 +240,7 @@ export abstract class DebeEngine {
   // Abstract
   abstract query<T>(
     model: IModel,
-    queryArgs: IAllQuery,
+    queryArgs: IQuery,
     queryType: 'all' | 'get' | 'count'
   ): Promise<T>;
   abstract remove(model: IModel, id: string[]): Promise<void>;
@@ -258,8 +260,7 @@ export abstract class DebeEngine {
         type: changes[i][this.idField] ? 'UPDATE' : 'CREATE',
         model: model.name
       };
-      this.ev.emit(model.name, change);
-      this.ev.emit('*', change);
+      this.emit(model.name, change);
     });
   }
 }

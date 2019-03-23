@@ -2,6 +2,7 @@ import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
 import { generate } from '@debe/core';
 import { createBetterSQLite3Client } from './index';
+const sql = require('better-sqlite3');
 
 const schema = [
   {
@@ -15,9 +16,7 @@ ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');
 
 test('sqlite3', async () => {
-  const db = createBetterSQLite3Client(schema, {
-    dbPath: getDBDir()
-  });
+  const db = createBetterSQLite3Client(sql(getDBDir()), schema);
   await db.connect();
   await db.insert('lorem', { hallo: 'ok' });
   await db.insert('lorem', { hallo: 'ok2' });

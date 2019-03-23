@@ -7,27 +7,22 @@ import {
 } from '@debe/core';
 
 export function createPostgreSQLClient(
-  connectionString: string,
-  dbSchema: IModelCreate[],
+  pool: any,
+  schema: IModelCreate[],
   options?: IDebeSQLEngineOptions
 ): DebeClient {
-  return new DebeClient(
-    new PostgreSQLEngine(dbSchema, connectionString, options)
-  );
+  return new DebeClient(new PostgreSQLEngine(pool, schema, options));
 }
 
 export class PostgreSQLEngine extends DebeSQLJSONEngine {
   pool: any;
   constructor(
-    dbSchema: IModelCreate[],
-    connectionString: string,
+    pool: any,
+    schema: IModelCreate[],
     options?: IDebeSQLEngineOptions
   ) {
-    super(dbSchema, options);
-    const { Pool } = require('pg');
-    this.pool = new Pool({
-      connectionString
-    });
+    super(schema, options);
+    this.pool = pool;
   }
   createSelect(model: IModel) {
     return `${super.createSelect(model, [

@@ -82,8 +82,7 @@ export function sync(
           }
           emit(null, value.model, [value.newValue]);
         };
-        client.engine.ev.addListener(model || '*', listener);
-        return () => client.engine.ev.removeListener(model || '*', listener);
+        return client.on(model || '*', listener);
       });
 
       // LOgic

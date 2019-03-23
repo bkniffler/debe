@@ -2,8 +2,8 @@ import { IModelCreate, IModel, IDebeSQLEngineOptions } from './base';
 import { DebeSQLEngine } from './sql';
 
 export abstract class DebeSQLJSONEngine extends DebeSQLEngine {
-  constructor(dbSchema: IModelCreate[], options?: IDebeSQLEngineOptions) {
-    super(dbSchema, options);
+  constructor(schema: IModelCreate[], options?: IDebeSQLEngineOptions) {
+    super(schema, options);
   }
 
   public get bodyField() {

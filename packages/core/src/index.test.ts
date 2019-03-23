@@ -3,6 +3,7 @@ import { ensureDirSync, removeSync } from 'fs-extra';
 import { generate } from './index';
 import { createBetterSQLite3Client } from '@debe/better-sqlite3';
 import { toISO } from './utils';
+import { Emitter } from './common';
 
 const schema = [
   {
@@ -16,9 +17,10 @@ ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');
 
 test('simple', async () => {
-  const db = createBetterSQLite3Client(schema, {
-    dbPath: getDBDir()
-  });
+  const db = createBetterSQLite3Client(
+    require('better-sqlite3')(getDBDir()),
+    schema
+  );
   await db.connect();
   await db.insert('lorem', { hallo: 'ok' });
   await db.insert('lorem', { hallo: 'ok2' });
@@ -35,9 +37,10 @@ test('simple-use', async () => {
     goa2?: string;
     hallo?: string;
   }
-  const db = createBetterSQLite3Client(schema, {
-    dbPath: getDBDir()
-  });
+  const db = createBetterSQLite3Client(
+    require('better-sqlite3')(getDBDir()),
+    schema
+  );
   await db.connect();
   const lorem = db.use<ILorem>('lorem');
   await lorem.insert({ hallo: 'ok' });
@@ -54,10 +57,43 @@ test('time', () => {
   expect(toISO(null)).toBe(undefined);
 });
 
+test('emitter', () => {
+  const emitter = new Emitter();
+  const invocations = [];
+  const unlisten = emitter.on('h', (i: number) => invocations.push(i));
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  unlisten();
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  expect(invocations.length).toBe(3);
+  emitter.once('h', (i: number) => invocations.push(i));
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  expect(invocations.length).toBe(4);
+  emitter.once((i: number) => invocations.push(i));
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  expect(invocations.length).toBe(5);
+  const unlisten2 = emitter.on((i: number) => invocations.push(i));
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  unlisten2();
+  emitter.emit('h', 1);
+  emitter.emit('h', 1);
+  expect(emitter.numberOfListeners).toBe(0);
+});
+
 test('remove', async () => {
-  const db = createBetterSQLite3Client(schema, {
-    dbPath: getDBDir()
-  });
+  const db = createBetterSQLite3Client(
+    require('better-sqlite3')(getDBDir()),
+    schema
+  );
   await db.connect();
   await db.insert('lorem', { hallo: 'ok' });
   const item = await db.insert('lorem', { hallo: 'ok2' });
@@ -70,18 +106,19 @@ test('remove', async () => {
 });
 
 test('complex', async () => {
-  const db = createBetterSQLite3Client(schema, {
-    dbPath: getDBDir()
-  });
+  const db = createBetterSQLite3Client(
+    require('better-sqlite3')(getDBDir()),
+    schema
+  );
   await db.connect();
   let listenerResult: any;
-  const close = await db.all(
+  const close = db.all(
     'lorem',
     { limit: 1, orderBy: ['rev ASC'] },
     items => (listenerResult = items)
   );
   let listenerResult2: any;
-  const close2 = await db.all(
+  const close2 = db.all(
     'lorem',
     { orderBy: ['rev ASC'] },
     items => (listenerResult2 = items)
@@ -91,7 +128,7 @@ test('complex', async () => {
   await db.insert('lorem', { hallo: 'ok3', id: '2' });
   await db.insert('lorem', { hallo: 'ok2', hallo2: 'ok', id: '1' });
   await db.insert('lorem', { hallo2: 'ok55', id: '1' });
-  const all = await db.all('lorem', {});
+  const all = await db.all('lorem');
   const all2 = await db.all('lorem', {
     limit: 1,
     where: ['hallo2 = ?', 'ok55']

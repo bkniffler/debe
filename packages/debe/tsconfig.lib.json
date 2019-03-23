@@ -6,8 +6,11 @@
     "outDir": "lib"
   },
   "references": [
+    { "path": "../automerge/tsconfig.lib.json" },
+    { "path": "../better-sqlite3/tsconfig.lib.json" },
     { "path": "../core/tsconfig.lib.json" },
-    { "path": "../better-sqlite3/tsconfig.lib.json" }
+    { "path": "../postgres/tsconfig.lib.json" },
+    { "path": "../sync/tsconfig.lib.json" }
   ],
   "include": ["src"]
 }

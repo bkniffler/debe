@@ -1,25 +1,26 @@
 import {
   DebeSQLiteJSONEngine,
-  IDebeSQLiteJSONEngineOptions,
+  IDebeSQLEngineOptions,
   IModelCreate,
   DebeClient
 } from '@debe/core';
 
 export function createBetterSQLite3Client(
-  dbSchema: IModelCreate[],
-  options: IDebeSQLiteJSONEngineOptions
+  db: any,
+  schema: IModelCreate[],
+  options?: IDebeSQLEngineOptions
 ): DebeClient {
-  return new DebeClient(new BetterSQLite3Engine(dbSchema, options));
+  return new DebeClient(new BetterSQLite3Engine(db, schema, options));
 }
 export class BetterSQLite3Engine extends DebeSQLiteJSONEngine {
   db: any;
   constructor(
-    dbSchema: IModelCreate[],
-    options: IDebeSQLiteJSONEngineOptions
+    db: any,
+    schema: IModelCreate[],
+    options?: IDebeSQLEngineOptions
   ) {
-    super(dbSchema, options);
-    const sqlite3 = require('better-sqlite3');
-    this.db = sqlite3(options.dbPath, {});
+    super(schema, options);
+    this.db = db;
   }
   destroy() {
     this.db.close();

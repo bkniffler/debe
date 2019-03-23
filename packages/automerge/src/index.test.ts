@@ -4,6 +4,8 @@ import { debeAutomerge } from './index';
 import { generate } from '@debe/core';
 import { createBetterSQLite3Client } from '@debe/better-sqlite3';
 import { createPostgreSQLClient } from '../../postgres/src';
+const sql = require('better-sqlite3');
+const pg = require('pg');
 
 const name = 'lorem' + generate();
 const schema = [
@@ -24,7 +26,7 @@ interface ILorem {
   hallo?: string;
 }
 test('automerge', async () => {
-  const db = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
+  const db = createBetterSQLite3Client(sql(getDBDir()), schema);
   await db.connect();
   const automerge = debeAutomerge(db);
   const item = await automerge<ILorem>(name, doc => {
@@ -41,10 +43,10 @@ test('automerge', async () => {
 
 if (process.env.PG_CONNECTIONSTRING) {
   test('automerge:pg', async () => {
-    const db = createPostgreSQLClient(
-      process.env.PG_CONNECTIONSTRING + '',
-      schema
-    );
+    const pool = new pg.Pool({
+      connectionString: process.env.PG_CONNECTIONSTRING + ''
+    });
+    const db = createPostgreSQLClient(pool, schema);
     await db.connect();
     const automerge = debeAutomerge(db);
     const item = await automerge<ILorem>(name, doc => {

@@ -2,15 +2,16 @@ import {
   DebeEngine,
   IModelCreate,
   IModel,
-  IDebeSQLEngineOptions
+  IDebeSQLEngineOptions,
+  IInsertOptions
 } from './base';
 import { generate } from '../common';
 import { toISO, ensureArray } from '../utils';
-import { IInsertOptions, IAllQuery, IGetItem, IInsertItem } from '@debe/types';
+import { IQuery, IGetItem, IInsertItem } from '@debe/types';
 
 export abstract class DebeSQLEngine extends DebeEngine {
-  constructor(dbSchema: IModelCreate[], options?: IDebeSQLEngineOptions) {
-    super(dbSchema, options);
+  constructor(schema: IModelCreate[], options?: IDebeSQLEngineOptions) {
+    super(schema, options);
   }
 
   addModel(model: IModel) {
@@ -105,7 +106,7 @@ export abstract class DebeSQLEngine extends DebeEngine {
   }
   createQueryStatement(
     model: IModel,
-    queryArgs: IAllQuery,
+    queryArgs: IQuery,
     queryType: string
   ): [string, ...any[]] {
     const {
@@ -181,7 +182,7 @@ export abstract class DebeSQLEngine extends DebeEngine {
   }
   query<T>(
     model: IModel,
-    queryArgs: IAllQuery,
+    queryArgs: IQuery,
     queryType: 'all' | 'get' | 'count'
   ): Promise<T> {
     const [sql, ...args] = this.createQueryStatement(

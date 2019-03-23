@@ -1,5 +1,6 @@
 import { createPostgreSQLClient } from './index';
 import { generate } from '@debe/core';
+const pg = require('pg');
 
 if (process.env.PG_CONNECTIONSTRING) {
   const name = 'lorem' + generate().substr(0, 5);
@@ -10,10 +11,10 @@ if (process.env.PG_CONNECTIONSTRING) {
     }
   ];
   test('postgres', async () => {
-    const db = createPostgreSQLClient(
-      process.env.PG_CONNECTIONSTRING + '',
-      schema
-    );
+    const pool = new pg.Pool({
+      connectionString: process.env.PG_CONNECTIONSTRING + ''
+    });
+    const db = createPostgreSQLClient(pool, schema);
     await db.connect();
     const init = await db.count(name);
     await db.insert(name, { hallo: 'ok' });

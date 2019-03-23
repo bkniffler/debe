@@ -4,6 +4,7 @@ import { generate, log, DebeClient } from '@debe/core';
 import { createBetterSQLite3Client } from '@debe/better-sqlite3';
 import { createBroker } from '@service-tunnel/core';
 import { sync } from './index';
+const db = require('better-sqlite3');
 
 const schema = [
   {
@@ -41,8 +42,8 @@ function prepare(
   }
   let timeout = setTimeout(done, 10000);
   const destroy = createBroker(async broker => {
-    const db1 = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
-    const db2 = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
+    const db1 = createBetterSQLite3Client(db(getDBDir()), schema);
+    const db2 = createBetterSQLite3Client(db(getDBDir()), schema);
     await Promise.all([db1.connect(), db2.connect()]);
     const sync1 = sync(db1, ['lorem'], ['debe-sync2']);
     const sync2 = sync(db2, ['lorem'], ['debe-sync1']);
@@ -83,7 +84,7 @@ test('sync:delayed', cb => {
   }
   let timeout = setTimeout(done, 10000);
   const destroy = createBroker(async broker => {
-    const db1 = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
+    const db1 = createBetterSQLite3Client(db(getDBDir()), schema);
     await db1.connect();
     const sync1 = sync(db1, ['lorem'], ['debe-sync2']);
     const local1 = broker.local('debe-sync1', sync1.connect);
@@ -91,7 +92,7 @@ test('sync:delayed', cb => {
       db1.insert('lorem', { goa: 'a' + x });
     }
     await new Promise(yay => setTimeout(yay, 5000));
-    const db2 = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
+    const db2 = createBetterSQLite3Client(db(getDBDir()), schema);
     await db2.connect();
     const sync2 = sync(db2, ['lorem'], ['debe-sync1']);
     const local2 = broker.local('debe-sync2', sync2.connect);
@@ -120,7 +121,7 @@ test('sync:where', cb => {
   }
   let timeout = setTimeout(done, 10000);
   const destroy = createBroker(async broker => {
-    const dbMaster = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
+    const dbMaster = createBetterSQLite3Client(db(getDBDir()), schema);
     await dbMaster.connect();
     const syncMaster = sync(dbMaster, ['lorem'], []);
     const localMaster = broker.local('debe-sync-master', syncMaster.connect);
@@ -133,7 +134,7 @@ test('sync:where', cb => {
         }))
     );
     await new Promise(yay => setTimeout(yay, 5000));
-    const dbClient = createBetterSQLite3Client(schema, { dbPath: getDBDir() });
+    const dbClient = createBetterSQLite3Client(db(getDBDir()), schema);
     await dbClient.connect();
     const item = await dbClient.insert('lorem', { goa: 'a1001' });
     const syncClient = sync(

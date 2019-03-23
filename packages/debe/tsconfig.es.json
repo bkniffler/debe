@@ -7,8 +7,11 @@
     "module": "esnext"
   },
   "references": [
+    { "path": "../automerge/tsconfig.es.json" },
+    { "path": "../better-sqlite3/tsconfig.es.json" },
     { "path": "../core/tsconfig.es.json" },
-    { "path": "../better-sqlite3/tsconfig.es.json" }
+    { "path": "../postgres/tsconfig.es.json" },
+    { "path": "../sync/tsconfig.es.json" }
   ],
   "include": ["src"]
 }
