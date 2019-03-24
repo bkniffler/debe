@@ -1,27 +1,9 @@
-import {
-  DebeSQLJSONEngine,
-  IModelCreate,
-  DebeClient,
-  IDebeSQLEngineOptions,
-  IModel
-} from '@debe/core';
-
-export function createPostgreSQLClient(
-  pool: any,
-  schema: IModelCreate[],
-  options?: IDebeSQLEngineOptions
-): DebeClient {
-  return new DebeClient(new PostgreSQLEngine(pool, schema, options));
-}
+import { DebeSQLJSONEngine, IDebeSQLEngineOptions, IModel } from '@debe/core';
 
 export class PostgreSQLEngine extends DebeSQLJSONEngine {
   pool: any;
-  constructor(
-    pool: any,
-    schema: IModelCreate[],
-    options?: IDebeSQLEngineOptions
-  ) {
-    super(schema, options);
+  constructor(pool: any, options?: IDebeSQLEngineOptions) {
+    super(options);
     this.pool = pool;
   }
   createSelect(model: IModel) {

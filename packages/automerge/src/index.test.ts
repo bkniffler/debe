@@ -1,9 +1,10 @@
 import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
 import { debeAutomerge } from './index';
-import { generate } from '@debe/core';
-import { createBetterSQLite3Client } from '@debe/better-sqlite3';
-import { createPostgreSQLClient } from '../../postgres/src';
+import { generate, Debe } from '@debe/core';
+import { BetterSQLite3Engine } from '@debe/better-sqlite3';
+import { PostgreSQLEngine } from '@debe/postgres';
+
 const sql = require('better-sqlite3');
 const pg = require('pg');
 
@@ -25,20 +26,27 @@ interface ILorem {
   goa2?: string;
   hallo?: string;
 }
-test('automerge', async () => {
-  const db = createBetterSQLite3Client(sql(getDBDir()), schema);
-  await db.connect();
+
+async function runTest(db: Debe) {
+  await db.initialize(schema);
   const automerge = debeAutomerge(db);
   const item = await automerge<ILorem>(name, doc => {
     doc.goa = 'mpu';
   });
   await automerge<ILorem>(name, item.id, doc => {
+    doc.goa2 = 'mpu1';
+  });
+  await automerge<ILorem>(name, item.id, doc => {
     doc.goa2 = 'mpu2';
   });
-  const final = await db.all<ILorem>(name, {});
+  const final = await db.all<ILorem>(name, { id: item.id });
   expect(final.length).toBe(1);
   expect(final[0].goa).toBe('mpu');
   expect(final[0].goa2).toBe('mpu2');
+}
+
+test('automerge', async () => {
+  runTest(new Debe(new BetterSQLite3Engine(sql(getDBDir()))));
 });
 
 if (process.env.PG_CONNECTIONSTRING) {
@@ -46,21 +54,6 @@ if (process.env.PG_CONNECTIONSTRING) {
     const pool = new pg.Pool({
       connectionString: process.env.PG_CONNECTIONSTRING + ''
     });
-    const db = createPostgreSQLClient(pool, schema);
-    await db.connect();
-    const automerge = debeAutomerge(db);
-    const item = await automerge<ILorem>(name, doc => {
-      doc.goa = 'mpu';
-    });
-    await automerge<ILorem>(name, item.id, doc => {
-      doc.goa2 = 'mpu1';
-    });
-    await automerge<ILorem>(name, item.id, doc => {
-      doc.goa2 = 'mpu2';
-    });
-    const final = await db.all<ILorem>(name, { id: item.id });
-    expect(final.length).toBe(1);
-    expect(final[0].goa).toBe('mpu');
-    expect(final[0].goa2).toBe('mpu2');
+    runTest(new Debe(new PostgreSQLEngine(pool)));
   });
 }

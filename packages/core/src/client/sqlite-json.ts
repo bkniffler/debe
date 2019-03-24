@@ -1,9 +1,9 @@
-import { IModelCreate, IDebeSQLEngineOptions, IModel } from './base';
+import { IDebeSQLEngineOptions, IModel } from './base';
 import { DebeSQLJSONEngine } from './sql-json';
 
 export abstract class DebeSQLiteJSONEngine extends DebeSQLJSONEngine {
-  constructor(schema: IModelCreate[], options?: IDebeSQLEngineOptions) {
-    super(schema, options);
+  constructor(options?: IDebeSQLEngineOptions) {
+    super(options);
   }
 
   createSelect(model: IModel): string {

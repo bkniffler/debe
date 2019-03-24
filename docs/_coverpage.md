@@ -1,5 +1,5 @@
 <div align="center">
-  <h2>sqlight</h2>
+  <h2>debe</h2>
   <strong>Proxy any async service through sockets or other transport. Works with promises and subscriptions.</strong>
   <br />
   <br />

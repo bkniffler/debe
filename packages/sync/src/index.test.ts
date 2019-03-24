@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { ensureDirSync, removeSync } from 'fs-extra';
-import { generate, log, DebeClient } from '@debe/core';
-import { createBetterSQLite3Client } from '@debe/better-sqlite3';
+import { generate, Debe } from '@debe/core';
+import { BetterSQLite3Engine as Engine } from '@debe/better-sqlite3';
 import { createBroker } from '@service-tunnel/core';
 import { sync } from './index';
 const db = require('better-sqlite3');
@@ -24,11 +24,7 @@ interface ILorem {
 }
 function prepare(
   cb: any,
-  init: (
-    db1: DebeClient,
-    db2: DebeClient,
-    forceSync: () => Promise<any>
-  ) => Promise<void>
+  init: (db1: Debe, db2: Debe, forceSync: () => Promise<any>) => Promise<void>
 ) {
   function done(cleanup?: any) {
     clearTimeout(timeout);
@@ -42,9 +38,9 @@ function prepare(
   }
   let timeout = setTimeout(done, 10000);
   const destroy = createBroker(async broker => {
-    const db1 = createBetterSQLite3Client(db(getDBDir()), schema);
-    const db2 = createBetterSQLite3Client(db(getDBDir()), schema);
-    await Promise.all([db1.connect(), db2.connect()]);
+    const db1 = new Debe(new Engine(db(getDBDir())));
+    const db2 = new Debe(new Engine(db(getDBDir())));
+    await Promise.all([db1.initialize(schema), db2.initialize(schema)]);
     const sync1 = sync(db1, ['lorem'], ['debe-sync2']);
     const sync2 = sync(db2, ['lorem'], ['debe-sync1']);
     const local1 = broker.local('debe-sync1', sync1.connect);
@@ -58,7 +54,7 @@ function prepare(
 }
 
 test('sync:many', cb => {
-  prepare(cb, async (db1: DebeClient, db2: DebeClient, forceSync) => {
+  prepare(cb, async (db1: Debe, db2: Debe, forceSync) => {
     for (let x = 0; x < 100; x++) {
       db1.insert('lorem', { goa: 'a' + x });
       db2.insert('lorem', { goa: 'b' + x });
@@ -84,16 +80,16 @@ test('sync:delayed', cb => {
   }
   let timeout = setTimeout(done, 10000);
   const destroy = createBroker(async broker => {
-    const db1 = createBetterSQLite3Client(db(getDBDir()), schema);
-    await db1.connect();
+    const db1 = new Debe(new Engine(db(getDBDir())));
+    await db1.initialize(schema);
     const sync1 = sync(db1, ['lorem'], ['debe-sync2']);
     const local1 = broker.local('debe-sync1', sync1.connect);
     for (let x = 0; x < 100; x++) {
       db1.insert('lorem', { goa: 'a' + x });
     }
     await new Promise(yay => setTimeout(yay, 5000));
-    const db2 = createBetterSQLite3Client(db(getDBDir()), schema);
-    await db2.connect();
+    const db2 = new Debe(new Engine(db(getDBDir())));
+    await db2.initialize(schema);
     const sync2 = sync(db2, ['lorem'], ['debe-sync1']);
     const local2 = broker.local('debe-sync2', sync2.connect);
     await sync1.forceSync();
@@ -107,7 +103,6 @@ test('sync:delayed', cb => {
 }, 10000);
 
 test('sync:where', cb => {
-  log.enable();
   function done(cleanup?: any) {
     clearTimeout(timeout);
     if (cleanup) {
@@ -116,13 +111,12 @@ test('sync:where', cb => {
     if (destroy) {
       destroy();
     }
-    log.disable();
     cb();
   }
   let timeout = setTimeout(done, 10000);
   const destroy = createBroker(async broker => {
-    const dbMaster = createBetterSQLite3Client(db(getDBDir()), schema);
-    await dbMaster.connect();
+    const dbMaster = new Debe(new Engine(db(getDBDir())));
+    await dbMaster.initialize(schema);
     const syncMaster = sync(dbMaster, ['lorem'], []);
     const localMaster = broker.local('debe-sync-master', syncMaster.connect);
     await dbMaster.insert(
@@ -134,8 +128,8 @@ test('sync:where', cb => {
         }))
     );
     await new Promise(yay => setTimeout(yay, 5000));
-    const dbClient = createBetterSQLite3Client(db(getDBDir()), schema);
-    await dbClient.connect();
+    const dbClient = new Debe(new Engine(db(getDBDir())));
+    await dbClient.initialize(schema);
     const item = await dbClient.insert('lorem', { goa: 'a1001' });
     const syncClient = sync(
       dbClient,
@@ -145,10 +139,10 @@ test('sync:where', cb => {
     );
     const localClient = broker.client(syncClient.connect);
     await syncClient.forceSync();
-    const final2 = await dbClient.all<ILorem>('lorem', {});
-    const final1 = await dbClient.all<ILorem>('lorem', {});
-    expect(final2.length).toBe(51);
-    expect(final1.find(x => x.id === item.id)).toBeTruthy();
+    const finalClient = await dbClient.all<ILorem>('lorem');
+    const finalMaster = await dbClient.all<ILorem>('lorem');
+    expect(finalClient.length).toBe(51);
+    expect(finalMaster.find(x => x.id === item.id)).toBeTruthy();
     done(() => {
       localMaster();
       localClient();

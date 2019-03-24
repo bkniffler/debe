@@ -1,5 +1,5 @@
-import { createPostgreSQLClient } from './index';
-import { generate } from '@debe/core';
+import { PostgreSQLEngine } from './index';
+import { generate, Debe } from '@debe/core';
 const pg = require('pg');
 
 if (process.env.PG_CONNECTIONSTRING) {
@@ -14,8 +14,8 @@ if (process.env.PG_CONNECTIONSTRING) {
     const pool = new pg.Pool({
       connectionString: process.env.PG_CONNECTIONSTRING + ''
     });
-    const db = createPostgreSQLClient(pool, schema);
-    await db.connect();
+    const db = new Debe(new PostgreSQLEngine(pool));
+    await db.initialize(schema);
     const init = await db.count(name);
     await db.insert(name, { hallo: 'ok' });
     await db.insert(name, { hallo: 'ok2' });
@@ -26,6 +26,6 @@ if (process.env.PG_CONNECTIONSTRING) {
   });
 } else {
   test('debe', () => {
-    expect(createPostgreSQLClient).toBeTruthy();
+    expect(PostgreSQLEngine).toBeTruthy();
   });
 }

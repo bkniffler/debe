@@ -1,4 +1,4 @@
-import { createLog, DebeClient } from '@debe/core';
+import { createLog, Debe } from '@debe/core';
 import { IListenerCallback, IItem } from '@debe/types';
 import { IService } from '@service-tunnel/core';
 const log = createLog('sync');
@@ -35,7 +35,7 @@ interface ISync {
   ) => () => void;
 }
 export function sync(
-  client: DebeClient,
+  client: Debe,
   tables: string[],
   others: string[],
   where?: string[]
@@ -119,9 +119,10 @@ export function sync(
             return;
           }
           await Promise.all([
-            client.insert(table, changes.items, {
+            client.insert(table, changes.items),
+            /*client.insert(table, changes.items, {
               keepRev: true
-            }),
+            }),*/
             client
               .all(table, { id: changes.request })
               .then(items => sync.sendChanges(table, items))
@@ -138,7 +139,8 @@ export function sync(
                   changes.length
                 } new change(s)`
               );
-              return client.insert(model, changes, { keepRev: true });
+              return client.insert(model, changes);
+              // return client.insert(model, changes, { keepRev: true });
             })
           );
         });

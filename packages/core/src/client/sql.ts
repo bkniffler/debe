@@ -1,6 +1,5 @@
 import {
   DebeEngine,
-  IModelCreate,
   IModel,
   IDebeSQLEngineOptions,
   IInsertOptions
@@ -10,8 +9,8 @@ import { toISO, ensureArray } from '../utils';
 import { IQuery, IGetItem, IInsertItem } from '@debe/types';
 
 export abstract class DebeSQLEngine extends DebeEngine {
-  constructor(schema: IModelCreate[], options?: IDebeSQLEngineOptions) {
-    super(schema, options);
+  constructor(options?: IDebeSQLEngineOptions) {
+    super(options);
   }
 
   addModel(model: IModel) {
@@ -166,7 +165,7 @@ export abstract class DebeSQLEngine extends DebeEngine {
       rest
     ];
   }
-  transformForStorage(model: IModel, item: any, keepRev = false): any {
+  transformForStorage(model: IModel, item: any, keepRev = false): [any, any] {
     const [obj, rest] = this.filterItem(model, item);
     if (!keepRev || !obj[this.revField]) {
       obj[this.revField] = new Date().getTime() / 1000 + '';
@@ -176,7 +175,7 @@ export abstract class DebeSQLEngine extends DebeEngine {
     }
     return [obj, rest];
   }
-  transformFromStorage(model: IModel, item: any): any {
+  transformFromStorage(model: IModel, item: any): [any, any] {
     const [obj, rest] = this.filterItem(model, item);
     return [obj, rest];
   }

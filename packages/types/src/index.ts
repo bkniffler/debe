@@ -34,12 +34,12 @@ export type IObserverCallback<T = IItem> = (
   items: T,
   reason: 'INITIAL' | 'CHANGE'
 ) => void;
-export interface IDebeClient<TBase = IItem> {
+export interface IDebe<TBase = IItem> {
   // protected ev: EventEmitter()
   schema: any;
   destroy(): Promise<void>;
   connect(): Promise<any>;
-  use<T = IItem>(model: string): IDebeClientUse<T>;
+  use<T = IItem>(model: string): IDebeUse<T>;
   insert<T = any>(
     model: string,
     value: (T & IInsertItem)[] | T & IInsertItem
@@ -80,7 +80,7 @@ export interface IDebeClient<TBase = IItem> {
   ): Promise<T> | (() => void);
 }
 
-export interface IDebeClientUse<T> {
+export interface IDebeUse<T> {
   all(queryArgs: IQuery): Promise<T[]>;
   all(queryArgs: IQuery, cb?: IObserverCallback<T[]>): () => void;
   all(

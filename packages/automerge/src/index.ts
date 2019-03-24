@@ -1,8 +1,8 @@
 import { IItem, IGetItem } from '@debe/types';
-import { DebeClient } from '@debe/core';
+import { Debe } from '@debe/core';
 const Automerge = require('automerge');
 
-export function debeAutomerge(client: DebeClient) {
+export function debeAutomerge(client: Debe) {
   async function edit<T = IItem>(
     table: string,
     cb: (doc: T & IGetItem) => void
