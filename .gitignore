@@ -8,5 +8,6 @@ example/**/dist
 example/**/.cache
 yarn-error.log
 yarn-error.log
+.ou
 .out
 .temp

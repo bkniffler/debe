@@ -32,8 +32,8 @@
     "bootstrap": "lerna bootstrap",
     "build": "yarn bootstrap && run-p ts:*",
     "dev": "run-p \"ts:* -- --watch\"",
-    "ts:es": "tsc --build ./packages/debe/tsconfig.es.json",
-    "ts:lib": "tsc --build ./packages/debe/tsconfig.lib.json",
+    "ts:es": "tsc --build ./packages/core/tsconfig.es.json",
+    "ts:lib": "tsc --build ./packages/core/tsconfig.lib.json",
     "clean": "rm -rf ./packages/*/lib ./packages/*/es",
     "li": "lerna init",
     "lp": "yarn build && yarn test && lerna publish --registry https://registry.npmjs.org",
@@ -61,6 +61,7 @@
   },
   "jest": {
     "modulePathIgnorePatterns": [
+      ".ou",
       "_old",
       ".cache"
     ],

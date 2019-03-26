@@ -1,4 +1,166 @@
-import { Debe, DebeMemoryEngine } from './index';
+import { Debe, corePlugin, changeListenerPlugin, memoryPlugin } from './index';
+import { softDeletePlugin, jsonBodyPlugin } from './plugins';
+
+test('dispatcher', async () => {
+  const client = new Debe();
+  client.addPlugin(() => (action, flow) => {
+    action.value.push(1);
+    flow(action);
+  });
+  client.addPlugin(() => (action, flow) => {
+    action.value.push(2);
+    flow(action);
+  });
+  client.addPlugin(() => (action, flow) => {
+    action.value.push(3);
+    flow(action);
+  });
+  client.addPlugin(() => (action, flow) => {
+    return flow(action.value);
+  });
+  const result = await client.dispatch<any>({
+    type: 'hans',
+    model: '',
+    value: [0]
+  });
+  expect(Array.isArray(result)).toBe(true);
+  expect(result.length).toBe(4);
+});
+
+test('dispatcher:nopromise', async () => {
+  const client = new Debe();
+  client.addPlugin(() => action => {
+    action.value.push(1);
+    return action.value;
+  });
+  const result = client.dispatchSync({ type: 'hans', model: '', value: [0] });
+  expect(Array.isArray(result)).toBe(true);
+  expect(result.length).toBe(2);
+});
+
+test('dispatcher:afterware', async () => {
+  const client = new Debe();
+  client.addPlugin(() => (action, flow) => {
+    action.value.push(1);
+    flow(
+      action,
+      (x: any, flow: any) => {
+        x.push(5);
+        flow(x);
+      }
+    );
+  });
+  client.addPlugin(() => (action, flow) => {
+    action.value.push(2);
+    flow(
+      action,
+      (x: any, flow: any) => {
+        x.push(4);
+        flow(x);
+      }
+    );
+  });
+  client.addPlugin(() => (action, flow) => {
+    action.value.push(3);
+    flow(action);
+  });
+  client.addPlugin(() => (action, flow) => {
+    return flow(action.value);
+  });
+  const result = await client.dispatch<any>({
+    type: 'hans',
+    model: '',
+    value: [0]
+  });
+  expect(Array.isArray(result)).toBe(true);
+  expect(result.length).toBe(6);
+  expect(result.join('')).toBe('012345');
+});
+
+test('dispatcher:memory', async () => {
+  const client = new Debe();
+  client.addPlugin(corePlugin);
+  client.addPlugin(memoryPlugin);
+  const insertResult = await client.dispatch<any>({
+    type: 'insert',
+    model: 'lorem',
+    value: { id: 0, name: 'Hallo' }
+  });
+  const queryResult = await client.dispatch<any>({
+    type: 'all',
+    model: 'lorem'
+  });
+  expect(insertResult.id).toBe('0');
+  expect(insertResult.name).toBe('Hallo');
+  expect(Array.isArray(queryResult)).toBe(true);
+  expect(queryResult.length).toBe(1);
+  expect(queryResult[0].id).toBe(insertResult.id);
+  expect(queryResult[0].name).toBe(insertResult.name);
+});
+
+test('dispatcher:memory:change', async () => {
+  const client = new Debe();
+  client.addPlugin(changeListenerPlugin);
+  client.addPlugin(corePlugin);
+  client.addPlugin(memoryPlugin);
+  let calls = 0;
+  const unlisten = client.dispatchSync({
+    type: 'all',
+    model: 'lorem',
+    callback: () => {
+      calls = calls + 1;
+    }
+  });
+  await client.dispatch({
+    type: 'insert',
+    model: 'lorem',
+    value: { id: '0', name: 'Hallo' }
+  });
+  await client.dispatch({
+    type: 'insert',
+    model: 'lorem',
+    value: { id: '1', name: 'Hallo' }
+  });
+  unlisten();
+  await client.dispatch({
+    type: 'insert',
+    model: 'lorem',
+    value: { id: '2', name: 'Hallo' }
+  });
+  expect(calls).toBe(2);
+});
+
+test('client', async () => {
+  const client = new Debe();
+  client.addPlugin(jsonBodyPlugin);
+  client.addPlugin(memoryPlugin);
+  await client.insert('lorem', { name: 'Hallo' });
+  const all = await client.all('lorem');
+  console.log(all);
+  expect(all.length).toBe(1);
+});
+
+test('client', async () => {
+  const client = new Debe();
+  client.addPlugin(changeListenerPlugin);
+  client.addPlugin(memoryPlugin);
+  await client.insert('lorem', { name: 'Hallo' });
+  const all = await client.all('lorem');
+  expect(all.length).toBe(1);
+});
+
+test('client', async () => {
+  const client = new Debe();
+  client.addPlugin(changeListenerPlugin);
+  client.addPlugin(softDeletePlugin);
+  client.addPlugin(memoryPlugin);
+  const item = await client.insert('lorem', { name: 'Hallo' });
+  await client.remove('lorem', item.id);
+  const all = await client.all('lorem');
+  expect(all.length).toBe(1);
+});
+
+/*import { Debe, DebeMemoryEngine } from './index';
 import { toISO } from './utils';
 import { Emitter } from './common';
 
@@ -13,12 +175,13 @@ test('simple', async () => {
   await db.initialize(schema);
   await db.insert('lorem', { hallo: 'ok' });
   await db.insert('lorem', { hallo: 'ok2' });
-  const result = await db.all('lorem');
+  const result = await db.all('lorem', {});
   const count = await db.count('lorem');
   expect(count).toBe(2);
   expect(result.length).toBe(2);
 });
-
+*/
+/*
 test('simple-use', async () => {
   interface ILorem {
     goa?: string;
@@ -85,4 +248,4 @@ test('emitter', () => {
   emitter.emit('h', 1);
   emitter.emit('h', 1);
   expect(emitter.numberOfListeners).toBe(0);
-});
+});*/
