@@ -16,20 +16,16 @@ export const corePlugin: IPluginCreator = (client, options = {}) => {
     item[idField] = item[idField] + '';
     return item;
   }
-  return function(action, flow) {
-    const { type, value, model } = action;
-
-    action.model = { name: model };
+  return function(type, payload, flow) {
     if (type === types.INSERT) {
+      const [model, value] = payload;
       const isArray = Array.isArray(value);
-      action.value = ensureArray(value).map(transformForStorage);
-      return flow(
-        action,
-        (result: any, flow: any) => {
-          return flow(isArray ? result : result[0]);
-        }
+      flow(
+        [model, ensureArray(value).map(transformForStorage)],
+        (result: any, flow: any) => flow(isArray ? result : result[0])
       );
+    } else {
+      flow(payload);
     }
-    return flow(action);
   };
 };

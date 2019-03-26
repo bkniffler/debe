@@ -8,16 +8,13 @@ import {
 } from './types';
 import { Dispatcher } from './dispatcher';
 
-interface IDebeAction {
-  model: string;
-}
-export class Debe<TBase = IItem> extends Dispatcher<IDebeAction> {
+export class Debe<TBase = IItem> extends Dispatcher {
   indexFields: string[] = [];
   public destroy() {
-    return this.dispatch({ type: types.DESTROY, model: '' });
+    return this.dispatch(types.DESTROY);
   }
   public initialize(arg?: any) {
-    return this.dispatch({ type: types.INITIALIZE, model: '', value: arg });
+    return this.dispatch(types.INITIALIZE, arg);
   }
   public use<T = IItem>(model: string): IDebeUse<T> {
     const proxy = this;
@@ -34,44 +31,53 @@ export class Debe<TBase = IItem> extends Dispatcher<IDebeAction> {
   }
   public insert<T = IInsertItem>(
     model: string,
-    value: (T & IInsertItem)[]
+    value: (T & IInsertItem)[],
+    context?: any
   ): Promise<(T & IGetItem)[]>;
   public insert<T = IInsertItem>(
     model: string,
-    value: T & IInsertItem
+    value: T & IInsertItem,
+    context?: any
   ): Promise<T & IGetItem>;
   public insert<T = IInsertItem>(
     model: string,
-    value: (T & IInsertItem)[] | (T & IInsertItem)
+    value: (T & IInsertItem)[] | (T & IInsertItem),
+    context: any = {}
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
-    return this.dispatch({ type: types.INSERT, model, value });
+    return this.dispatch(types.INSERT, [model, value], context);
   }
   // remove
   public remove<T = any>(
     model: string,
     value: string | string[]
   ): Promise<void> {
-    return this.dispatch({ type: types.REMOVE, model, value });
+    return this.dispatch(types.REMOVE, [model, value]);
   }
   // all
   public all<T = TBase>(
     model: string,
-    value?: IQuery
+    value?: IQuery,
+    context?: any
   ): Promise<(T & IGetItem)[]>;
   public all<T = TBase>(
     model: string,
     value?: IQuery,
-    callback?: IObserverCallback<(T & IGetItem)[]>
+    callback?: IObserverCallback<(T & IGetItem)[]>,
+    context?: any
   ): () => void;
   public all<T = TBase>(
     model: string,
     value?: IQuery,
-    callback?: IObserverCallback<(T & IGetItem)[]>
+    callback?: IObserverCallback<(T & IGetItem)[]>,
+    context: any = {}
   ): Promise<T[]> | (() => void) {
-    if (callback) {
-      return this.dispatchSync({ type: 'all', model, value, callback });
+    if (callback && typeof callback === 'function') {
+      return this.dispatchSync(types.ALL, [model, value], {
+        ...context,
+        callback
+      });
     }
-    return this.dispatch({ type: types.ALL, model, value });
+    return this.dispatch(types.ALL, [model, value], context);
   }
   // count
   public count(model: string, args?: IQuery): Promise<number>;
@@ -86,9 +92,9 @@ export class Debe<TBase = IItem> extends Dispatcher<IDebeAction> {
     callback?: IObserverCallback<number>
   ): Promise<number> | (() => void) {
     if (callback) {
-      return this.dispatchSync({ type: 'all', model, value, callback });
+      return this.dispatchSync(types.COUNT, [model, value], { callback });
     }
-    return this.dispatch({ type: types.COUNT, model, value });
+    return this.dispatch(types.COUNT, [model, value]);
   }
   // get
   public get<T = TBase>(model: string, args?: IQuery): Promise<T & IGetItem>;
@@ -103,9 +109,9 @@ export class Debe<TBase = IItem> extends Dispatcher<IDebeAction> {
     callback?: IObserverCallback<T & IGetItem>
   ): Promise<T> | (() => void) {
     if (callback) {
-      return this.dispatchSync({ type: 'all', model, value, callback });
+      return this.dispatchSync(types.GET, [model, value], { callback });
     }
-    return this.dispatch({ type: types.GET, model, value });
+    return this.dispatch(types.GET, [model, value]);
   }
 }
 

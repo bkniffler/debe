@@ -6,26 +6,25 @@ export const softDeletePlugin: IPluginCreator = (client, options = {}) => {
   const { removedField = 'rem' } = options;
   client['indexFields'].push(removedField);
 
-  return function(action, flow) {
-    const { type, value = {} } = action;
+  return function(type, payload, flow) {
     if (type === 'all' || type === 'count') {
-      if (!value.where) {
-        value.where = [];
+      const [model, arg = {}] = payload;
+      if (!arg.where) {
+        arg.where = [];
       }
-      value.where.push({ [removedField]: null });
-      action.value = value;
-      flow(action);
+      arg.where.push({ [removedField]: null });
+      flow([model, arg]);
     } else if (type === 'remove') {
-      flow.restart({
-        $action: {},
-        type: types.INSERT,
-        value: ensureArray(value).map(id => ({
+      const [model, arg = {}] = payload;
+      flow.restart(types.INSERT, [
+        model,
+        ensureArray(arg).map(id => ({
           id,
           [removedField]: toISO(new Date())
         }))
-      });
+      ]);
     } else {
-      flow(action);
+      flow(payload);
     }
   };
 };

@@ -1,52 +1,31 @@
-function isAction(action: any) {
-  if (action && action.$isAction) {
-    return true;
-  }
-  return false;
-}
-function isSameAction(action1: any, action2: any) {
-  if (
-    action1 &&
-    action1.$isAction &&
-    action2 &&
-    action2.$isAction &&
-    action1.$isAction === action2.$isAction
-  ) {
-    return true;
-  }
-  return false;
-}
-interface IAction {
-  type: string;
-  value?: any | any[];
-  callback?: Function;
-}
 export interface IFlow<T> {
-  (action: IAction & T, onFlowBack?: IFlowBack<T>): void;
-  restart: (action: IAction & T) => void;
-  return: (action: IAction & T) => void;
+  (value: T, onFlowBack?: INextFlow<T>): void;
+  restart: (type: string, value: T, context?: any) => void;
+  return: (value: T) => void;
+  set: (key: string, value: any) => void;
+  get: (key: string, defaultValue?: any) => any;
 }
-export type IFlowBack<T> = (
-  action: IAction & T,
+export type INextFlow<T = any> = (
+  result: T,
   flow: (value: any) => void
 ) => void;
 export type IPluginCreator<T1 = any, T2 = any> = (
   dispatcher: Dispatcher<T2> & T1,
   options: any
 ) => IPlugin<T2>;
-export type IPlugin<T> = (action: IAction & T, flow: IFlow<T>) => void;
+export type IPlugin<T> = (type: string, value: T, flow: IFlow<T>) => void;
 
 // restart, flow, return,
-export class Dispatcher<T1> {
-  plugins: IPlugin<T1>[] = [];
-  pluginDup: any[] = [];
-  dispatch<T>(action: IAction & T1) {
+export class Dispatcher<T1 = any> {
+  private plugins: IPlugin<T1>[] = [];
+  private pluginDup: any[] = [];
+  dispatch<T>(type: string, value?: T1, context: any = {}) {
     return new Promise<T>(yay => {
-      return dispatch(this.plugins, { $isAction: {}, ...action }, yay);
+      return dispatch(yay, this.plugins, type, value, context);
     });
   }
-  dispatchSync(action: IAction & T1) {
-    return dispatch(this.plugins, { $isAction: {}, ...action });
+  dispatchSync(type: string, value?: T1, context: any = {}) {
+    return dispatch(undefined, this.plugins, type, value, context);
   }
   addPlugin(plugin: IPluginCreator, options: any = {}) {
     if (this.pluginDup.indexOf(plugin) !== -1) {
@@ -58,51 +37,54 @@ export class Dispatcher<T1> {
 }
 
 export function dispatch(
+  callback: Function | undefined,
   plugins: Function[] = [],
-  args: any,
-  callback?: Function
+  type: string,
+  value: any,
+  initialContext: any = {},
+  isNext = false
 ) {
-  let flowbacks: Function[] = [];
-  const isFlowback = !isAction(args);
-  function callPlugin(action: any, i = 0): any {
+  let nextFlows: Function[] = [];
+  const context = initialContext;
+  function setContext(key: string, value: any) {
+    context[key] = value;
+  }
+  function getContext(key: string, defaultValue: any) {
+    return context[key] !== undefined ? context[key] : defaultValue;
+  }
+  function callPlugin(value: any, i = 0): any {
     const plugin = plugins[i];
-    if (!plugin) {
-      if (callback) {
-        return callback(action);
-      }
-      return;
-    }
-    function flow(newAction: any, onFlowback: any) {
-      if (!isFlowback && onFlowback) {
-        flowbacks = [onFlowback, ...flowbacks];
-      }
-      const prevAction = action;
-      action = newAction || action;
-      if (!isFlowback && isAction(action)) {
-        if (isSameAction(prevAction, action)) {
-          // Is still action, so flow plugin
-          return callPlugin(action, i + 1);
-        } else {
-          // Is a new action, so restart
-          return dispatch(plugins, action, callback);
-        }
-      } else if (isFlowback) {
-        return callPlugin(action, i + 1);
-      } else if (flowbacks.length) {
+    function flowReturn(value: any) {
+      if (nextFlows.length) {
         // Afterwares present, go for them
-        return dispatch(flowbacks, action, callback);
+        return dispatch(callback, nextFlows, type, value, context, true);
       } else if (callback) {
         // Finish
-        return callback(action);
+        return callback(value);
       }
     }
-    flow.restart = function(action: any) {
-      return dispatch(plugins, action, callback);
-    };
-    flow.return = function(action: any) {
-      return dispatch(flowbacks, action, callback);
-    };
-    return plugin(action, flow);
+    function flowRestart(type: string, value: any, con: any) {
+      return dispatch(callback, plugins, type, value, con || context);
+    }
+    if (!plugin) {
+      return flowReturn(value);
+    }
+    function flow(newValue: any, nextFlow: any) {
+      if (nextFlow) {
+        nextFlows = [nextFlow, ...nextFlows];
+      }
+      value = newValue || value;
+      return callPlugin(value, i + 1);
+    }
+    flow.restart = flowRestart;
+    flow.return = flowReturn;
+    flow.get = getContext;
+    flow.set = setContext;
+    if (isNext) {
+      return plugin(value, flow);
+    } else {
+      return plugin(type, value, flow);
+    }
   }
-  return callPlugin(args);
+  return callPlugin(value);
 }

@@ -1,8 +1,11 @@
 import { IModel, types } from '../types';
 import { IPluginCreator } from '../dispatcher';
 
+function getModel(name: string): IModel {
+  return { name, columns: [], index: [] };
+}
 export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
-  const { bodyField } = options;
+  const { bodyField = 'body' } = options;
   client.indexFields.push(bodyField);
 
   function filterItem(model: IModel, item: any): [any, any] {
@@ -23,17 +26,15 @@ export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
     ];
   }
 
-  return function(action, flow) {
-    const { type, model, value } = action;
-
-    const transform = (result: any): any => {
+  return function(type, payload, flow) {
+    const transform = (model: IModel, result: any): any => {
       if (Array.isArray(result)) {
         return result.map(transform);
       }
       if (!result) {
         return result;
       }
-      const [obj] = filterItem(model as any, result);
+      const [obj] = filterItem(model, result);
       const body =
         obj[bodyField] && typeof obj[bodyField] === 'string'
           ? JSON.parse(obj[bodyField])
@@ -42,19 +43,21 @@ export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
       return { ...body, ...obj };
     };
 
-    const transform2 = (result: any): any => {
+    const transform2 = (model: IModel, result: any): any => {
       if (Array.isArray(result)) {
         return result.map(transform2);
       }
       if (!result) {
         return result;
       }
-      const [obj, rest] = filterItem(model as any, result);
+      const [obj, rest] = filterItem(model, result);
       obj[bodyField] = JSON.stringify(rest);
       return obj;
     };
 
-    if (type === 'insert') {
+    if (type === types.INSERT) {
+      const [m, value] = payload;
+      const model = getModel(m);
       if (Array.isArray(value)) {
         const ids: string[] = [];
         const indices = {};
@@ -65,8 +68,8 @@ export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
           }
         });
         if (ids.length) {
-          return client
-            .dispatch({ type: types.ALL, value: { where: { id: ids } } })
+          client
+            .dispatch(types.ALL, [m, { where: { id: ids } }])
             .then((items: any[]) => {
               items.forEach(item => {
                 if (
@@ -81,34 +84,33 @@ export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
                   };
                 }
               });
-              action.value = transform2(value);
-              return flow(action);
+              flow([m, transform2(model, value)]);
             });
         } else {
-          action.value = transform2(value);
-          return flow(action);
+          flow([m, transform2(model, value)]);
         }
       } else if (value.id) {
-        return client
-          .dispatch({
-            type: types.GET,
-            value: { where: { id: value.id } }
-          })
-          .then((item: any) => {
-            action.value = transform2({ ...item, ...value });
-            return flow(action);
-          });
+        client
+          .dispatch(types.GET, [m, { where: { id: value.id } }])
+          .then((item: any) =>
+            flow([m, transform2(model, { ...item, ...value })])
+          );
       } else {
-        action.value = transform2(value);
-        return flow(action);
+        flow([m, transform2(model, value)]);
       }
-    }
-    if (type === types.GET || type === types.ALL || type === types.INSERT) {
-      return flow(
-        action,
-        (x, flow) => flow(transform(x))
+    } else if (
+      type === types.GET ||
+      type === types.ALL ||
+      type === types.INSERT
+    ) {
+      const [m] = payload;
+      const model = getModel(m);
+      flow(
+        payload,
+        (x, flow) => flow(transform(model, x))
       );
+    } else {
+      flow(payload);
     }
-    return flow(action);
   };
 };

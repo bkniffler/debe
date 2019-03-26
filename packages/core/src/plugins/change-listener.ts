@@ -20,13 +20,14 @@ export const changeListenerPlugin: IPluginCreator<Debe> = (
     return item;
   }
 
-  return function({ callback, ...action }: any, flow) {
-    const { type, model, value } = action;
+  return function(type, payload, flow) {
+    const callback = flow.get('callback');
     if (callback) {
+      const [model] = payload;
       let lastResult: any = undefined;
       const listener = async () => {
         let isInitial = lastResult === undefined;
-        const newValue = await client.dispatch(action);
+        const newValue = await client.dispatch(type, payload);
         // Check is results changed
         if (!isEqual(lastResult, newValue as any, revField)) {
           callback(
@@ -37,23 +38,25 @@ export const changeListenerPlugin: IPluginCreator<Debe> = (
         lastResult = newValue || null;
       };
       listener();
-      return emitter.on(model.name || model, listener);
-    }
-    if (type === types.INSERT) {
-      if (Array.isArray(value)) {
-        action.value = value.map((x: any) => addRev(x, action['keepRev']));
-      } else {
-        action.value = addRev(value, action['keepRev']);
-      }
-      flow(
-        action,
+      return emitter.on(model, listener);
+    } else if (type === types.INSERT) {
+      const keepRev = flow.get('keepRev');
+      const [model, items] = payload;
+      return flow(
+        [
+          model,
+          Array.isArray(items)
+            ? items.map((x: any) => addRev(x, keepRev))
+            : addRev(items, keepRev)
+        ],
         (res, back) => {
-          emitter.emit(model.name || model);
+          emitter.emit(model);
           back(res);
         }
       );
+    } else {
+      return flow(payload);
     }
-    return flow(action);
   };
 };
 

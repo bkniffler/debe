@@ -3,75 +3,67 @@ import { softDeletePlugin, jsonBodyPlugin } from './plugins';
 
 test('dispatcher', async () => {
   const client = new Debe();
-  client.addPlugin(() => (action, flow) => {
-    action.value.push(1);
-    flow(action);
+  client.addPlugin(() => (type, value, flow) => {
+    value.push(1);
+    flow(value);
   });
-  client.addPlugin(() => (action, flow) => {
-    action.value.push(2);
-    flow(action);
+  client.addPlugin(() => (type, value, flow) => {
+    value.push(2);
+    flow(value);
   });
-  client.addPlugin(() => (action, flow) => {
-    action.value.push(3);
-    flow(action);
+  client.addPlugin(() => (type, value, flow) => {
+    value.push(3);
+    flow(value);
   });
-  client.addPlugin(() => (action, flow) => {
-    return flow(action.value);
+  client.addPlugin(() => (type, value, flow) => {
+    return flow(value);
   });
-  const result = await client.dispatch<any>({
-    type: 'hans',
-    model: '',
-    value: [0]
-  });
+  const result = await client.dispatch<any>('hans', [0]);
   expect(Array.isArray(result)).toBe(true);
   expect(result.length).toBe(4);
 });
 
 test('dispatcher:nopromise', async () => {
   const client = new Debe();
-  client.addPlugin(() => action => {
-    action.value.push(1);
-    return action.value;
+  client.addPlugin(() => (type, value) => {
+    value.push(1);
+    return value;
   });
-  const result = client.dispatchSync({ type: 'hans', model: '', value: [0] });
+  const result = client.dispatchSync('hans', [0]);
   expect(Array.isArray(result)).toBe(true);
   expect(result.length).toBe(2);
 });
 
 test('dispatcher:afterware', async () => {
   const client = new Debe();
-  client.addPlugin(() => (action, flow) => {
-    action.value.push(1);
+  client.addPlugin(() => (type, value, flow) => {
+    value.push(1);
     flow(
-      action,
+      value,
       (x: any, flow: any) => {
         x.push(5);
         flow(x);
       }
     );
   });
-  client.addPlugin(() => (action, flow) => {
-    action.value.push(2);
+  client.addPlugin(() => (type, value, flow) => {
+    value.push(2);
     flow(
-      action,
+      value,
       (x: any, flow: any) => {
         x.push(4);
         flow(x);
       }
     );
   });
-  client.addPlugin(() => (action, flow) => {
-    action.value.push(3);
-    flow(action);
+  client.addPlugin(() => (type, value, flow) => {
+    value.push(3);
+    flow(value);
   });
-  client.addPlugin(() => (action, flow) => {
-    return flow(action.value);
+  client.addPlugin(() => (type, value, flow) => {
+    return flow(value);
   });
-  const result = await client.dispatch<any>({
-    type: 'hans',
-    model: '',
-    value: [0]
-  });
+  const result = await client.dispatch<any>('hans', [0]);
   expect(Array.isArray(result)).toBe(true);
   expect(result.length).toBe(6);
   expect(result.join('')).toBe('012345');
@@ -81,15 +73,11 @@ test('dispatcher:memory', async () => {
   const client = new Debe();
   client.addPlugin(corePlugin);
   client.addPlugin(memoryPlugin);
-  const insertResult = await client.dispatch<any>({
-    type: 'insert',
-    model: 'lorem',
-    value: { id: 0, name: 'Hallo' }
-  });
-  const queryResult = await client.dispatch<any>({
-    type: 'all',
-    model: 'lorem'
-  });
+  const insertResult = await client.dispatch<any>('insert', [
+    'lorem',
+    { id: 0, name: 'Hallo' }
+  ]);
+  const queryResult = await client.dispatch<any>('all', ['lorem']);
   expect(insertResult.id).toBe('0');
   expect(insertResult.name).toBe('Hallo');
   expect(Array.isArray(queryResult)).toBe(true);
@@ -104,29 +92,15 @@ test('dispatcher:memory:change', async () => {
   client.addPlugin(corePlugin);
   client.addPlugin(memoryPlugin);
   let calls = 0;
-  const unlisten = client.dispatchSync({
-    type: 'all',
-    model: 'lorem',
+  const unlisten = client.dispatchSync('all', ['lorem'], {
     callback: () => {
       calls = calls + 1;
     }
   });
-  await client.dispatch({
-    type: 'insert',
-    model: 'lorem',
-    value: { id: '0', name: 'Hallo' }
-  });
-  await client.dispatch({
-    type: 'insert',
-    model: 'lorem',
-    value: { id: '1', name: 'Hallo' }
-  });
+  await client.dispatch('insert', ['lorem', { id: '0', name: 'Hallo' }]);
+  await client.dispatch('insert', ['lorem', { id: '1', name: 'Hallo' }]);
   unlisten();
-  await client.dispatch({
-    type: 'insert',
-    model: 'lorem',
-    value: { id: '2', name: 'Hallo' }
-  });
+  await client.dispatch('insert', ['lorem', { id: '2', name: 'Hallo' }]);
   expect(calls).toBe(2);
 });
 
@@ -134,9 +108,8 @@ test('client', async () => {
   const client = new Debe();
   client.addPlugin(jsonBodyPlugin);
   client.addPlugin(memoryPlugin);
-  await client.insert('lorem', { name: 'Hallo' });
-  const all = await client.all('lorem');
-  console.log(all);
+  await client.insert('lorem', { name: 'Hallo' }, { log: true });
+  const all = await client.all('lorem', {}, { log: true });
   expect(all.length).toBe(1);
 });
 
