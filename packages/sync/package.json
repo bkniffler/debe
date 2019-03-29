@@ -32,8 +32,8 @@
     "url": "https://github.com/bkniffler/debe.git"
   },
   "dependencies": {
+    "@service-tunnel/core": "^1.0.0",
     "debe": "^1.0.0",
-    "service-dog": "^1.0.3",
     "tslib": "^1.9.3"
   },
   "gitHead": "37e16f2e21ef0b726e671a06a8c42c9c6c71ceaf"
