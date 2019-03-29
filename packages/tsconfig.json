@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
+      "debe": ["./debe/src/index.ts"],
       "@debe/*": ["./*/src/index.ts"],
       "debe-*": ["./*/src/index.ts"]
     }
