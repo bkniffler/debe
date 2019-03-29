@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-  - "10"
+  - '10'
 
 sudo: false
 
@@ -11,5 +11,6 @@ install:
   - yarn bootstrap
 
 script:
+  - yarn build
   - yarn test --collect-coverage
   - yarn coverage
