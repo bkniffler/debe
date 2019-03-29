@@ -1,3 +1,5 @@
+import { ServiceDog, ITracker } from 'service-dog';
+import { createLog } from './utils';
 import {
   IObserverCallback,
   IQuery,
@@ -6,15 +8,29 @@ import {
   IInsertItem,
   types
 } from './types';
-import { Dispatcher } from './dispatcher';
 
-export class Debe<TBase = IItem> extends Dispatcher {
-  indexFields: string[] = [];
-  public destroy() {
-    return this.dispatch(types.DESTROY);
+export class Debe<TBase = IItem> extends ServiceDog {
+  createLog(name: string) {
+    return createLog(name);
   }
-  public initialize(arg?: any) {
-    return this.dispatch(types.INITIALIZE, arg);
+  tracker: ITracker | undefined;
+  constructor({ tracker }: { tracker?: boolean } = {}) {
+    super();
+    if (tracker) {
+      this.tracker = args => {
+        console.log(args);
+      };
+    }
+  }
+  public destroy() {
+    return this.send(types.DESTROY);
+  }
+  public async initialize(arg?: any) {
+    return await this.send<any>(
+      types.INITIALIZE,
+      { indices: [], columns: [] },
+      this
+    );
   }
   public use<T = IItem>(model: string): IDebeUse<T> {
     const proxy = this;
@@ -29,55 +45,52 @@ export class Debe<TBase = IItem> extends Dispatcher {
       }
     );
   }
+  public listen(model: string, callback: any): any {
+    return this.sendSync(types.LISTEN, [model], { ...this, callback });
+  }
   public insert<T = IInsertItem>(
     model: string,
-    value: (T & IInsertItem)[],
-    context?: any
+    value: (T & IInsertItem)[]
   ): Promise<(T & IGetItem)[]>;
   public insert<T = IInsertItem>(
     model: string,
-    value: T & IInsertItem,
-    context?: any
+    value: T & IInsertItem
   ): Promise<T & IGetItem>;
   public insert<T = IInsertItem>(
     model: string,
-    value: (T & IInsertItem)[] | (T & IInsertItem),
-    context: any = {}
+    value: (T & IInsertItem)[] | (T & IInsertItem)
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
-    return this.dispatch(types.INSERT, [model, value], context);
+    return this.send(types.INSERT, [model, value], this);
   }
   // remove
   public remove<T = any>(
     model: string,
     value: string | string[]
   ): Promise<void> {
-    return this.dispatch(types.REMOVE, [model, value]);
+    return this.send(types.REMOVE, [model, value]);
   }
   // all
   public all<T = TBase>(
     model: string,
-    value?: IQuery,
-    context?: any
+    value?: IQuery
   ): Promise<(T & IGetItem)[]>;
   public all<T = TBase>(
     model: string,
     value?: IQuery,
-    callback?: IObserverCallback<(T & IGetItem)[]>,
-    context?: any
+    callback?: IObserverCallback<(T & IGetItem)[]>
   ): () => void;
   public all<T = TBase>(
     model: string,
     value?: IQuery,
-    callback?: IObserverCallback<(T & IGetItem)[]>,
-    context: any = {}
+    callback?: IObserverCallback<(T & IGetItem)[]>
   ): Promise<T[]> | (() => void) {
     if (callback && typeof callback === 'function') {
-      return this.dispatchSync(types.ALL, [model, value], {
-        ...context,
+      return this.sendSync(types.ALL, [model, value], {
+        ...this,
         callback
       });
     }
-    return this.dispatch(types.ALL, [model, value], context);
+    return this.send(types.ALL, [model, value], this);
   }
   // count
   public count(model: string, args?: IQuery): Promise<number>;
@@ -92,9 +105,9 @@ export class Debe<TBase = IItem> extends Dispatcher {
     callback?: IObserverCallback<number>
   ): Promise<number> | (() => void) {
     if (callback) {
-      return this.dispatchSync(types.COUNT, [model, value], { callback });
+      return this.sendSync(types.COUNT, [model, value], { ...this, callback });
     }
-    return this.dispatch(types.COUNT, [model, value]);
+    return this.send(types.COUNT, [model, value], this);
   }
   // get
   public get<T = TBase>(model: string, args?: IQuery): Promise<T & IGetItem>;
@@ -109,9 +122,9 @@ export class Debe<TBase = IItem> extends Dispatcher {
     callback?: IObserverCallback<T & IGetItem>
   ): Promise<T> | (() => void) {
     if (callback) {
-      return this.dispatchSync(types.GET, [model, value], { callback });
+      return this.sendSync(types.GET, [model, value], { ...this, callback });
     }
-    return this.dispatch(types.GET, [model, value]);
+    return this.send(types.GET, [model, value], this);
   }
 }
 

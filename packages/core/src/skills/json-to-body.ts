@@ -1,35 +1,39 @@
 import { IModel, types } from '../types';
-import { IPluginCreator } from '../dispatcher';
+import { ISkill } from 'service-dog';
 
 function getModel(name: string): IModel {
   return { name, columns: [], index: [] };
 }
-export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
-  const { bodyField = 'body' } = options;
-  client.indexFields.push(bodyField);
+export const jsonBodySkill = (options: any = {}): ISkill => {
+  const { bodyField = 'body', merge = true } = options;
 
-  function filterItem(model: IModel, item: any): [any, any] {
-    const rest = {};
-    return [
-      Object.keys(item).reduce((state: any, key: string) => {
-        if (
-          client.indexFields.indexOf(key) !== -1 ||
-          (model.columns || []).indexOf(key) !== -1
-        ) {
-          state[key] = item[key] || state[key];
-        } else {
-          rest[key] = item[key] || state[key];
-        }
-        return state;
-      }, {}),
-      rest
-    ];
-  }
-
-  return function(type, payload, flow) {
+  return function jsonToBody(type, payload, flow) {
+    if (type === types.INITIALIZE) {
+      payload.columns = [...payload.columns, bodyField];
+      return flow(payload);
+    }
+    const columns = flow.get('columns', []);
+    const schema = flow.get('schema', {});
+    function filterItem(model: IModel, item: any): [any, any] {
+      const rest = {};
+      return [
+        Object.keys(item).reduce((state: any, key: string) => {
+          if (
+            columns.indexOf(key) !== -1 ||
+            (model.columns || []).indexOf(key) !== -1
+          ) {
+            state[key] = item[key] || state[key];
+          } else {
+            rest[key] = item[key] || state[key];
+          }
+          return state;
+        }, {}),
+        rest
+      ];
+    }
     const transform = (model: IModel, result: any): any => {
       if (Array.isArray(result)) {
-        return result.map(transform);
+        return result.map(x => transform(model, x));
       }
       if (!result) {
         return result;
@@ -45,7 +49,7 @@ export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
 
     const transform2 = (model: IModel, result: any): any => {
       if (Array.isArray(result)) {
-        return result.map(transform2);
+        return result.map(x => transform2(model, x));
       }
       if (!result) {
         return result;
@@ -57,8 +61,8 @@ export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
 
     if (type === types.INSERT) {
       const [m, value] = payload;
-      const model = getModel(m);
-      if (Array.isArray(value)) {
+      const model = schema[m];
+      if (Array.isArray(value) && merge) {
         const ids: string[] = [];
         const indices = {};
         value.forEach((x, i) => {
@@ -68,8 +72,8 @@ export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
           }
         });
         if (ids.length) {
-          client
-            .dispatch(types.ALL, [m, { where: { id: ids } }])
+          flow
+            .send(types.ALL, [m, { where: { id: ids } }])
             .then((items: any[]) => {
               items.forEach(item => {
                 if (
@@ -89,20 +93,19 @@ export const jsonBodyPlugin: IPluginCreator = (client, options = {}) => {
         } else {
           flow([m, transform2(model, value)]);
         }
-      } else if (value.id) {
-        client
-          .dispatch(types.GET, [m, { where: { id: value.id } }])
+      } else if (value.id && merge) {
+        flow
+          .send(types.GET, [m, { where: { id: value.id } }])
           .then((item: any) =>
             flow([m, transform2(model, { ...item, ...value })])
           );
       } else {
-        flow([m, transform2(model, value)]);
+        flow(
+          [m, transform2(model, value)],
+          (x, flow) => flow(transform(model, x))
+        );
       }
-    } else if (
-      type === types.GET ||
-      type === types.ALL ||
-      type === types.INSERT
-    ) {
+    } else if (type === types.GET || type === types.ALL) {
       const [m] = payload;
       const model = getModel(m);
       flow(

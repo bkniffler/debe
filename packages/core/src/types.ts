@@ -1,4 +1,5 @@
 export const types = {
+  LISTEN: 'listen',
   INSERT: 'insert',
   GET: 'get',
   ALL: 'all',

@@ -1,13 +1,16 @@
+import { Debe } from '../client';
+import { coreSkill, changeListenerSkill } from '../skills';
 import { IGetItem, types } from '../types';
-import { IPluginCreator } from '../dispatcher';
-import { corePlugin } from './core';
+import { ISkill } from 'service-dog';
+//@ts-ignore
+import * as Faltu from 'faltu';
 
 interface IStore {
   [s: string]: IGetItem[];
 }
-export const memoryPlugin: IPluginCreator = client => {
+
+export const memorySkill = (): ISkill => {
   const store: IStore = {};
-  client.addPlugin(corePlugin);
   function handle(type: string, item: any) {
     const index = item.id ? store[type].findIndex(x => x.id === item.id) : -1;
     if (index === -1) {
@@ -23,7 +26,7 @@ export const memoryPlugin: IPluginCreator = client => {
     }
   }
 
-  return function(type, payload, flow) {
+  return function memory(type, payload, flow) {
     if (type === types.INSERT) {
       const [model, arg] = payload;
       ensureModel(model);
@@ -37,11 +40,23 @@ export const memoryPlugin: IPluginCreator = client => {
       ensureModel(model);
       flow.return(store[model].find(x => x.id === arg.id));
     } else if (type === types.ALL) {
-      const [model] = payload;
+      const [model, query] = payload;
       ensureModel(model);
-      flow.return([...store[model]]);
+      if (query && query.where) {
+        flow.return(new Faltu(store[model]).find(query.where).get());
+      } else {
+        flow.return([...store[model]]);
+      }
     } else {
       flow(payload);
     }
   };
 };
+
+export class MemoryDebe extends Debe {
+  constructor() {
+    super();
+    this.skill([changeListenerSkill(), coreSkill(), memorySkill()]);
+    // this.tracker = x => console.log(x);
+  }
+}

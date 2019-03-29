@@ -1,44 +1,13 @@
-// Do function arguments contain a cb function?
-export function isArgsWithCallback(args: any[]) {
-  return typeof args[args.length - 1] === 'function';
-}
-
-// Return last arg and rest args
-export function extractCallback(args: any[]): [Function | undefined, ...any[]] {
-  if (isArgsWithCallback(args)) {
-    return [args[args.length - 1], ...args.splice(0, args.length - 1)];
-  } else {
-    return [undefined, ...args];
-  }
-}
-
-export type ITransaction = <T = any>(
-  cb: (
-    exec: (statement: string, ...args: any[]) => any,
-    resolve: (value: any) => void
-  ) => void
-) => Promise<T>;
-export interface IDB {
-  transaction: ITransaction;
-  close: () => void;
-}
-
-const uuidv4 = require('uuid/v4');
-export let _generate = uuidv4;
-export function setIdGenerator(generator: () => string) {
-  _generate = generator;
-}
-export function generate() {
-  return _generate();
-}
-
 let logging = false;
-type ILogFunc = (level: 'info' | 'error' | 'warn', ...args: any[]) => void;
+export type ILogFunc = (
+  level: 'info' | 'error' | 'warn',
+  ...args: any[]
+) => void;
 let logFunc: ILogFunc = (level, ...args) => console[level](...args);
 export function overwriteLog(func: ILogFunc) {
   logFunc = func;
 }
-interface ILog {
+export interface ILog {
   info: (...args: any[]) => void;
   warn: (...args: any[]) => void;
   error: (...args: any[]) => void;

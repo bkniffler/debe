@@ -1,5 +1,5 @@
 {
-  "name": "@debe/core",
+  "name": "@debe/automerge",
   "version": "1.0.0-alpha.7",
   "sideEffects": false,
   "license": "MIT",
@@ -32,12 +32,9 @@
     "url": "https://github.com/bkniffler/debe.git"
   },
   "dependencies": {
-    "faltu": "^0.1.0",
-    "tslib": "^1.9.3",
-    "uuid4": "^1.1.4"
+    "@debe/core": "1.0.0-alpha.7",
+    "automerge": "^0.10.0",
+    "tslib": "^1.9.3"
   },
-  "gitHead": "37e16f2e21ef0b726e671a06a8c42c9c6c71ceaf",
-  "devDependencies": {
-    "better-sqlite3": "^5.4.0"
-  }
+  "gitHead": "37e16f2e21ef0b726e671a06a8c42c9c6c71ceaf"
 }

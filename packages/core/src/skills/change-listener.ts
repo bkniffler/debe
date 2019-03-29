@@ -1,14 +1,10 @@
 import { IItem, types } from '../types';
-import { Debe } from '../client';
-import { IPluginCreator } from '../dispatcher';
+import { ISkill } from 'service-dog';
 
-export const changeListenerPlugin: IPluginCreator<Debe> = (
-  client,
-  options = {}
-) => {
+export const changeListenerSkill = (options: any = {}): ISkill => {
   const { revField = 'rev' } = options;
-  client.indexFields.push(revField);
-  const emitter = new Emitter();
+  const queryEmitter = new Emitter();
+  const singleEmitter = new Emitter();
 
   function addRev(item: any, keepRev: boolean = false): [any, any] {
     if (!item) {
@@ -20,14 +16,24 @@ export const changeListenerPlugin: IPluginCreator<Debe> = (
     return item;
   }
 
-  return function(type, payload, flow) {
+  return function changeListener(type, payload, flow) {
+    if (type === types.INITIALIZE) {
+      payload.columns = [...payload.columns, revField];
+      payload.indices = [...payload.indices, revField];
+      return flow(payload);
+    }
     const callback = flow.get('callback');
     if (callback) {
       const [model] = payload;
+      if (type === types.LISTEN) {
+        return singleEmitter.on(model, callback);
+      }
       let lastResult: any = undefined;
       const listener = async () => {
         let isInitial = lastResult === undefined;
-        const newValue = await client.dispatch(type, payload);
+        const newValue = await flow.send(type, payload, {
+          callback: undefined
+        });
         // Check is results changed
         if (!isEqual(lastResult, newValue as any, revField)) {
           callback(
@@ -38,7 +44,7 @@ export const changeListenerPlugin: IPluginCreator<Debe> = (
         lastResult = newValue || null;
       };
       listener();
-      return emitter.on(model, listener);
+      return queryEmitter.on(model, listener);
     } else if (type === types.INSERT) {
       const keepRev = flow.get('keepRev');
       const [model, items] = payload;
@@ -50,7 +56,10 @@ export const changeListenerPlugin: IPluginCreator<Debe> = (
             : addRev(items, keepRev)
         ],
         (res, back) => {
-          emitter.emit(model);
+          queryEmitter.emit(model);
+          (Array.isArray(res) ? res : [res]).map(x =>
+            singleEmitter.emit(model, x)
+          );
           back(res);
         }
       );

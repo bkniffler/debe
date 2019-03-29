@@ -1,11 +1,9 @@
-import { ensureArray } from '../utils';
-import { generate } from '../common';
+import { ensureArray, generate } from '../utils';
 import { types } from '../types';
-import { IPluginCreator } from '../dispatcher';
+import { ISkill } from 'service-dog';
 
-export const corePlugin: IPluginCreator = (client, options = {}) => {
+export const coreSkill = (options: any = {}): ISkill => {
   const { idField = 'id' } = options;
-  client.indexFields.push(idField);
   function transformForStorage(item: any) {
     if (!item) {
       return item;
@@ -16,7 +14,12 @@ export const corePlugin: IPluginCreator = (client, options = {}) => {
     item[idField] = item[idField] + '';
     return item;
   }
-  return function(type, payload, flow) {
+  return function core(type, payload, flow) {
+    if (type === types.INITIALIZE) {
+      payload.columns = [...payload.columns, idField];
+      payload.indices = [...payload.indices, idField];
+      return flow(payload);
+    }
     if (type === types.INSERT) {
       const [model, value] = payload;
       const isArray = Array.isArray(value);

@@ -1,12 +1,16 @@
 import { ensureArray, toISO } from '../utils';
 import { types } from '../types';
-import { IPluginCreator } from '../dispatcher';
+import { ISkill } from 'service-dog';
 
-export const softDeletePlugin: IPluginCreator = (client, options = {}) => {
+export const softDeleteSkill = (options: any = {}): ISkill => {
   const { removedField = 'rem' } = options;
-  client['indexFields'].push(removedField);
 
-  return function(type, payload, flow) {
+  return function softDelete(type, payload, flow) {
+    if (type === types.INITIALIZE) {
+      payload.columns = [...payload.columns, removedField];
+      payload.indices = [...payload.indices, removedField];
+      return flow(payload);
+    }
     if (type === 'all' || type === 'count') {
       const [model, arg = {}] = payload;
       if (!arg.where) {

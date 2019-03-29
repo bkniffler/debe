@@ -1,83 +1,15 @@
-import { Debe, corePlugin, changeListenerPlugin, memoryPlugin } from './index';
-import { softDeletePlugin, jsonBodyPlugin } from './plugins';
+import { Debe, coreSkill, changeListenerSkill, memorySkill } from './index';
 
-test('dispatcher', async () => {
+test('memory:basic', async () => {
   const client = new Debe();
-  client.addPlugin(() => (type, value, flow) => {
-    value.push(1);
-    flow(value);
-  });
-  client.addPlugin(() => (type, value, flow) => {
-    value.push(2);
-    flow(value);
-  });
-  client.addPlugin(() => (type, value, flow) => {
-    value.push(3);
-    flow(value);
-  });
-  client.addPlugin(() => (type, value, flow) => {
-    return flow(value);
-  });
-  const result = await client.dispatch<any>('hans', [0]);
-  expect(Array.isArray(result)).toBe(true);
-  expect(result.length).toBe(4);
-});
-
-test('dispatcher:nopromise', async () => {
-  const client = new Debe();
-  client.addPlugin(() => (type, value) => {
-    value.push(1);
-    return value;
-  });
-  const result = client.dispatchSync('hans', [0]);
-  expect(Array.isArray(result)).toBe(true);
-  expect(result.length).toBe(2);
-});
-
-test('dispatcher:afterware', async () => {
-  const client = new Debe();
-  client.addPlugin(() => (type, value, flow) => {
-    value.push(1);
-    flow(
-      value,
-      (x: any, flow: any) => {
-        x.push(5);
-        flow(x);
-      }
-    );
-  });
-  client.addPlugin(() => (type, value, flow) => {
-    value.push(2);
-    flow(
-      value,
-      (x: any, flow: any) => {
-        x.push(4);
-        flow(x);
-      }
-    );
-  });
-  client.addPlugin(() => (type, value, flow) => {
-    value.push(3);
-    flow(value);
-  });
-  client.addPlugin(() => (type, value, flow) => {
-    return flow(value);
-  });
-  const result = await client.dispatch<any>('hans', [0]);
-  expect(Array.isArray(result)).toBe(true);
-  expect(result.length).toBe(6);
-  expect(result.join('')).toBe('012345');
-});
-
-test('dispatcher:memory', async () => {
-  const client = new Debe();
-  client.addPlugin(corePlugin);
-  client.addPlugin(memoryPlugin);
-  const insertResult = await client.dispatch<any>('insert', [
+  client.skill(coreSkill());
+  client.skill(memorySkill());
+  await client.initialize();
+  const insertResult = await client.send<any>('insert', [
     'lorem',
     { id: 0, name: 'Hallo' }
   ]);
-  const queryResult = await client.dispatch<any>('all', ['lorem']);
+  const queryResult = await client.send<any>('all', ['lorem']);
   expect(insertResult.id).toBe('0');
   expect(insertResult.name).toBe('Hallo');
   expect(Array.isArray(queryResult)).toBe(true);
@@ -86,52 +18,52 @@ test('dispatcher:memory', async () => {
   expect(queryResult[0].name).toBe(insertResult.name);
 });
 
-test('dispatcher:memory:change', async () => {
+test('memory:many', async () => {
   const client = new Debe();
-  client.addPlugin(changeListenerPlugin);
-  client.addPlugin(corePlugin);
-  client.addPlugin(memoryPlugin);
+  client.skill(coreSkill());
+  client.skill(memorySkill());
+  for (let x = 0; x < 100; x++) {
+    client.insert('lorem', { goa: 'a' + (x < 10 ? `0${x}` : x) });
+  }
+  const final1 = await client.all('lorem', {
+    where: { goa: { $lt: 'a50' } }
+  } as any);
+  const final2 = await client.all('lorem', {
+    where: { goa: { $gte: 'a50' } }
+  } as any);
+  expect(final1.length).toBe(50);
+  expect(final2.length).toBe(50);
+}, 10000);
+
+test('memory:change', async () => {
+  const client = new Debe();
+  client.skill(changeListenerSkill());
+  client.skill(coreSkill());
+  client.skill(memorySkill());
+  await client.initialize();
   let calls = 0;
-  const unlisten = client.dispatchSync('all', ['lorem'], {
-    callback: () => {
-      calls = calls + 1;
-    }
+  const unlisten = client.sendSync('all', ['lorem'], {
+    callback: () => (calls = calls + 1)
   });
-  await client.dispatch('insert', ['lorem', { id: '0', name: 'Hallo' }]);
-  await client.dispatch('insert', ['lorem', { id: '1', name: 'Hallo' }]);
+  await client.send('insert', ['lorem', { id: '0', name: 'Hallo' }]);
+  await client.send('insert', ['lorem', { id: '1', name: 'Hallo' }]);
   unlisten();
-  await client.dispatch('insert', ['lorem', { id: '2', name: 'Hallo' }]);
+  await client.send('insert', ['lorem', { id: '2', name: 'Hallo' }]);
   expect(calls).toBe(2);
 });
 
-test('client', async () => {
+/*test('softdelete', async () => {
   const client = new Debe();
-  client.addPlugin(jsonBodyPlugin);
-  client.addPlugin(memoryPlugin);
-  await client.insert('lorem', { name: 'Hallo' }, { log: true });
-  const all = await client.all('lorem', {}, { log: true });
-  expect(all.length).toBe(1);
-});
-
-test('client', async () => {
-  const client = new Debe();
-  client.addPlugin(changeListenerPlugin);
-  client.addPlugin(memoryPlugin);
-  await client.insert('lorem', { name: 'Hallo' });
-  const all = await client.all('lorem');
-  expect(all.length).toBe(1);
-});
-
-test('client', async () => {
-  const client = new Debe();
-  client.addPlugin(changeListenerPlugin);
-  client.addPlugin(softDeletePlugin);
-  client.addPlugin(memoryPlugin);
+  client.skill(changeListenerSkill());
+  client.skill(coreSkill());
+  // client.skill(softDeleteSkill());
+  client.skill(memorySkill());
+  await client.initialize();
   const item = await client.insert('lorem', { name: 'Hallo' });
   await client.remove('lorem', item.id);
   const all = await client.all('lorem');
   expect(all.length).toBe(1);
-});
+});*/
 
 /*import { Debe, DebeMemoryEngine } from './index';
 import { toISO } from './utils';
