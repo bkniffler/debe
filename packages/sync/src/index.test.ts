@@ -1,4 +1,4 @@
-import { MemoryDebe } from '@debe/core';
+import { MemoryDebe } from 'debe';
 import { createBroker } from '@service-tunnel/core';
 import { sync } from './index';
 

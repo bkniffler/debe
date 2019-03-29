@@ -1,1 +1,1 @@
-# @debe/core
+# Debe

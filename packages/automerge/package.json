@@ -1,5 +1,5 @@
 {
-  "name": "@debe/automerge",
+  "name": "debe-automerge",
   "version": "1.0.0-alpha.7",
   "sideEffects": false,
   "license": "MIT",
@@ -32,7 +32,7 @@
     "url": "https://github.com/bkniffler/debe.git"
   },
   "dependencies": {
-    "@debe/core": "1.0.0-alpha.7",
+    "debe": "1.0.0-alpha.7",
     "automerge": "^0.10.0",
     "tslib": "^1.9.3"
   },

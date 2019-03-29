@@ -1,4 +1,4 @@
-import { Debe, IItem, IGetItem } from '@debe/core';
+import { Debe, IItem, IGetItem } from 'debe';
 import { IService } from '@service-tunnel/core';
 /*function createCache(onSubmit: (items: any[]) => Promise<void>, limit = 100) {
   let items: any[] = [];

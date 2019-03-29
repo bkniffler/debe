@@ -1,5 +1,5 @@
 {
-  "name": "@debe/core",
+  "name": "debe",
   "version": "1.0.0-alpha.7",
   "sideEffects": false,
   "license": "MIT",

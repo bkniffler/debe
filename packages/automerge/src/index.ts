@@ -1,4 +1,4 @@
-import { Debe, IItem, IGetItem } from '@debe/core';
+import { Debe, IItem, IGetItem } from 'debe';
 //@ts-ignore
 import * as Automerge from 'automerge';
 

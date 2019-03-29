@@ -1,4 +1,4 @@
-import { MemoryDebe } from '@debe/core';
+import { MemoryDebe } from 'debe';
 import { debeAutomerge } from './index';
 
 const schema = [
