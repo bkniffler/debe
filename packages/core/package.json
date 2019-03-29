@@ -1,6 +1,6 @@
 {
   "name": "debe",
-  "version": "1.0.0-alpha.7",
+  "version": "1.0.0",
   "sideEffects": false,
   "license": "MIT",
   "main": "./lib/index.cjs.js",

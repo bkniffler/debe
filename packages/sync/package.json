@@ -1,6 +1,6 @@
 {
   "name": "debe-sync",
-  "version": "1.0.0-alpha.7",
+  "version": "1.0.0",
   "sideEffects": false,
   "license": "MIT",
   "main": "./lib/index.cjs.js",
@@ -32,7 +32,7 @@
     "url": "https://github.com/bkniffler/debe.git"
   },
   "dependencies": {
-    "debe": "1.0.0-alpha.7",
+    "debe": "^1.0.0",
     "service-dog": "^1.0.3",
     "tslib": "^1.9.3"
   },
