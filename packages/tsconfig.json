@@ -1,12 +1,18 @@
 {
   "extends": "../tsconfig.base",
   "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "debe": ["./core/src/index.ts"],
-      "@debe/*": ["./*/src/index.ts"],
-      "debe-*": ["./*/src/index.ts"]
-    }
+    "baseUrl": "./"
   },
+  "references": [
+    {
+      "path": "./automerge"
+    },
+    {
+      "path": "./core"
+    },
+    {
+      "path": "./sync"
+    }
+  ],
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "node_modules"]
 }
