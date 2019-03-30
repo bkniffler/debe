@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.base",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "rootDir": "src",
+    "outDir": "lib",
+    "paths": {
+      "debe": ["./src"],
+      "debe/sql": ["./src/sql"],
+      "debe/memory": ["./src/packages/memory"],
+      "debe/better-sqlite3": ["./src/packages/better-sqlite3"],
+      "debe/sync": ["./src/packages/sync"],
+      "debe/automerge": ["./src/packages/automerge"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["src/*.test.ts"]
+}

@@ -2,11 +2,6 @@
 .DS_Store
 coverage
 node_modules
-packages/**/lib
-example/**/dist
-example/**/.cache
+core/lib
 yarn-error.log
-yarn-error.log
-.ou
-.out
 .temp
