@@ -27,7 +27,7 @@ export const log = {
     if (!logging) return;
     logFunc('error', ...args);
   },
-  warning(...args: any[]) {
+  warn(...args: any[]) {
     if (!logging) return;
     logFunc('warn', ...args);
   }
