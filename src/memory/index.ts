@@ -10,23 +10,18 @@ import {
 import * as Faltu from 'faltu';
 
 interface IStore {
-  [s: string]: IGetItem[];
+  [s: string]: Map<string, IGetItem>;
 }
 
 export const memorySkill = (): ISkill => {
   const store: IStore = {};
-  function handle(type: string, item: any) {
-    const index = item.id ? store[type].findIndex(x => x.id === item.id) : -1;
-    if (index === -1) {
-      store[type].push(item);
-    } else {
-      store[type][index] = item;
-    }
+  function handle(type: string, item: IGetItem) {
+    store[type].set(item.id, item);
     return item;
   }
   function ensureModel(model: string) {
     if (model && !store[model]) {
-      store[model] = [];
+      store[model] = new Map();
     }
   }
 
@@ -38,18 +33,20 @@ export const memorySkill = (): ISkill => {
     } else if (type === types.COUNT) {
       const [model] = payload;
       ensureModel(model);
-      flow.return(store[model].length);
+      flow.return(Array.from(store[model].keys()).length);
     } else if (type === types.GET) {
       const [model, arg] = payload;
       ensureModel(model);
-      flow.return(store[model].find(x => x.id === arg.id));
+      flow.return(store[model].get(arg.id));
     } else if (type === types.ALL) {
       const [model, query] = payload;
       ensureModel(model);
       if (query && query.where) {
-        flow.return(new Faltu(store[model]).find(query.where).get());
+        flow.return(
+          new Faltu(Array.from(store[model].values())).find(query.where).get()
+        );
       } else {
-        flow.return([...store[model]]);
+        flow.return(Array.from(store[model].values()));
       }
     } else {
       flow(payload);
@@ -58,9 +55,12 @@ export const memorySkill = (): ISkill => {
 };
 
 export class MemoryDebe extends Debe {
-  constructor() {
+  constructor({ changeListener = true } = {}) {
     super();
-    this.skill([changeListenerSkill(), coreSkill(), memorySkill()]);
+    if (changeListener) {
+      this.skill(changeListenerSkill());
+    }
+    this.skill([coreSkill(), memorySkill()]);
     // this.tracker = x => console.log(x);
   }
 }

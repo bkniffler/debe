@@ -56,12 +56,10 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
             : addRev(items, keepRev)
         ],
         (res, back) => {
-          setTimeout(() => {
-            queryEmitter.emit(model);
-            (Array.isArray(res) ? res : [res]).map(x =>
-              singleEmitter.emit(model, x)
-            );
-          });
+          queryEmitter.emit(model);
+          (Array.isArray(res) ? res : [res]).map(x =>
+            singleEmitter.emit(model, x)
+          );
           back(res);
         }
       );
