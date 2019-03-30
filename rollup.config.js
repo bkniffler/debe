@@ -13,7 +13,7 @@ const mainPackageJSON = require(join(__dirname, 'package.json'));
 const names = Object.keys(paths).reduce(
   (state, key) => ({
     ...state,
-    [key]: key.replace(/-([a-z])/g, g => g[1].toUpperCase())
+    [key]: key.split('-')[0] // key.replace(/-([a-z])/g, g => g[1].toUpperCase())
   }),
   {}
 );
@@ -60,7 +60,8 @@ const projects = Object.keys(paths).forEach(key => {
       output: {
         name: names[key],
         file: join(lib, 'index.umd.js'),
-        format: 'umd'
+        format: 'umd',
+        extend: true
       },
       external: Object.keys(paths),
       globals: names,

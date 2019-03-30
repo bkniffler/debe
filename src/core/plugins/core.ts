@@ -11,7 +11,9 @@ export const coreSkill = (options: any = {}): ISkill => {
     if (item[idField] === undefined || item[idField] === null) {
       item[idField] = generate();
     }
-    item[idField] = item[idField] + '';
+    if (typeof item[idField] !== 'string') {
+      item[idField] = item[idField] + '';
+    }
     return item;
   }
   return function core(type, payload, flow) {
