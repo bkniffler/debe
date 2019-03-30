@@ -1,0 +1,8 @@
+{
+  "name": "debe-automerge",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "automerge": "^0.10.0"
+  }
+}

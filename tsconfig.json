@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "declaration": true,
+    "noImplicitAny": true,
+    "removeComments": true,
+    "noLib": false,
+    "moduleResolution": "node",
+    "target": "es5",
+    "lib": ["es6", "dom"],
+    "allowJs": false,
+    "jsx": "react",
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "noUnusedLocals": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "importHelpers": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/.cache/typescript",
+    "baseUrl": "./",
+    "paths": {
+      "debe": ["./src/core"],
+      "debe-memory": ["./src/memory"],
+      "debe-better-sqlite3": ["./src/better-sqlite3"],
+      "debe-sql": ["./src/sql"],
+      "debe-sync": ["./src/sync"],
+      "debe-automerge": ["./src/automerge"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "lib"]
+}

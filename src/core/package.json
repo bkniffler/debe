@@ -1,0 +1,10 @@
+{
+  "name": "debe",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "service-dog": "^1.0.3",
+    "tslib": "^1.9.3",
+    "uuid4": "^1.1.4"
+  }
+}

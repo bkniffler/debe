@@ -1,0 +1,8 @@
+{
+  "name": "debe-sync",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "@service-tunnel/core": "^1.0.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "debe-memory",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "faltu": "^0.1.0"
+  }
+}
