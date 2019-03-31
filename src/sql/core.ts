@@ -11,9 +11,6 @@ export abstract class SQLCore {
     type?: 'all' | 'get' | 'count' | 'insert'
   ): Promise<T>;
 
-  addModel(model: IModel) {
-    return this.createTable(model);
-  }
   createTableIndex(model: string, field: string) {
     return `CREATE INDEX IF NOT EXISTS "${model}_${field}" ON "${model}" (${field})`;
   }
