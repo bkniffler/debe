@@ -1,4 +1,4 @@
-import { IModel, types } from '../types';
+import { IModel, types } from 'debe';
 import { ISkill } from 'service-dog';
 
 function getModel(name: string): IModel {

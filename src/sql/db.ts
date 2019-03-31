@@ -2,10 +2,11 @@ import {
   Debe,
   coreSkill,
   changeListenerSkill,
-  jsonBodySkill,
-  softDeleteSkill
+  softDeleteSkill,
+  ISkill,
+  types
 } from 'debe';
-import { ISkill, types } from 'debe';
+import { jsonBodySkill } from './plugins';
 
 export class SQLDebe extends Debe {
   dbPath: string;

@@ -26,20 +26,3 @@ export abstract class SQLJsonCore extends SQLCore {
     return [``, ...args];
   }
 }
-
-/*createInsertStatement(model: IModel, columns?: string[]) {
-    columns = columns || [...this.defaultColumns(), ...model.columns];
-    const conflict = columns
-      .filter(x => x !== this.idField)
-      .map(key =>
-        key === this.bodyField
-          ? `${this.bodyField}=json_patch(${this.bodyField}, excluded.${
-              this.bodyField
-            })`
-          : `${key}=excluded.${key}`
-      )
-      .join(', ');
-    return `${super.createInsertStatement(model, columns)} ON CONFLICT(${
-      this.idField
-    }) DO UPDATE SET ${conflict}`;
-  }*/

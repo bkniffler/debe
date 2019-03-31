@@ -4,6 +4,7 @@ import {
   types,
   coreSkill,
   changeListenerSkill,
+  softDeleteSkill,
   ISkill
 } from 'debe';
 import { createFilter } from './filter';
@@ -11,6 +12,21 @@ export * from './filter';
 
 interface IStore {
   [s: string]: Map<string, IGetItem>;
+}
+
+export class MemoryDebe extends Debe {
+  constructor({ changeListener = true, softDelete = false } = {}) {
+    super();
+    if (changeListener) {
+      this.skill(changeListenerSkill());
+    }
+    this.skill(coreSkill());
+    if (softDelete) {
+      this.skill(softDeleteSkill());
+    }
+    this.skill(memorySkill());
+    // this.tracker = x => console.log(x);
+  }
 }
 
 export const memorySkill = (): ISkill => {
@@ -53,14 +69,3 @@ export const memorySkill = (): ISkill => {
     }
   };
 };
-
-export class MemoryDebe extends Debe {
-  constructor({ changeListener = true } = {}) {
-    super();
-    if (changeListener) {
-      this.skill(changeListenerSkill());
-    }
-    this.skill([coreSkill(), memorySkill()]);
-    // this.tracker = x => console.log(x);
-  }
-}
