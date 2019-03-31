@@ -35,16 +35,24 @@ test('memory:basic', async () => {
 test('memory:many', async () => {
   const client = new MemoryDebe();
   for (let x = 0; x < 100; x++) {
-    client.insert('lorem', { goa: 'a' + (x < 10 ? `0${x}` : x) });
+    client.insert('lorem', { goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
   }
   const final1 = await client.all('lorem', {
-    where: { goa: { $lt: 'a50' } }
+    where: ['goa < ?', 'a50']
   } as any);
   const final2 = await client.all('lorem', {
-    where: { goa: { $gte: 'a50' } }
+    where: ['goa >= ?', 'a50']
+  } as any);
+  const final3 = await client.all('lorem', {
+    where: ['goa >= ? AND goa2 = ?', 'a50', 1]
+  } as any);
+  const final4 = await client.all('lorem', {
+    where: ['goa >= ? AND goa = ?', 'a50', 'a50']
   } as any);
   expect(final1.length).toBe(50);
   expect(final2.length).toBe(50);
+  expect(final3.length).toBe(50);
+  expect(final4.length).toBe(1);
 }, 10000);
 
 test('memory:change', async () => {

@@ -6,8 +6,7 @@ import {
   changeListenerSkill,
   ISkill
 } from 'debe';
-//@ts-ignore
-import * as Faltu from 'faltu';
+import { createFilter } from './filter';
 
 interface IStore {
   [s: string]: Map<string, IGetItem>;
@@ -41,10 +40,10 @@ export const memorySkill = (): ISkill => {
     } else if (type === types.ALL) {
       const [model, query] = payload;
       ensureModel(model);
-      if (query && query.where) {
-        flow.return(
-          new Faltu(Array.from(store[model].values())).find(query.where).get()
-        );
+      const filter =
+        query && query.where ? createFilter(query.where) : undefined;
+      if (filter) {
+        flow.return(Array.from(store[model].values()).filter(filter));
       } else {
         flow.return(Array.from(store[model].values()));
       }
