@@ -29,7 +29,20 @@ export const coreSkill = (options: any = {}): ISkill => {
         [model, ensureArray(value).map(transformForStorage)],
         (result: any, flow: any) => flow(isArray ? result : result[0])
       );
-    } else {
+    } /*else if (type === types.ALL || type === types.GET) {
+      const [model, value] = payload;
+      if (model && value && !value.where) {
+        value.where = [];
+      } else if (
+        value &&
+        value.where &&
+        Array.isArray(value.where) &&
+        typeof value.where[0] === 'string'
+      ) {
+        value.where = [value.where];
+      }
+      flow(payload);
+    }*/ else {
       flow(payload);
     }
   };

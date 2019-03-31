@@ -50,6 +50,10 @@ export const memorySkill = (): ISkill => {
       const [model] = payload;
       ensureModel(model);
       flow.return(Array.from(store[model].keys()).length);
+    } else if (type === types.REMOVE) {
+      const [model, arg] = payload;
+      ensureModel(model);
+      flow.return(store[model].delete(arg.id));
     } else if (type === types.GET) {
       const [model, arg] = payload;
       ensureModel(model);

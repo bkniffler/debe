@@ -80,3 +80,18 @@ test('memory:change', async () => {
   await client.run('insert', ['lorem', { id: '2', name: 'Hallo' }]);
   expect(calls).toBe(2);
 });
+
+test('memory:softdelete', async () => {
+  const client = new MemoryDebe({ softDelete: true });
+  await client.initialize();
+  await client.run('insert', ['lorem', { id: '0', name: 'Hallo' }]);
+  await client.run('insert', ['lorem', { id: '1', name: 'Hallo' }]);
+  await client.run('remove', ['lorem', { id: '0' }]);
+  const all0 = await client.run('all', ['lorem', { where: ['id != ?', null] }]);
+  const all1 = await client.run('all', ['lorem', {}]);
+  const item0 = await client.run('get', ['lorem', { id: '0' }]);
+  expect(all0.length).toBe(1);
+  expect(all1.length).toBe(1);
+  expect(item0).toBeTruthy();
+  expect(item0.id).toBe('0');
+});

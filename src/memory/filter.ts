@@ -27,10 +27,13 @@ export function createFilter(query: [string, ...any[]]) {
         return false;
       } else if (
         (operand === '=' || operand === '==') &&
-        !(item[left] == right)
+        !((item[left] || null) == (right || null))
       ) {
         return false;
-      } else if (operand === '!=' && !(item[left] != right)) {
+      } else if (
+        operand === '!=' &&
+        !((item[left] || null) != (right || null))
+      ) {
         return false;
       }
     }
