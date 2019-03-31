@@ -6,8 +6,8 @@ import {
   jsonBodySkill,
   softDeleteSkill
 } from 'debe';
-import { SQLite3 } from 'debe-sql';
 import { ISkill } from 'service-dog';
+import { SQLite3 } from './sqlight';
 
 export class Sqlite3Debe extends Debe {
   dbPath: string;
@@ -15,7 +15,7 @@ export class Sqlite3Debe extends Debe {
   schema: any;
   constructor(
     schema: any[],
-    { softDelete = false, jsonBody = true, sqlite3Db = {} }
+    { softDelete = false, jsonBody = true, dbPath = '' }
   ) {
     super();
     this.skill([changeListenerSkill(), coreSkill()]);
@@ -25,14 +25,14 @@ export class Sqlite3Debe extends Debe {
     if (softDelete) {
       this.skill(softDeleteSkill());
     }
-    this.db = new SQLite3(sqlite3Db);
+    this.db = new SQLite3(dbPath);
     this.schema = schema.reduce((store, x) => {
       if (!x.columns) {
         x.columns = [];
       }
       return { ...store, [x.name]: x };
     }, {});
-    this.skill('sqlite3Skill', this.sqlite3Skill);
+    this.skill('sqlite3', this.sqlite3Skill);
   }
   async initialize() {
     await super.initialize();

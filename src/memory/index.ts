@@ -7,6 +7,7 @@ import {
   ISkill
 } from 'debe';
 import { createFilter } from './filter';
+export * from './filter';
 
 interface IStore {
   [s: string]: Map<string, IGetItem>;

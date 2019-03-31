@@ -1,0 +1,11 @@
+{
+  "name": "debe-postgresql",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "better-sqlite3": "^5.4.0",
+    "debe": "*",
+    "debe-sql": "*",
+    "pg": "^7.9.0"
+  }
+}

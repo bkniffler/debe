@@ -32,7 +32,7 @@
     "pub": "yarn test && yarn build && yarn pub:npm",
     "pub:npm": "foreach --no-C -g \"lib/*\" -x \"npm publish #{path} --registry=https://registry.npmjs.org/\"",
     "test": "jest --verbose=false",
-    "test2": "yarn ts:lib && PG_CONNECTIONSTRING=postgresql://postgres@localhost:5432/test2 jest --verbose=false",
+    "test2": "PG_CONNECTIONSTRING=postgresql://postgres@localhost:5432/test2 yarn test",
     "coverage": "codecov"
   },
   "devDependencies": {

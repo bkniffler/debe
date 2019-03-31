@@ -98,7 +98,7 @@ export abstract class SQLCore {
     const [whereStatement, ...args] =
       id && typeof id === 'string'
         ? this.createWhereId(id)
-        : this.createWhere(where);
+        : this.createWhere(model, where);
     const sql = `
         ${this.createSelect(model)}
         FROM "${model.name}" 
@@ -109,7 +109,7 @@ export abstract class SQLCore {
       `.trim();
     return [queryType === 'count' ? this.makeCount(sql) : sql, ...args];
   }
-  createWhere(where: string[] | string): any[] {
+  createWhere(model: IModel, where: string[] | string): any[] {
     where = ensureArray(where);
     const [clause, ...args] = where;
     return [clause ? `WHERE ${clause}` : ``, ...args];

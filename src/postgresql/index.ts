@@ -1,3 +1,79 @@
+import {
+  Debe,
+  types,
+  coreSkill,
+  changeListenerSkill,
+  jsonBodySkill,
+  softDeleteSkill
+} from 'debe';
+import { PostgreSQL } from './pg';
+import { ISkill } from 'service-dog';
+
+export class PostgreSQLDebe extends Debe {
+  dbPath: string;
+  db: PostgreSQL;
+  schema: any;
+  constructor(
+    schema: any[],
+    { softDelete = false, jsonBody = true, connectionString = '' }
+  ) {
+    super();
+    this.skill([changeListenerSkill(), coreSkill()]);
+    if (jsonBody) {
+      this.skill(jsonBodySkill({ merge: false }));
+    }
+    if (softDelete) {
+      this.skill(softDeleteSkill());
+    }
+    this.db = new PostgreSQL(connectionString);
+    this.schema = schema.reduce((store, x) => {
+      if (!x.columns) {
+        x.columns = [];
+      }
+      return { ...store, [x.name]: x };
+    }, {});
+    this.skill('postgresql', this.postgreSQLSkill);
+  }
+  async initialize() {
+    await super.initialize();
+    return Promise.all(
+      Object.keys(this.schema).map(key => this.db.createTable(this.schema[key]))
+    );
+  }
+  postgreSQLSkill: ISkill = async (type, payload, flow) => {
+    if (type === types.INITIALIZE) {
+      const { indices = [], columns = [] } = payload;
+      indices.forEach((col: string) => {
+        if (this.db.indices.indexOf(col) === -1) {
+          this.db.indices = [...this.db.indices, col];
+          this['indices'] = this.db.indices;
+        }
+      });
+      columns.forEach((col: string) => {
+        if (this.db.columns.indexOf(col) === -1) {
+          this.db.columns = [...this.db.columns, col];
+          this['columns'] = this.db.columns;
+        }
+      });
+      flow.return(payload);
+    } else if (type === types.INSERT) {
+      const [model, value] = payload;
+      flow.return(await this.db.insert(this.schema[model], value));
+    } else if (type === types.COUNT) {
+      const [model, value] = payload;
+      flow.return(await this.db.query(this.schema[model], value, 'count'));
+    } else if (type === types.GET) {
+      const [model, value] = payload;
+      flow.return(await this.db.query(this.schema[model], value, 'get'));
+    } else if (type === types.ALL) {
+      const [model, value] = payload;
+      flow.return(await this.db.query(this.schema[model], value, 'all'));
+    } else {
+      flow(payload);
+    }
+  };
+}
+
 /*import { DebeSQLJSONEngine, IDebeSQLEngineOptions, IModel } from '@debe-core';
 
 export class PostgreSQLEngine extends DebeSQLJSONEngine {

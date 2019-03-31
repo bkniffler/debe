@@ -1,4 +1,4 @@
-import { MemoryDebe } from './index';
+import { MemoryDebe, createFilter } from './index';
 
 test('memory:basic', async () => {
   const client = new MemoryDebe();
@@ -43,16 +43,28 @@ test('memory:many', async () => {
   const final2 = await client.all('lorem', {
     where: ['goa >= ?', 'a50']
   } as any);
-  const final3 = await client.all('lorem', {
-    where: ['goa >= ? AND goa2 = ?', 'a50', 1]
-  } as any);
-  const final4 = await client.all('lorem', {
-    where: ['goa >= ? AND goa = ?', 'a50', 'a50']
-  } as any);
   expect(final1.length).toBe(50);
   expect(final2.length).toBe(50);
-  expect(final3.length).toBe(50);
-  expect(final4.length).toBe(1);
+}, 10000);
+
+test('memory:filter', async () => {
+  const items = [];
+  for (let x = 0; x < 100; x++) {
+    items.push({ goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
+  }
+  expect(items.filter(createFilter(['goa < ?', 'a50']) as any).length).toBe(50);
+  expect(
+    items.filter(createFilter(['goa < ? AND goa2 = ?', 'a50', 1]) as any).length
+  ).toBe(50);
+  expect(
+    items.filter(createFilter(['goa < ? AND goa2 = ?', 'a50', 2]) as any).length
+  ).toBe(0);
+  expect(
+    items.filter(createFilter(['goa = ? AND goa2 = ?', 'a50', 1]) as any).length
+  ).toBe(1);
+  expect(items.filter(createFilter(['goa != ?', 'a51']) as any).length).toBe(
+    99
+  );
 }, 10000);
 
 test('memory:change', async () => {

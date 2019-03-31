@@ -2,7 +2,6 @@ import { generate } from 'debe';
 import { Sqlite3Debe } from './index';
 import { join } from 'path';
 import { removeSync, ensureDirSync } from 'fs-extra';
-const sqlite3 = require('better-sqlite3');
 
 const dbDir = join(process.cwd(), '.temp/better-sqlite3');
 removeSync(dbDir);
@@ -17,7 +16,7 @@ test('sqlite3:basic', async () => {
       }
     ],
     {
-      sqlite3Db: sqlite3(getDBDir())
+      dbPath: getDBDir()
     }
   );
   await client.initialize();
@@ -43,7 +42,7 @@ test('sqlite3:many', async () => {
       }
     ],
     {
-      sqlite3Db: sqlite3(getDBDir())
+      dbPath: getDBDir()
     }
   );
   await client.initialize();
@@ -51,7 +50,7 @@ test('sqlite3:many', async () => {
   for (let x = 0; x < 100; x++) {
     items.push({ goa: 'a' + (x < 10 ? `0${x}` : x) });
   }
-  client.insert('lorem', items);
+  await client.insert('lorem', items);
   const queryResult = await client.all<any>('lorem');
   const queryResult2 = await client.all<any>('lorem', {
     where: ['goa < ?', 'a50']

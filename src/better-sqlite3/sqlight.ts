@@ -1,10 +1,25 @@
-import { SQLJsonCore } from './json';
+import { SQLJsonCore } from 'debe-sql';
+//@ts-ignore
+import * as sqlite3 from 'better-sqlite3';
 
 export class SQLite3 extends SQLJsonCore {
   db: any;
-  constructor(db: any) {
+  constructor(dbPath: string) {
     super();
-    this.db = db;
+    this.db = sqlite3(dbPath);
+  }
+  selectJSONField(field: string) {
+    return `json_extract(${this.bodyField}, '$.${field}')`;
+  }
+  createTableIndex(model: string, field: string) {
+    // If is default field, return default operation
+    if (this.columns.indexOf(field) !== -1) {
+      return super.createTableIndex(model, field);
+    }
+    //
+    return `CREATE INDEX IF NOT EXISTS "${model}_${field}" ON "${model}" (json_extract(${
+      this.bodyField
+    }, '$.${field}'))`;
   }
   exec<T>(
     sql: string,

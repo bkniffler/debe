@@ -1,25 +1,29 @@
-import { IModel } from 'debe';
 import { SQLCore } from './core';
+import { IModel, ensureArray } from 'debe';
 
 export abstract class SQLJsonCore extends SQLCore {
   bodyField = 'body';
-  createSelect(model: IModel): string {
-    return `${super.createSelect(model, [
-      ...this.columns,
-      ...model.columns
-    ])}, ${model.index.map(
-      field => `json_extract(${this.bodyField}, '$.${field}') as "${field}"`
-    )}`;
-  }
-  createTableIndex(model: string, field: string) {
-    // If is default field, return default operation
-    if (this.columns.indexOf(field) !== -1) {
-      return super.createTableIndex(model, field);
+  getColumnType(field: string): string {
+    if (field === this.bodyField) {
+      return 'JSON';
     }
-    //
-    return `CREATE INDEX IF NOT EXISTS "${model}_${field}" ON "${model}" (json_extract(${
-      this.bodyField
-    }, '$.${field}'))`;
+    return super.getColumnType(field);
+  }
+  abstract selectJSONField(field: string): string;
+  createWhere(model: IModel, where: string[] | string): any[] {
+    where = ensureArray(where);
+    let [clause, ...args] = where;
+    if (clause) {
+      for (var i = 0; i < model.index.length; i++) {
+        let field = model.index[i];
+        clause = clause.replace(
+          new RegExp(`${field} `, 'g'),
+          this.selectJSONField(field)
+        );
+      }
+      return [`WHERE ${clause}`, ...args];
+    }
+    return [``, ...args];
   }
 }
 
