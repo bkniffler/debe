@@ -5,11 +5,12 @@
     <script>
       console.log(window.debe);
       const MemoryDebe = window.debe.MemoryDebe;
-      async function work() {
-        const db = new MemoryDebe();
+      async function work(changeListener) {
+        const db = new MemoryDebe({ changeListener });
         await db.initialize();
         const items = [];
-        for (var i = 0; i < 100000; i++) {
+        const length = 100000;
+        for (var i = 0; i < length; i++) {
           items.push({
             // id: i,
             name: 'item' + i
@@ -17,10 +18,12 @@
         }
         const start = new Date().getTime();
         await db.insert('lorem', items);
-        console.log(new Date().getTime() - start);
-        console.log(await db.all('lorem'));
+        console.log(
+          `Created ${length} items in ${new Date().getTime() - start}`
+        );
+        await db.all('lorem');
       }
-      work();
+      work(true).then(x => work(false));
     </script>
   </head>
 </html>

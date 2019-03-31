@@ -1,4 +1,4 @@
-import { ServiceDog, ITracker } from 'service-dog';
+import { Flowzilla, ITracker } from 'flowzilla';
 import { createLog } from './utils';
 import {
   IObserverCallback,
@@ -9,7 +9,7 @@ import {
   types
 } from './types';
 
-export class Debe<TBase = IItem> extends ServiceDog {
+export class Debe<TBase = IItem> extends Flowzilla {
   createLog(name: string) {
     return createLog(name);
   }
@@ -23,10 +23,10 @@ export class Debe<TBase = IItem> extends ServiceDog {
     }
   }
   public destroy() {
-    return this.send(types.DESTROY);
+    return this.run(types.DESTROY);
   }
   public async initialize(arg?: any) {
-    return await this.send<any>(
+    return await this.run<any>(
       types.INITIALIZE,
       { indices: [], columns: [] },
       this
@@ -46,7 +46,7 @@ export class Debe<TBase = IItem> extends ServiceDog {
     );
   }
   public listen(model: string, callback: any): any {
-    return this.sendSync(types.LISTEN, [model], { ...this, callback });
+    return this.runSync(types.LISTEN, [model], { ...this, callback });
   }
   public insert<T = IInsertItem>(
     model: string,
@@ -60,14 +60,14 @@ export class Debe<TBase = IItem> extends ServiceDog {
     model: string,
     value: (T & IInsertItem)[] | (T & IInsertItem)
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
-    return this.send(types.INSERT, [model, value], this);
+    return this.run(types.INSERT, [model, value], this);
   }
   // remove
   public remove<T = any>(
     model: string,
     value: string | string[]
   ): Promise<void> {
-    return this.send(types.REMOVE, [model, value]);
+    return this.run(types.REMOVE, [model, value]);
   }
   // all
   public all<T = TBase>(
@@ -85,12 +85,12 @@ export class Debe<TBase = IItem> extends ServiceDog {
     callback?: IObserverCallback<(T & IGetItem)[]>
   ): Promise<T[]> | (() => void) {
     if (callback && typeof callback === 'function') {
-      return this.sendSync(types.ALL, [model, value], {
+      return this.runSync(types.ALL, [model, value], {
         ...this,
         callback
       });
     }
-    return this.send(types.ALL, [model, value], this);
+    return this.run(types.ALL, [model, value], this);
   }
   // count
   public count(model: string, args?: IQuery): Promise<number>;
@@ -105,9 +105,9 @@ export class Debe<TBase = IItem> extends ServiceDog {
     callback?: IObserverCallback<number>
   ): Promise<number> | (() => void) {
     if (callback) {
-      return this.sendSync(types.COUNT, [model, value], { ...this, callback });
+      return this.runSync(types.COUNT, [model, value], { ...this, callback });
     }
-    return this.send(types.COUNT, [model, value], this);
+    return this.run(types.COUNT, [model, value], this);
   }
   // get
   public get<T = TBase>(model: string, args?: IQuery): Promise<T & IGetItem>;
@@ -122,9 +122,9 @@ export class Debe<TBase = IItem> extends ServiceDog {
     callback?: IObserverCallback<T & IGetItem>
   ): Promise<T> | (() => void) {
     if (callback) {
-      return this.sendSync(types.GET, [model, value], { ...this, callback });
+      return this.runSync(types.GET, [model, value], { ...this, callback });
     }
-    return this.send(types.GET, [model, value], this);
+    return this.run(types.GET, [model, value], this);
   }
 }
 

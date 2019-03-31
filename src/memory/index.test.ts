@@ -3,11 +3,11 @@ import { MemoryDebe, createFilter } from './index';
 test('memory:basic', async () => {
   const client = new MemoryDebe();
   await client.initialize();
-  const insertResult = await client.send<any>('insert', [
+  const insertResult = await client.run<any>('insert', [
     'lorem',
     { id: 0, name: 'Hallo' }
   ]);
-  const queryResult = await client.send<any>('all', ['lorem']);
+  const queryResult = await client.run<any>('all', ['lorem']);
   expect(insertResult.id).toBe('0');
   expect(insertResult.name).toBe('Hallo');
   expect(Array.isArray(queryResult)).toBe(true);
@@ -19,11 +19,11 @@ test('memory:basic', async () => {
 test('memory:basic', async () => {
   const client = new MemoryDebe();
   await client.initialize();
-  const insertResult = await client.send<any>('insert', [
+  const insertResult = await client.run<any>('insert', [
     'lorem',
     { id: 0, name: 'Hallo' }
   ]);
-  const queryResult = await client.send<any>('all', ['lorem']);
+  const queryResult = await client.run<any>('all', ['lorem']);
   expect(insertResult.id).toBe('0');
   expect(insertResult.name).toBe('Hallo');
   expect(Array.isArray(queryResult)).toBe(true);
@@ -71,12 +71,12 @@ test('memory:change', async () => {
   const client = new MemoryDebe();
   await client.initialize();
   let calls = 0;
-  const unlisten = client.sendSync('all', ['lorem'], {
+  const unlisten = client.runSync('all', ['lorem'], {
     callback: () => (calls = calls + 1)
   });
-  await client.send('insert', ['lorem', { id: '0', name: 'Hallo' }]);
-  await client.send('insert', ['lorem', { id: '1', name: 'Hallo' }]);
+  await client.run('insert', ['lorem', { id: '0', name: 'Hallo' }]);
+  await client.run('insert', ['lorem', { id: '1', name: 'Hallo' }]);
   unlisten();
-  await client.send('insert', ['lorem', { id: '2', name: 'Hallo' }]);
+  await client.run('insert', ['lorem', { id: '2', name: 'Hallo' }]);
   expect(calls).toBe(2);
 });

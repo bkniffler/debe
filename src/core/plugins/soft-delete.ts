@@ -1,6 +1,6 @@
 import { types } from '../types';
 import { ensureArray, toISO } from '../utils';
-import { ISkill } from 'service-dog';
+import { ISkill } from 'flowzilla';
 
 export const softDeleteSkill = (options: any = {}): ISkill => {
   const { removedField = 'rem' } = options;
@@ -20,7 +20,7 @@ export const softDeleteSkill = (options: any = {}): ISkill => {
       flow([model, arg]);
     } else if (type === 'remove') {
       const [model, arg = {}] = payload;
-      flow.restart(types.INSERT, [
+      flow.reset(types.INSERT, [
         model,
         ensureArray(arg).map(id => ({
           id,

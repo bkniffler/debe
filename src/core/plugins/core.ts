@@ -1,6 +1,6 @@
 import { types } from '../types';
 import { ensureArray, generate } from '../utils';
-import { ISkill } from 'service-dog';
+import { ISkill } from 'flowzilla';
 
 export const coreSkill = (options: any = {}): ISkill => {
   const { idField = 'id' } = options;

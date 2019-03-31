@@ -14,12 +14,12 @@ export class SQLDebe extends Debe {
   schema: any;
   constructor(schema: any[], db: any, { softDelete = false, jsonBody = true }) {
     super();
-    this.skill([changeListenerSkill(), coreSkill()]);
+    this.addSkill([changeListenerSkill(), coreSkill()]);
     if (jsonBody) {
-      this.skill(jsonBodySkill({ merge: false }));
+      this.addSkill(jsonBodySkill({ merge: false }));
     }
     if (softDelete) {
-      this.skill(softDeleteSkill());
+      this.addSkill(softDeleteSkill());
     }
     this.db = db;
     this.schema = schema.reduce((store, x) => {
@@ -28,7 +28,7 @@ export class SQLDebe extends Debe {
       }
       return { ...store, [x.name]: x };
     }, {});
-    this.skill('sql', sqlSkill(this));
+    this.addSkill('sql', sqlSkill(this));
   }
   async initialize() {
     await super.initialize();

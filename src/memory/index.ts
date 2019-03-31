@@ -18,13 +18,13 @@ export class MemoryDebe extends Debe {
   constructor({ changeListener = true, softDelete = false } = {}) {
     super();
     if (changeListener) {
-      this.skill(changeListenerSkill());
+      this.addSkill(changeListenerSkill());
     }
-    this.skill(coreSkill());
+    this.addSkill(coreSkill());
     if (softDelete) {
-      this.skill(softDeleteSkill());
+      this.addSkill(softDeleteSkill());
     }
-    this.skill(memorySkill());
+    this.addSkill(memorySkill());
     // this.tracker = x => console.log(x);
   }
 }

@@ -1,5 +1,5 @@
 import { IItem, types } from '../types';
-import { ISkill } from 'service-dog';
+import { ISkill } from 'flowzilla';
 
 export const changeListenerSkill = (options: any = {}): ISkill => {
   const { revField = 'rev' } = options;
@@ -31,7 +31,7 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
       let lastResult: any = undefined;
       const listener = async () => {
         let isInitial = lastResult === undefined;
-        const newValue = await flow.send(type, payload, {
+        const newValue = await flow.run(type, payload, {
           callback: undefined
         });
         // Check is results changed

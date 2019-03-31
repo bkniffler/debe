@@ -1,5 +1,5 @@
 import { IModel, types } from 'debe';
-import { ISkill } from 'service-dog';
+import { ISkill } from 'flowzilla';
 
 function getModel(name: string): IModel {
   return { name, columns: [], index: [] };
@@ -73,7 +73,7 @@ export const jsonBodySkill = (options: any = {}): ISkill => {
         });
         if (ids.length) {
           flow
-            .send(types.ALL, [m, { where: { id: ids } }])
+            .run(types.ALL, [m, { where: { id: ids } }])
             .then((items: any[]) => {
               items.forEach(item => {
                 if (
@@ -95,7 +95,7 @@ export const jsonBodySkill = (options: any = {}): ISkill => {
         }
       } else if (value.id && merge) {
         flow
-          .send(types.GET, [m, { where: { id: value.id } }])
+          .run(types.GET, [m, { where: { id: value.id } }])
           .then((item: any) =>
             flow([m, transform2(model, { ...item, ...value })])
           );
