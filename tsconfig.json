@@ -26,6 +26,7 @@
       "debe": ["./src/core"],
       "debe-memory": ["./src/memory"],
       "debe-better-sqlite3": ["./src/better-sqlite3"],
+      "debe-postgresql": ["./src/postgresql"],
       "debe-sql": ["./src/sql"],
       "debe-sync": ["./src/sync"],
       "debe-automerge": ["./src/automerge"]

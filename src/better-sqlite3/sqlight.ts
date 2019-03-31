@@ -1,12 +1,12 @@
 import { SQLJsonCore } from 'debe-sql';
 //@ts-ignore
-import * as sqlite3 from 'better-sqlite3';
-
+import * as _sql from 'better-sqlite3';
+const sql = _sql;
 export class SQLite3 extends SQLJsonCore {
   db: any;
   constructor(dbPath: string) {
     super();
-    this.db = sqlite3(dbPath);
+    this.db = sql(dbPath);
   }
   selectJSONField(field: string) {
     return `json_extract(${this.bodyField}, '$.${field}')`;
