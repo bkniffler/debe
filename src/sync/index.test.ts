@@ -1,7 +1,7 @@
 import { MemoryDebe } from 'debe-memory';
 import { createBroker } from 'rpc1';
 import { sync, createSocketClient } from './index';
-import { isEqual, log } from 'debe';
+import { isEqual } from 'debe';
 import { createSocketServer } from 'debe-sync-server';
 
 const schema = [
@@ -172,7 +172,6 @@ test('sync:socket:simple', async cb => {
 }, 10000);
 
 test('sync:socket:crazy', async cb => {
-  log.enable();
   const port0 = 5555;
   const dbMaster0 = new MemoryDebe();
   const destroyServer0 = createSocketServer(dbMaster0, { port: port0 });
