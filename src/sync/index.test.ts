@@ -165,6 +165,97 @@ test('sync:socket', async cb => {
   cb();
 }, 10000);
 
+test('sync:socket:crazy', async cb => {
+  const port0 = 5555;
+  const dbMaster0 = new MemoryDebe();
+  const destroyServer0 = createDebeServer(dbMaster0, { port: port0 });
+
+  const port1 = 5556;
+  const dbMaster1 = new MemoryDebe();
+  const destroyServer1 = createDebeServer(dbMaster1, { port: port1 });
+  const destroyClient0 = socketSync(dbMaster1, `http://localhost:${port0}`, [
+    'lorem'
+  ]);
+
+  const port2 = 5557;
+  const dbMaster2 = new MemoryDebe();
+  const destroyServer2 = createDebeServer(dbMaster2, { port: port2 });
+  const destroyClient1 = socketSync(dbMaster2, `http://localhost:${port1}`, [
+    'lorem'
+  ]);
+
+  // CLIENT
+  const dbClient = new MemoryDebe();
+  const destroyClient = socketSync(dbClient, `http://localhost:${port0}`, [
+    'lorem'
+  ]);
+
+  // CLIENT
+  const dbClient2 = new MemoryDebe();
+  const destroyClient2 = socketSync(dbClient2, `http://localhost:${port0}`, [
+    'lorem'
+  ]);
+
+  // CLIENT
+  const dbClient3 = new MemoryDebe();
+  const destroyClient3 = socketSync(dbClient3, `http://localhost:${port1}`, [
+    'lorem'
+  ]);
+
+  for (let x = 0; x < 100; x++) {
+    dbClient.insert('lorem', { goa: 'a' + x });
+  }
+
+  await new Promise(yay => setTimeout(yay, 10000));
+
+  async function isEqualState() {
+    const allOnClient = await dbClient.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+    const allOnClient2 = await dbClient2.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+    const allOnMaster = await dbMaster0.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+    const allOnMaster1 = await dbMaster1.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+    const allOnClient3 = await dbClient3.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+    const allOnMaster2 = await dbMaster2.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+
+    expect(isEqual(allOnClient, allOnMaster)).toBeTruthy();
+    expect(isEqual(allOnClient2, allOnMaster)).toBeTruthy();
+    expect(isEqual(allOnClient2, allOnMaster1)).toBeTruthy();
+    expect(isEqual(allOnClient3, allOnMaster)).toBeTruthy();
+    expect(isEqual(allOnMaster2, allOnMaster)).toBeTruthy();
+  }
+
+  await isEqualState();
+
+  await dbClient.insert('lorem', { goa: 'a1000' });
+  await dbClient2.insert('lorem', { goa: 'a1001' });
+  await dbMaster0.insert('lorem', { goa: 'a1002' });
+  await dbMaster0.insert('lorem', { goa: 'a1003' });
+  await dbMaster0.insert('lorem', { goa: 'a1004' });
+  await new Promise(yay => setTimeout(yay, 3000));
+  await isEqualState();
+
+  destroyClient0();
+  destroyServer0();
+  destroyServer2();
+  destroyServer1();
+  destroyClient1();
+  destroyClient();
+  destroyClient2();
+  destroyClient3();
+  cb();
+}, 20000);
+
 /*
 
 test('sync:delayed', cb => {
