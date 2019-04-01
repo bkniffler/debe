@@ -147,6 +147,9 @@ export function sync(
                     changes.length
                   } new change(s)`
                 );
+                if (changes.length === 0) {
+                  return;
+                }
                 return client.insert(model, changes, {
                   keepRev: true,
                   syncFrom: name
@@ -159,7 +162,7 @@ export function sync(
               table,
               async (value: IGetItem[], options: any = {}) => {
                 await isInitialDone;
-                if (options.syncFrom === name) {
+                if (options.syncFrom === name || value.length === 0) {
                   return;
                 }
                 sync.sendChanges(table, value, {
