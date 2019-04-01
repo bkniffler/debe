@@ -34,11 +34,11 @@ interface ISync {
     emit: (err: any, model: string, items: IItem[]) => void
   ) => () => void;
 }
-export function socketSync(db: Debe, url: string, models: string[]) {
+export function createSocketClient(db: Debe, url: string, models: string[]) {
   const syncer = sync(db, models, ['debe']);
   return createSocket(url, syncer.connect);
 }
-export function localSync(db: Debe, broker: IBroker, models: string[]) {
+export function createLocalClient(db: Debe, broker: IBroker, models: string[]) {
   const syncer = sync(db, models, ['debe']);
   const local = broker.local('debe-sync1', syncer.connect);
   return local;

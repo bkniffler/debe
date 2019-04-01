@@ -1,8 +1,8 @@
 import { MemoryDebe } from 'debe-memory';
 import { createBroker } from 'rpc1';
-import { sync, socketSync } from './index';
+import { sync, createSocketClient } from './index';
 import { isEqual } from 'debe';
-import { createDebeServer } from 'debe-sync-server';
+import { createSocketServer } from 'debe-sync-server';
 
 const schema = [
   {
@@ -40,7 +40,7 @@ function prepare(
     const db2 = new MemoryDebe();
     await Promise.all([db1.initialize(schema), db2.initialize(schema)]);
     const sync1 = sync(db1, ['lorem'], ['debe-sync2']);
-    const sync2 = sync(db2, ['lorem'], ['debe-sync1']);
+    const sync2 = sync(db2, ['lorem'], []);
     const local1 = broker.local('debe-sync1', sync1.connect);
     const local2 = broker.local('debe-sync2', sync2.connect);
     await init(db1, db2, sync1.forceSync);
@@ -51,7 +51,7 @@ function prepare(
   });
 }
 
-test('sync:many:initial:oneway', cb => {
+test('sync:many:initial:oneway:simple', cb => {
   prepare(cb, async (db1, db2, forceSync) => {
     for (let x = 0; x < 100; x++) {
       db1.insert('lorem', { goa: 'a' + x });
@@ -111,29 +111,33 @@ test('sync:many:dynamic:twoway', cb => {
 }, 10000);
 
 test('sync:socket', async cb => {
-  const port = 5555;
+  prepare;
+  const port = 5554;
   // HOST
   const dbMaster = new MemoryDebe();
-  const destroyServer = createDebeServer(dbMaster, { port });
+  const destroyServer = createSocketServer(dbMaster, { port });
 
   // CLIENT
   const dbClient = new MemoryDebe();
-  const destroyClient = socketSync(dbClient, `http://localhost:${port}`, [
-    'lorem'
-  ]);
+  const destroyClient = createSocketClient(
+    dbClient,
+    `http://localhost:${port}`,
+    ['lorem']
+  );
 
   // CLIENT
   const dbClient2 = new MemoryDebe();
-  const destroyClient2 = socketSync(dbClient2, `http://localhost:${port}`, [
-    'lorem'
-  ]);
+  const destroyClient2 = createSocketClient(
+    dbClient2,
+    `http://localhost:${port}`,
+    ['lorem']
+  );
 
   for (let x = 0; x < 100; x++) {
     dbClient.insert('lorem', { goa: 'a' + x });
   }
 
   await new Promise(yay => setTimeout(yay, 3000));
-
   async function isEqualState() {
     const allOnClient = await dbClient.all<ILorem>('lorem', {
       orderBy: ['rev ASC', 'id ASC']
@@ -168,45 +172,55 @@ test('sync:socket', async cb => {
 test('sync:socket:crazy', async cb => {
   const port0 = 5555;
   const dbMaster0 = new MemoryDebe();
-  const destroyServer0 = createDebeServer(dbMaster0, { port: port0 });
+  const destroyServer0 = createSocketServer(dbMaster0, { port: port0 });
 
   const port1 = 5556;
   const dbMaster1 = new MemoryDebe();
-  const destroyServer1 = createDebeServer(dbMaster1, { port: port1 });
-  const destroyClient0 = socketSync(dbMaster1, `http://localhost:${port0}`, [
-    'lorem'
-  ]);
+  const destroyServer1 = createSocketServer(dbMaster1, { port: port1 });
+  const destroyClient0 = createSocketClient(
+    dbMaster1,
+    `http://localhost:${port0}`,
+    ['lorem']
+  );
 
   const port2 = 5557;
   const dbMaster2 = new MemoryDebe();
-  const destroyServer2 = createDebeServer(dbMaster2, { port: port2 });
-  const destroyClient1 = socketSync(dbMaster2, `http://localhost:${port1}`, [
-    'lorem'
-  ]);
+  const destroyServer2 = createSocketServer(dbMaster2, { port: port2 });
+  const destroyClient1 = createSocketClient(
+    dbMaster2,
+    `http://localhost:${port1}`,
+    ['lorem']
+  );
 
   // CLIENT
   const dbClient = new MemoryDebe();
-  const destroyClient = socketSync(dbClient, `http://localhost:${port0}`, [
-    'lorem'
-  ]);
+  const destroyClient = createSocketClient(
+    dbClient,
+    `http://localhost:${port0}`,
+    ['lorem']
+  );
 
   // CLIENT
   const dbClient2 = new MemoryDebe();
-  const destroyClient2 = socketSync(dbClient2, `http://localhost:${port0}`, [
-    'lorem'
-  ]);
+  const destroyClient2 = createSocketClient(
+    dbClient2,
+    `http://localhost:${port0}`,
+    ['lorem']
+  );
 
   // CLIENT
   const dbClient3 = new MemoryDebe();
-  const destroyClient3 = socketSync(dbClient3, `http://localhost:${port1}`, [
-    'lorem'
-  ]);
+  const destroyClient3 = createSocketClient(
+    dbClient3,
+    `http://localhost:${port1}`,
+    ['lorem']
+  );
 
   for (let x = 0; x < 100; x++) {
     dbClient.insert('lorem', { goa: 'a' + x });
   }
 
-  await new Promise(yay => setTimeout(yay, 10000));
+  await new Promise(yay => setTimeout(yay, 15000));
 
   async function isEqualState() {
     const allOnClient = await dbClient.all<ILorem>('lorem', {
@@ -242,7 +256,7 @@ test('sync:socket:crazy', async cb => {
   await dbMaster0.insert('lorem', { goa: 'a1002' });
   await dbMaster0.insert('lorem', { goa: 'a1003' });
   await dbMaster0.insert('lorem', { goa: 'a1004' });
-  await new Promise(yay => setTimeout(yay, 3000));
+  await new Promise(yay => setTimeout(yay, 5000));
   await isEqualState();
 
   destroyClient0();
