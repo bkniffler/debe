@@ -1,6 +1,7 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import autoExternal from 'rollup-plugin-auto-external';
+import json from 'rollup-plugin-json';
 import pkg from './package.json';
 import { join } from 'path';
 
@@ -69,10 +70,17 @@ const projects = Object.keys(paths).forEach(key => {
       external: Object.keys(paths),
       globals: names,
       plugins: [
+        json(),
         resolve({ browser: true }),
         commonjs({
           namedExports: {
-            'node_modules/service-dog/lib/index.umd.js': ['ServiceDog']
+            'node_modules/flowzilla/lib/index.umd.js': ['Flowzilla'],
+            'node_modules/rpc1/index.umd.js': [
+              'createLog',
+              'requestReply',
+              'createBroker'
+            ],
+            'node_modules/rpc1-socket/index.umd.js': ['createSocket']
           }
         })
       ]
@@ -82,6 +90,7 @@ const projects = Object.keys(paths).forEach(key => {
     input: join(lib, 'index.js'),
     output: [{ file: join(lib, 'index.cjs.js'), format: 'cjs' }],
     plugins: [
+      json(),
       resolve({ module: true, jail: lib }),
       autoExternal({
         packagePath: join(lib, 'package.json')

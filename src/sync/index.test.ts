@@ -171,6 +171,7 @@ test('sync:socket:simple', async cb => {
   cb();
 }, 10000);
 
+/*
 test('sync:socket:crazy', async cb => {
   function spawnMaster(port: number, syncTo?: number) {
     const db = new MemoryDebe();
@@ -240,7 +241,7 @@ test('sync:socket:crazy', async cb => {
 
   instances.forEach(instance => instance.destroy());
   cb();
-}, 60000);
+}, 60000);*/
 
 /*
 

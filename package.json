@@ -1,6 +1,6 @@
 {
   "name": "debe-workspace",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "private": true,
   "license": "MIT",
   "keywords": [
@@ -37,7 +37,7 @@
   "devDependencies": {
     "@types/fs-extra": "^5.0.5",
     "@types/jest": "^24.0.11",
-    "@types/node": "^11.12.2",
+    "@types/node": "^11.13.0",
     "@types/react": "^16.8.10",
     "@types/react-test-renderer": "^16.0.3",
     "codecov": "^3.1.0",
@@ -49,12 +49,14 @@
     "rollup": "^1.7.4",
     "rollup-plugin-auto-external": "^2.0.0",
     "rollup-plugin-commonjs": "^9.2.2",
+    "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^4.0.1",
     "ts-jest": "^24.0.0",
     "typedoc": "^0.14.2",
     "typescript": "^3.4.1"
   },
   "resolutions": {
+    "typescript": "^3.4.1",
     "@types/react": "^16.8.10"
   },
   "jest": {
