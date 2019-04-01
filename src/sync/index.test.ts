@@ -172,105 +172,73 @@ test('sync:socket:simple', async cb => {
 }, 10000);
 
 test('sync:socket:crazy', async cb => {
-  const port0 = 5555;
-  const dbMaster0 = new MemoryDebe();
-  const destroyServer0 = createSocketServer(dbMaster0, { port: port0 });
-
-  const port1 = 5556;
-  const dbMaster1 = new MemoryDebe();
-  const destroyServer1 = createSocketServer(dbMaster1, { port: port1 });
-  const destroyServer1Client = createSocketClient(
-    dbMaster1,
-    `http://localhost:${port0}`,
-    ['lorem']
-  );
-
-  const port2 = 5557;
-  const dbMaster2 = new MemoryDebe();
-  const destroyServer2 = createSocketServer(dbMaster2, { port: port2 });
-  const destroyServer2Client = createSocketClient(
-    dbMaster2,
-    `http://localhost:${port0}`,
-    ['lorem']
-  );
-
-  // CLIENT
-  const dbClient = new MemoryDebe();
-  const destroyClient = createSocketClient(
-    dbClient,
-    `http://localhost:${port0}`,
-    ['lorem']
-  );
-
-  // CLIENT
-  const dbClient2 = new MemoryDebe();
-  const destroyClient2 = createSocketClient(
-    dbClient2,
-    `http://localhost:${port0}`,
-    ['lorem']
-  );
-
-  // CLIENT
-  const dbClient3 = new MemoryDebe();
-  const destroyClient3 = createSocketClient(
-    dbClient3,
-    `http://localhost:${port1}`,
-    ['lorem']
-  );
+  function spawnMaster(port: number, syncTo?: number) {
+    const db = new MemoryDebe();
+    const destroy = [
+      createSocketServer(db, { port }),
+      syncTo
+        ? createSocketClient(db, `http://localhost:${syncTo}`, ['lorem'])
+        : undefined
+    ];
+    return { db, destroy: () => destroy.forEach(x => x && x()) };
+  }
+  function spawnClient(syncTo: number) {
+    const db = new MemoryDebe();
+    const destroy = createSocketClient(db, `http://localhost:${syncTo}`, [
+      'lorem'
+    ]);
+    return { db, destroy };
+  }
+  const instances = [
+    spawnMaster(5555),
+    spawnMaster(5556, 5555),
+    spawnClient(5555),
+    spawnClient(5555),
+    spawnClient(5555),
+    spawnClient(5556),
+    spawnClient(5556)
+  ];
 
   const items = [];
   for (let x = 0; x < 10; x++) {
-    items.push({ goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
+    items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
   }
-  await dbClient.insert('lorem', items);
+  await instances[2].db.insert('lorem', items);
 
-  await new Promise(yay => setTimeout(yay, 3000));
-
+  // Let it sync
+  await new Promise(yay => setTimeout(yay, 5000));
   async function isEqualState() {
-    const allOnClient = await dbClient.all<ILorem>('lorem', {
-      orderBy: ['rev ASC', 'id ASC']
-    });
-    const allOnClient2 = await dbClient2.all<ILorem>('lorem', {
-      orderBy: ['rev ASC', 'id ASC']
-    });
-    const allOnMaster = await dbMaster0.all<ILorem>('lorem', {
-      orderBy: ['rev ASC', 'id ASC']
-    });
-    const allOnMaster1 = await dbMaster1.all<ILorem>('lorem', {
-      orderBy: ['rev ASC', 'id ASC']
-    });
-    const allOnClient3 = await dbClient3.all<ILorem>('lorem', {
-      orderBy: ['rev ASC', 'id ASC']
-    });
-    const allOnMaster2 = await dbMaster2.all<ILorem>('lorem', {
-      orderBy: ['rev ASC', 'id ASC']
-    });
+    const all = await Promise.all(
+      instances.map(i =>
+        i.db.all<ILorem>('lorem', {
+          orderBy: ['rev ASC', 'id ASC']
+        })
+      )
+    );
 
-    expect(isEqual(allOnClient, allOnMaster)).toBeTruthy();
-    expect(isEqual(allOnClient2, allOnMaster)).toBeTruthy();
-    expect(isEqual(allOnClient2, allOnMaster1)).toBeTruthy();
-    expect(isEqual(allOnClient3, allOnMaster)).toBeTruthy();
-    expect(isEqual(allOnMaster2, allOnMaster)).toBeTruthy();
+    expect(all.length).toBe(instances.length);
+    all.reduce((lastResults, results) => {
+      if (!lastResults.length) {
+        return results;
+      }
+      expect(isEqual(lastResults, results)).toBeTruthy();
+      return results;
+    }, []);
   }
 
   await isEqualState();
 
-  await dbClient.insert('lorem', { goa: 'a1000' });
-  await dbClient2.insert('lorem', { goa: 'a1001' });
-  await dbMaster0.insert('lorem', { goa: 'a1002' });
-  await dbMaster0.insert('lorem', { goa: 'a1003' });
-  await dbMaster0.insert('lorem', { goa: 'a1004' });
+  await Promise.all(
+    instances.map((instance, i) =>
+      instance.db.insert<ILorem>('lorem', {
+        name: 'a1000' + i
+      })
+    )
+  );
   await new Promise(yay => setTimeout(yay, 3000));
   await isEqualState();
 
-  destroyServer0();
-  destroyServer2();
-  destroyServer1();
-  destroyClient();
-  destroyClient2();
-  destroyClient3();
-  destroyServer1Client();
-  destroyServer2Client();
+  instances.forEach(instance => instance.destroy());
   cb();
 }, 60000);
 
