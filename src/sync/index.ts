@@ -94,7 +94,7 @@ export function sync(
           return client.listen(
             model || '*',
             (value: IGetItem[], options: any = {}) => {
-              if (options.isInitial || options.keepRev === clientID) {
+              if (options.syncFrom === clientID) {
                 return;
               }
               emit(null, model, value);
@@ -136,18 +136,48 @@ export function sync(
           if (!cancels) {
             return;
           }
-          await Promise.all([
+          cancels.push(
+            sync.listenToChanges(
+              table,
+              clientID,
+              async (err, model, changes) => {
+                await isInitialDone;
+                log.info(
+                  `Sync to ${name}:${table} reporting ${
+                    changes.length
+                  } new change(s)`
+                );
+                return client.insert(model, changes, {
+                  keepRev: true,
+                  syncFrom: name
+                });
+              }
+            )
+          );
+          cancels.push(
+            client.listen(
+              table,
+              async (value: IGetItem[], options: any = {}) => {
+                await isInitialDone;
+                if (options.syncFrom === name) {
+                  return;
+                }
+                sync.sendChanges(table, value, {
+                  keepRev: true,
+                  syncFrom: clientID
+                });
+              }
+            )
+          );
+          const isInitialDone = await Promise.all([
             client.insert(table, changes.items, {
-              keepRev: name,
-              isInitial: true
+              keepRev: true,
+              syncFrom: name
             }),
-            /*client.insert(table, changes.items, {
-              keepRev: true
-            }),*/
             client.all(table, { id: changes.request }).then(items =>
               sync.sendChanges(table, items, {
-                keepRev: clientID,
-                isInitial: true
+                keepRev: true,
+                syncFrom: clientID
               })
             )
           ]);
@@ -155,27 +185,6 @@ export function sync(
             return;
           }
           log.info(`Sync to ${name}:${table} is completed`);
-          cancels.push(
-            sync.listenToChanges(table, clientID, (err, model, changes) => {
-              log.info(
-                `Sync to ${name}:${table} reporting ${
-                  changes.length
-                } new change(s)`
-              );
-              return client.insert(model, changes, { keepRev: name });
-            })
-          );
-          cancels.push(
-            client.listen(
-              table || '*',
-              (value: IGetItem[], options: any = {}) => {
-                if (options.keepRev === name || options.isInitial) {
-                  return;
-                }
-                sync.sendChanges(table, value, { keepRev: clientID });
-              }
-            )
-          );
         });
         return () => {};
       });

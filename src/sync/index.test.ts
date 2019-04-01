@@ -1,7 +1,7 @@
 import { MemoryDebe } from 'debe-memory';
 import { createBroker } from 'rpc1';
 import { sync, createSocketClient } from './index';
-import { isEqual } from 'debe';
+import { isEqual, log } from 'debe';
 import { createSocketServer } from 'debe-sync-server';
 
 const schema = [
@@ -110,7 +110,7 @@ test('sync:many:dynamic:twoway', cb => {
   });
 }, 10000);
 
-test('sync:socket', async cb => {
+test('sync:socket:simple', async cb => {
   prepare;
   const port = 5554;
   // HOST
@@ -125,6 +125,12 @@ test('sync:socket', async cb => {
     ['lorem']
   );
 
+  const items = [];
+  for (let x = 0; x < 100; x++) {
+    items.push({ goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
+  }
+  await dbClient.insert('lorem', items);
+
   // CLIENT
   const dbClient2 = new MemoryDebe();
   const destroyClient2 = createSocketClient(
@@ -132,10 +138,6 @@ test('sync:socket', async cb => {
     `http://localhost:${port}`,
     ['lorem']
   );
-
-  for (let x = 0; x < 100; x++) {
-    dbClient.insert('lorem', { goa: 'a' + x });
-  }
 
   await new Promise(yay => setTimeout(yay, 3000));
   async function isEqualState() {
@@ -170,6 +172,7 @@ test('sync:socket', async cb => {
 }, 10000);
 
 test('sync:socket:crazy', async cb => {
+  log.enable();
   const port0 = 5555;
   const dbMaster0 = new MemoryDebe();
   const destroyServer0 = createSocketServer(dbMaster0, { port: port0 });
@@ -177,7 +180,7 @@ test('sync:socket:crazy', async cb => {
   const port1 = 5556;
   const dbMaster1 = new MemoryDebe();
   const destroyServer1 = createSocketServer(dbMaster1, { port: port1 });
-  const destroyClient0 = createSocketClient(
+  const destroyServer1Client = createSocketClient(
     dbMaster1,
     `http://localhost:${port0}`,
     ['lorem']
@@ -186,9 +189,9 @@ test('sync:socket:crazy', async cb => {
   const port2 = 5557;
   const dbMaster2 = new MemoryDebe();
   const destroyServer2 = createSocketServer(dbMaster2, { port: port2 });
-  const destroyClient1 = createSocketClient(
+  const destroyServer2Client = createSocketClient(
     dbMaster2,
-    `http://localhost:${port1}`,
+    `http://localhost:${port0}`,
     ['lorem']
   );
 
@@ -216,11 +219,13 @@ test('sync:socket:crazy', async cb => {
     ['lorem']
   );
 
-  for (let x = 0; x < 100; x++) {
-    dbClient.insert('lorem', { goa: 'a' + x });
+  const items = [];
+  for (let x = 0; x < 10; x++) {
+    items.push({ goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
   }
+  await dbClient.insert('lorem', items);
 
-  await new Promise(yay => setTimeout(yay, 15000));
+  await new Promise(yay => setTimeout(yay, 3000));
 
   async function isEqualState() {
     const allOnClient = await dbClient.all<ILorem>('lorem', {
@@ -256,17 +261,17 @@ test('sync:socket:crazy', async cb => {
   await dbMaster0.insert('lorem', { goa: 'a1002' });
   await dbMaster0.insert('lorem', { goa: 'a1003' });
   await dbMaster0.insert('lorem', { goa: 'a1004' });
-  await new Promise(yay => setTimeout(yay, 5000));
+  await new Promise(yay => setTimeout(yay, 3000));
   await isEqualState();
 
-  destroyClient0();
   destroyServer0();
   destroyServer2();
   destroyServer1();
-  destroyClient1();
   destroyClient();
   destroyClient2();
   destroyClient3();
+  destroyServer1Client();
+  destroyServer2Client();
   cb();
 }, 60000);
 

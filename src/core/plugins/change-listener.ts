@@ -47,6 +47,7 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
       return queryEmitter.on(model, listener);
     } else if (type === types.INSERT) {
       const keepRev = flow.get('keepRev');
+      const syncFrom = flow.get('syncFrom');
       const [model, items] = payload;
       return flow(
         [
@@ -57,7 +58,8 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
         ],
         (res, back) => {
           queryEmitter.emit(model, Array.isArray(res) ? res : [res], {
-            keepRev
+            keepRev,
+            syncFrom
           });
           back(res);
         }
