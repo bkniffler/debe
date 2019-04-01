@@ -268,7 +268,7 @@ test('sync:socket:crazy', async cb => {
   destroyClient2();
   destroyClient3();
   cb();
-}, 20000);
+}, 60000);
 
 /*
 
