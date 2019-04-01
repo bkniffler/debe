@@ -5,7 +5,6 @@ const defaultRevisionField = 'rev';
 export const changeListenerSkill = (options: any = {}): ISkill => {
   const { revField = defaultRevisionField } = options;
   const queryEmitter = new Emitter();
-  const singleEmitter = new Emitter();
 
   function addRev(item: any, keepRev: boolean = false): [any, any] {
     if (!item) {
@@ -27,7 +26,7 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
     if (callback) {
       const [model] = payload;
       if (type === types.LISTEN) {
-        return singleEmitter.on(model, callback);
+        return queryEmitter.on(model, callback);
       }
       let lastResult: any = undefined;
       const listener = async () => {
@@ -57,10 +56,9 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
             : addRev(items, keepRev)
         ],
         (res, back) => {
-          queryEmitter.emit(model);
-          (Array.isArray(res) ? res : [res]).map(x =>
-            singleEmitter.emit(model, x)
-          );
+          queryEmitter.emit(model, Array.isArray(res) ? res : [res], {
+            keepRev
+          });
           back(res);
         }
       );

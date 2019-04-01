@@ -1,5 +1,5 @@
-import { Debe, IItem, IGetItem } from 'debe';
-import { IService } from 'rpc1';
+import { Debe, IItem, IGetItem, generate } from 'debe';
+import { IService, IBroker } from 'rpc1';
 import { createSocket } from 'rpc1-socket';
 /*function createCache(onSubmit: (items: any[]) => Promise<void>, limit = 100) {
   let items: any[] = [];
@@ -27,15 +27,21 @@ interface ISync {
     state?: any,
     where?: string[]
   ) => Promise<ISyncInitialResponse>;
-  sendChanges: (model: string, items?: IItem[]) => Promise<void>;
+  sendChanges: (model: string, items?: IItem[], options?: any) => Promise<void>;
   listenToChanges: (
     table: string,
+    clientID: string,
     emit: (err: any, model: string, items: IItem[]) => void
   ) => () => void;
 }
 export function socketSync(db: Debe, url: string, models: string[]) {
   const syncer = sync(db, models, ['debe']);
   return createSocket(url, syncer.connect);
+}
+export function localSync(db: Debe, broker: IBroker, models: string[]) {
+  const syncer = sync(db, models, ['debe']);
+  const local = broker.local('debe-sync1', syncer.connect);
+  return local;
 }
 export function sync(
   client: Debe,
@@ -44,15 +50,15 @@ export function sync(
   where?: string[]
 ) {
   const log = client.createLog('sync');
+  const clientID = generate();
 
   return {
     connect: (service: IService) => {
-      const noRep = {};
       service.addMethod(
         'initialFetchChanges',
         (table: string, state: any = {}, where?: string[]) => {
           return client
-            .all(table, { where, orderBy: 'rev ASC' })
+            .all(table, { where, orderBy: ['rev ASC', 'id ASC'] })
             .then(result => {
               const response: ISyncInitialResponse = {
                 items: [],
@@ -76,18 +82,26 @@ export function sync(
             });
         }
       );
-      service.addMethod('sendChanges', (table: string, items: IItem[]) => {
-        return client.insert(table, items, { keepRev: true });
-      });
-      service.addSubscription('listenToChanges', (emit, model: string) => {
-        return client.listen(model || '*', (value: IGetItem) => {
-          if (noRep[value.id] === value.rev) {
-            delete noRep[value.id];
-            return;
-          }
-          emit(null, model, [value]);
-        });
-      });
+      service.addMethod(
+        'sendChanges',
+        (table: string, items: IItem[], options: any = {}) => {
+          return client.insert(table, items, options);
+        }
+      );
+      service.addSubscription(
+        'listenToChanges',
+        (emit, model: string, clientID: string) => {
+          return client.listen(
+            model || '*',
+            (value: IGetItem[], options: any = {}) => {
+              if (options.isInitial || options.keepRev === clientID) {
+                return;
+              }
+              emit(null, model, value);
+            }
+          );
+        }
+      );
 
       // LOgic
       let cancels: false | any[] = [];
@@ -96,7 +110,7 @@ export function sync(
         tables.forEach(async table => {
           const currentState = await client.all(table, {
             where,
-            orderBy: 'rev ASC'
+            orderBy: ['rev ASC', 'id ASC']
           });
           const stateObject = currentState.reduce((state, item) => {
             state[item.id] = item.rev;
@@ -123,29 +137,44 @@ export function sync(
             return;
           }
           await Promise.all([
-            client.insert(table, changes.items, { keepRev: true }),
+            client.insert(table, changes.items, {
+              keepRev: name,
+              isInitial: true
+            }),
             /*client.insert(table, changes.items, {
               keepRev: true
             }),*/
-            client
-              .all(table, { id: changes.request })
-              .then(items => sync.sendChanges(table, items))
+            client.all(table, { id: changes.request }).then(items =>
+              sync.sendChanges(table, items, {
+                keepRev: clientID,
+                isInitial: true
+              })
+            )
           ]);
           if (!cancels) {
             return;
           }
           log.info(`Sync to ${name}:${table} is completed`);
           cancels.push(
-            sync.listenToChanges(table, (err, model, changes) => {
-              changes.forEach(x => (noRep[x.id] = x.rev));
+            sync.listenToChanges(table, clientID, (err, model, changes) => {
               log.info(
                 `Sync to ${name}:${table} reporting ${
                   changes.length
                 } new change(s)`
               );
-              return client.insert(model, changes);
-              // return client.insert(model, changes, { keepRev: true });
+              return client.insert(model, changes, { keepRev: name });
             })
+          );
+          cancels.push(
+            client.listen(
+              table || '*',
+              (value: IGetItem[], options: any = {}) => {
+                if (options.keepRev === name || options.isInitial) {
+                  return;
+                }
+                sync.sendChanges(table, value, { keepRev: clientID });
+              }
+            )
           );
         });
         return () => {};

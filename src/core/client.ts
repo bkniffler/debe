@@ -64,8 +64,8 @@ export class Debe<TBase = IItem> extends Flowzilla {
     options: any = {}
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
     return this.run(types.INSERT, [model, value], {
-      ...this,
-      keepRev: options.keepRev
+      ...options,
+      ...this
     });
   }
   // remove

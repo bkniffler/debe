@@ -48,7 +48,10 @@ export function createFilter(query: [string, ...any[]]) {
   };
 }
 
-export function sort(arr: any[], orderer: string) {
+export function sort(arr: any[], orderer: string | string[]): any[] {
+  if (Array.isArray(orderer)) {
+    return orderer.reduce((arr, str) => sort(arr, str), arr);
+  }
   const [fieldName = '', direction = ''] = (orderer || '').split(' ');
   if (fieldName) {
     const isDesc = direction.toUpperCase() === 'DESC';

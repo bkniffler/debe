@@ -122,22 +122,46 @@ test('sync:socket', async cb => {
     'lorem'
   ]);
 
+  // CLIENT
+  const dbClient2 = new MemoryDebe();
+  const destroyClient2 = socketSync(dbClient2, `http://localhost:${port}`, [
+    'lorem'
+  ]);
+
   for (let x = 0; x < 100; x++) {
     dbClient.insert('lorem', { goa: 'a' + x });
   }
 
-  await new Promise(yay => setTimeout(yay, 1000));
+  await new Promise(yay => setTimeout(yay, 3000));
 
-  const allOnClient = await dbClient.all<ILorem>('lorem', {
-    orderBy: 'rev ASC'
-  });
-  const allOnMaster = await dbMaster.all<ILorem>('lorem', {
-    orderBy: 'rev ASC'
-  });
-  expect(isEqual(allOnClient, allOnMaster)).toBeTruthy();
+  async function isEqualState() {
+    const allOnClient = await dbClient.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+    const allOnClient2 = await dbClient2.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+    const allOnMaster = await dbMaster.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+
+    expect(isEqual(allOnClient, allOnMaster)).toBeTruthy();
+    expect(isEqual(allOnClient2, allOnMaster)).toBeTruthy();
+  }
+
+  await isEqualState();
+
+  await dbClient.insert('lorem', { goa: 'a1000' });
+  await dbClient2.insert('lorem', { goa: 'a1001' });
+  await dbMaster.insert('lorem', { goa: 'a1002' });
+  await dbMaster.insert('lorem', { goa: 'a1003' });
+  await dbMaster.insert('lorem', { goa: 'a1004' });
+  await new Promise(yay => setTimeout(yay, 1000));
+  await isEqualState();
 
   destroyServer();
   destroyClient();
+  destroyClient2();
   cb();
 }, 10000);
 
