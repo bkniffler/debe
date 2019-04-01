@@ -96,6 +96,6 @@ await instances[2].db.insert('lorem', items);
 // Let it sync
 await new Promise(yay => setTimeout(yay, 3000));
 
-// Check client4 items
-const length = await client6.db.count('lorem', items); // => 10
+// Check last clients items length
+const length = (await instances[instances.length - 1].db.all('lorem')).length; // => 10
 ```
