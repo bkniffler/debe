@@ -1,6 +1,6 @@
 <div align="center">
   <h2>debe</h2>
-  <strong>Flexible and reactive offline-first Javascript datastore for browsers, node, electron and react-native with focus on performance and simplicitiy. Includes support for multi-master/client database replication via plugin.</strong>
+  <strong>Tiny, flexible and reactive offline-first Javascript datastore for browsers, node, electron and react-native with focus on performance and simplicitiy. Includes support for multi-master/client database replication via plugin.</strong>
   <br />
   <br />
   <a href="https://travis-ci.org/bkniffler/debe">
@@ -17,6 +17,9 @@
   </a>
   <a href="https://github.com/bkniffler/debe/master/LICENSE">
     <img src="https://img.shields.io/github/license/bkniffler/debe.svg?style=flat-square" alt="License">
+  </a>
+  <a href="https://github.com/bkniffler/flowzilla">
+    <img src="https://flat.badgen.net/bundlephobia/minzip/debe-memory" alt="License">
   </a>
   <br />
   <br />
@@ -42,7 +45,7 @@ _Debe is currently under development, feel free to participate via PR or issues_
 
 PouchDB/RxDB are great solutions for replicating databases, but being forced to build your services on top of CouchDB can be unfitting for some users. Debe is a fast and modern one-stop solution if you want to replicate your data in every way imaginable, so master-to-clients, master-to-masters-to-clients or master-to-client-to-master-to-client, ... It currently uses schemaless SQLight/PostgreSQL for persistence (with possibly more to follow). This makes it work wonderfully on React-Native/Expo and ElectronJS, since these all support SQLight fairly easily.
 
-Please note, Debe is currently not supporting relations. If you're interested in relational data and graphs, you might be better off with graphQL, apollo and AppSync. Debe is focused on offline-first, performance and simplicity.
+Please note, Debe is currently not supporting relations. If you're interested in relational data and graphs, you might be better off with graphQL, apollo and AppSync. Debe is focused on offline-first, performance, simplicity and being slim.
 
 ## Example
 
