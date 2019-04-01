@@ -1,6 +1,8 @@
 import { MemoryDebe } from 'debe-memory';
 import { createBroker } from 'rpc1';
-import { sync } from './index';
+import { sync, socketSync } from './index';
+import { isEqual } from 'debe';
+import { createDebeServer } from 'debe-sync-server';
 
 const schema = [
   {
@@ -106,6 +108,37 @@ test('sync:many:dynamic:twoway', cb => {
     expect(final2.length).toBe(200);
     // log.disable();
   });
+}, 10000);
+
+test('sync:socket', async cb => {
+  const port = 5555;
+  // HOST
+  const dbMaster = new MemoryDebe();
+  const destroyServer = createDebeServer(dbMaster, { port });
+
+  // CLIENT
+  const dbClient = new MemoryDebe();
+  const destroyClient = socketSync(dbClient, `http://localhost:${port}`, [
+    'lorem'
+  ]);
+
+  for (let x = 0; x < 100; x++) {
+    dbClient.insert('lorem', { goa: 'a' + x });
+  }
+
+  await new Promise(yay => setTimeout(yay, 1000));
+
+  const allOnClient = await dbClient.all<ILorem>('lorem', {
+    orderBy: 'rev ASC'
+  });
+  const allOnMaster = await dbMaster.all<ILorem>('lorem', {
+    orderBy: 'rev ASC'
+  });
+  expect(isEqual(allOnClient, allOnMaster)).toBeTruthy();
+
+  destroyServer();
+  destroyClient();
+  cb();
 }, 10000);
 
 /*

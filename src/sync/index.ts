@@ -1,5 +1,6 @@
 import { Debe, IItem, IGetItem } from 'debe';
 import { IService } from 'rpc1';
+import { createSocket } from 'rpc1-socket';
 /*function createCache(onSubmit: (items: any[]) => Promise<void>, limit = 100) {
   let items: any[] = [];
   function submit() {
@@ -32,10 +33,14 @@ interface ISync {
     emit: (err: any, model: string, items: IItem[]) => void
   ) => () => void;
 }
+export function socketSync(db: Debe, url: string, models: string[]) {
+  const syncer = sync(db, models, ['debe']);
+  return createSocket(url, syncer.connect);
+}
 export function sync(
   client: Debe,
-  tables: string[],
-  others: string[],
+  tables: string[] = [],
+  others: string[] = [],
   where?: string[]
 ) {
   const log = client.createLog('sync');
@@ -72,7 +77,7 @@ export function sync(
         }
       );
       service.addMethod('sendChanges', (table: string, items: IItem[]) => {
-        return client.insert(table, items);
+        return client.insert(table, items, { keepRev: true });
       });
       service.addSubscription('listenToChanges', (emit, model: string) => {
         return client.listen(model || '*', (value: IGetItem) => {
@@ -118,7 +123,7 @@ export function sync(
             return;
           }
           await Promise.all([
-            client.insert(table, changes.items),
+            client.insert(table, changes.items, { keepRev: true }),
             /*client.insert(table, changes.items, {
               keepRev: true
             }),*/

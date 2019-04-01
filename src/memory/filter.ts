@@ -47,3 +47,17 @@ export function createFilter(query: [string, ...any[]]) {
     return true;
   };
 }
+
+export function sort(arr: any[], orderer: string) {
+  const [fieldName = '', direction = ''] = (orderer || '').split(' ');
+  if (fieldName) {
+    const isDesc = direction.toUpperCase() === 'DESC';
+    const compare = (a: any, b: any) => {
+      if (a[fieldName] < b[fieldName]) return isDesc ? 1 : -1;
+      if (a[fieldName] > b[fieldName]) return isDesc ? -1 : 1;
+      return 0;
+    };
+    return arr.sort(compare);
+  }
+  return arr;
+}

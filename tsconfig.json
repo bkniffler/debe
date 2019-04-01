@@ -29,6 +29,7 @@
       "debe-postgresql": ["./src/postgresql"],
       "debe-sql": ["./src/sql"],
       "debe-sync": ["./src/sync"],
+      "debe-sync-server": ["./src/sync-server"],
       "debe-automerge": ["./src/automerge"]
     }
   },

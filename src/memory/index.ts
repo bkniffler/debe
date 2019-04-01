@@ -7,7 +7,7 @@ import {
   softDeleteSkill,
   ISkill
 } from 'debe';
-import { createFilter } from './filter';
+import { createFilter, sort } from './filter';
 export * from './filter';
 
 interface IStore {
@@ -63,11 +63,15 @@ export const memorySkill = (): ISkill => {
       ensureModel(model);
       const filter =
         query && query.where ? createFilter(query.where) : undefined;
+      const orderBy = query && query.orderBy;
+      let arr = Array.from(store[model].values());
       if (filter) {
-        flow.return(Array.from(store[model].values()).filter(filter));
-      } else {
-        flow.return(Array.from(store[model].values()));
+        arr = arr.filter(filter);
       }
+      if (orderBy) {
+        arr = sort(arr, orderBy);
+      }
+      flow.return(arr);
     } else {
       flow(payload);
     }

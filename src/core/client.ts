@@ -50,17 +50,23 @@ export class Debe<TBase = IItem> extends Flowzilla {
   }
   public insert<T = IInsertItem>(
     model: string,
-    value: (T & IInsertItem)[]
+    value: (T & IInsertItem)[],
+    options?: any
   ): Promise<(T & IGetItem)[]>;
   public insert<T = IInsertItem>(
     model: string,
-    value: T & IInsertItem
+    value: T & IInsertItem,
+    options?: any
   ): Promise<T & IGetItem>;
   public insert<T = IInsertItem>(
     model: string,
-    value: (T & IInsertItem)[] | (T & IInsertItem)
+    value: (T & IInsertItem)[] | (T & IInsertItem),
+    options: any = {}
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
-    return this.run(types.INSERT, [model, value], this);
+    return this.run(types.INSERT, [model, value], {
+      ...this,
+      keepRev: options.keepRev
+    });
   }
   // remove
   public remove<T = any>(

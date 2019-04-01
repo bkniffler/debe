@@ -1,8 +1,9 @@
 import { IItem, types } from '../types';
 import { ISkill } from 'flowzilla';
 
+const defaultRevisionField = 'rev';
 export const changeListenerSkill = (options: any = {}): ISkill => {
-  const { revField = 'rev' } = options;
+  const { revField = defaultRevisionField } = options;
   const queryEmitter = new Emitter();
   const singleEmitter = new Emitter();
 
@@ -69,10 +70,10 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
   };
 };
 
-function isEqual(
+export function isEqual(
   rowsA: IItem[] | IItem | null,
   rowsB: IItem[] | IItem | null,
-  revisionField: string
+  revisionField = defaultRevisionField
 ) {
   if (Array.isArray(rowsA) && rowsA.length === 0) {
     rowsA = null;
@@ -110,6 +111,7 @@ function isEqual(
   if ((rowsA as any[]).length !== (rowsB as any[]).length) {
     return false;
   }
+
   if (
     (rowsA as any[]).map(extrapolate).join('|') !==
     (rowsB as any[]).map(extrapolate).join('|')
@@ -122,7 +124,7 @@ function isEqual(
 interface IListeners {
   [s: string]: Function[];
 }
-class Emitter {
+export class Emitter {
   listeners: IListeners = {};
   get numberOfListeners() {
     return Object.keys(this.listeners).reduce(
