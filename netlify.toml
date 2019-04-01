@@ -1,7 +1,0 @@
-[build]
-  publish = "/example/react/dist"
-  command = "yarn build && cd example/react && yarn && yarn build"
-
-[build2]
-  publish = "/docs"
-  command = "echo OK"

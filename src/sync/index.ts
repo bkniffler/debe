@@ -1,5 +1,5 @@
 import { Debe, IItem, IGetItem } from 'debe';
-import { IService } from '@service-tunnel/core';
+import { IService } from 'rpc1';
 /*function createCache(onSubmit: (items: any[]) => Promise<void>, limit = 100) {
   let items: any[] = [];
   function submit() {

@@ -2,7 +2,6 @@
 .DS_Store
 coverage
 node_modules
-core/lib
 lib
 yarn-error.log
 .temp

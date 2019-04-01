@@ -23,7 +23,6 @@
   },
   "scripts": {
     "up": "yarn upgrade-interactive --latest",
-    "docs": "docsify serve docs",
     "clean": "rimraf lib && rimraf node_modules/.cache",
     "dev": "run-p \"ts:* -- --watch\"",
     "build": "run-s build:*",

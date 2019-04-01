@@ -65,6 +65,9 @@ test('memory:filter', async () => {
   expect(items.filter(createFilter(['goa != ?', 'a51']) as any).length).toBe(
     99
   );
+  expect(
+    items.filter(createFilter(['goa IN ?', ['a50', 'a51']]) as any).length
+  ).toBe(2);
 }, 10000);
 
 test('memory:change', async () => {

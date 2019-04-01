@@ -1,3 +1,5 @@
+import { ensureArray } from 'debe';
+
 export function createFilter(query: [string, ...any[]]) {
   if (!query.length) {
     return;
@@ -24,6 +26,11 @@ export function createFilter(query: [string, ...any[]]) {
       } else if (operand === '<=' && !(item[left] <= right)) {
         return false;
       } else if (operand === '<' && !(item[left] < right)) {
+        return false;
+      } else if (
+        operand === 'IN' &&
+        ensureArray(right).indexOf(item[left]) === -1
+      ) {
         return false;
       } else if (
         (operand === '=' || operand === '==') &&

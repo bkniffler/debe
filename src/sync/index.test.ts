@@ -1,6 +1,6 @@
 import { MemoryDebe } from 'debe-memory';
-import { createBroker } from '@service-tunnel/core';
-import { sync } from 'debe-sync';
+import { createBroker } from 'rpc1';
+import { sync } from './index';
 
 const schema = [
   {
