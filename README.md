@@ -1,4 +1,9 @@
 <div align="center">
+  <a href="https://github.com/bkniffler/debe">
+    <img alt="flowzilla" src="https://raw.githubusercontent.com/bkniffler/debe/master/assets/logo.png" height="400px" />
+  </a>
+</div>
+<div align="center">
   <h2>debe</h2>
   <strong>Tiny, flexible and reactive offline-first Javascript datastore for browsers, node, electron and react-native with focus on performance and simplicitiy. Includes support for multi-master/client database replication via plugin.</strong>
   <br />
@@ -104,3 +109,7 @@ await new Promise(yay => setTimeout(yay, 3000));
 // Check last clients items length
 const length = (await instances[instances.length - 1].db.all('lorem')).length; // => 10
 ```
+
+# Credits
+
+- Logo: [www.freepik.com](https://www.freepik.com/free-photos-vectors/background)
