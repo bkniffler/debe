@@ -5,7 +5,9 @@
 </div>
 <div align="center">
   <strong>Tiny, flexible and reactive offline-first Javascript datastore for browsers, node, electron and react-native with focus on performance and simplicitiy. Includes support for multi-master/client database replication via plugin.</strong>
-  <i>Debe is currently under development, feel free to participate via PR or issues. Consider debe to not be production ready yet. Core API is considered pretty final, though plugin API like replication might change a bit.</i>
+    <br />
+    <br />
+  <i><small>Debe is currently under development, feel free to participate via PR or issues. Consider debe to not be production ready yet. Core API is considered pretty final, though plugin API like replication might change a bit.</small></i>
   <br />
   <br />
   <a href="https://travis-ci.org/bkniffler/debe">
