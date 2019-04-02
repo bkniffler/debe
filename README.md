@@ -29,7 +29,7 @@
   <br />
 </div>
 
-_Debe is currently under development, feel free to participate via PR or issues_
+_Debe is currently under development, feel free to participate via PR or issues. Consider debe to not be production ready yet. Core API is considered pretty final, though plugin API like replication might change a bit._
 
 https://codesandbox.io/s/y27xmr9rvj
 
