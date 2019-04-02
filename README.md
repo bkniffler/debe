@@ -111,4 +111,4 @@ const length = (await instances[instances.length - 1].db.all('lorem')).length; /
 
 # Credits
 
-- Logo: [www.freepik.com](https://www.freepik.com/free-photos-vectors/background)
+- Vector Graphic: [www.freepik.com](https://www.freepik.com/free-photos-vectors/background)
