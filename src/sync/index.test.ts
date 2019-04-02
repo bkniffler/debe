@@ -171,7 +171,6 @@ test('sync:socket:simple', async cb => {
   cb();
 }, 10000);
 
-/*
 test('sync:socket:crazy', async cb => {
   function spawnMaster(port: number, syncTo?: number) {
     const db = new MemoryDebe();
@@ -201,7 +200,7 @@ test('sync:socket:crazy', async cb => {
   ];
 
   const items = [];
-  for (let x = 0; x < 10; x++) {
+  for (let x = 0; x < 100; x++) {
     items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
   }
   await instances[2].db.insert('lorem', items);
@@ -241,7 +240,7 @@ test('sync:socket:crazy', async cb => {
 
   instances.forEach(instance => instance.destroy());
   cb();
-}, 60000);*/
+}, 60000);
 
 /*
 

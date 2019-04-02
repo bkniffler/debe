@@ -31,17 +31,22 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
       let lastResult: any = undefined;
       const listener = async () => {
         let isInitial = lastResult === undefined;
-        const newValue = await flow.run(type, payload, {
-          callback: undefined
-        });
-        // Check is results changed
-        if (!isEqual(lastResult, newValue as any, revField)) {
-          callback(
-            (newValue || undefined) as any,
-            isInitial ? 'INITIAL' : 'CHANGE'
-          );
+        try {
+          const newValue = await flow.run(type, payload, {
+            callback: undefined
+          });
+          // Check is results changed
+          if (!isEqual(lastResult, newValue as any, revField)) {
+            callback(
+              undefined,
+              (newValue || undefined) as any,
+              isInitial ? 'INITIAL' : 'CHANGE'
+            );
+          }
+          lastResult = newValue || null;
+        } catch (err) {
+          callback(err);
         }
-        lastResult = newValue || null;
       };
       listener();
       return queryEmitter.on(model, listener);

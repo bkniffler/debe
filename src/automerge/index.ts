@@ -42,7 +42,7 @@ export function debeAutomerge(client: Debe) {
       doc = Automerge.change(doc, (doc: any) => {
         if (item && !item.automerge) {
           Object.keys(item).forEach(key => {
-            if (key === 'id' || key === 'revision' || key === 'isRemoved') {
+            if (key === 'id' || key === 'rev' || key === 'rem') {
               return;
             }
             if (item[key] !== undefined && item[key] !== null) {

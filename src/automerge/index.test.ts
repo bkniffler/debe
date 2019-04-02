@@ -14,7 +14,7 @@ interface ILorem {
   hallo?: string;
 }
 
-test('automerge', async () => {
+test('automerge:simple', async () => {
   const db = new MemoryDebe();
   await db.initialize(schema);
   const automerge = debeAutomerge(db);
@@ -31,4 +31,15 @@ test('automerge', async () => {
   expect(final.length).toBe(1);
   expect(final[0].goa).toBe('mpu');
   expect(final[0].goa2).toBe('mpu2');
+});
+
+test('automerge:err', async () => {
+  const db = new MemoryDebe();
+  await db.initialize(schema);
+  const automerge = debeAutomerge(db);
+  let err = null;
+  await automerge<ILorem>(name, '10', doc => {
+    doc.goa = 'mpu';
+  }).catch(e => (err = e));
+  expect(err).toBeTruthy();
 });
