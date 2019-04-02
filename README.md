@@ -94,4 +94,18 @@ Please note, Debe is currently not supporting relations. If you're interested in
 
 # Credits
 
+## Assets
+
 - Vector Graphic: [www.freepik.com](https://www.freepik.com/free-photos-vectors/background)
+
+## Dependencies
+
+- [rpc1](https://github.com/bkniffler/rpc1)
+- [flowzilla](https://github.com/bkniffler/flowzilla)
+
+## Similar libraries
+
+- PouchDB
+- RxDB
+- Realm
+- NanoSQL
