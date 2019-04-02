@@ -4,7 +4,6 @@
   </a>
 </div>
 <div align="center">
-  <h2>debe</h2>
   <strong>Tiny, flexible and reactive offline-first Javascript datastore for browsers, node, electron and react-native with focus on performance and simplicitiy. Includes support for multi-master/client database replication via plugin.</strong>
   <br />
   <br />
