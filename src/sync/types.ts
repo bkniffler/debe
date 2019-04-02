@@ -5,8 +5,8 @@ import { IItem, IGetItem } from 'debe';
   request: string[];
 }*/
 export interface ISyncItem extends IGetItem {
-  remote: string;
-  local: string;
+  remote?: string;
+  local?: string;
 }
 export interface ISync {
   initialFetchChanges: (
@@ -15,7 +15,11 @@ export interface ISync {
     since?: string,
     where?: string[]
   ) => Promise<IItem[]>;
-  sendChanges: (model: string, items?: IItem[], options?: any) => Promise<void>;
+  sendChanges: (
+    model: string,
+    items?: IItem[],
+    options?: any
+  ) => Promise<string | undefined>;
   listenToChanges: (
     table: string,
     clientID: string,

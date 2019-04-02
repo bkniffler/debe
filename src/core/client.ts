@@ -25,10 +25,10 @@ export class Debe<TBase = IItem> extends Flowzilla {
   public destroy() {
     return this.run(types.DESTROY);
   }
-  public async initialize(arg?: any) {
+  public async initialize(arg: any = {}) {
     return await this.run<any>(
       types.INITIALIZE,
-      { indices: [], columns: [] },
+      { ...arg, indices: [], columns: [] },
       this
     );
   }

@@ -1,0 +1,12 @@
+{
+  "name": "sqlite-sync",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "debe": "^1.0.20",
+    "debe-better-sqlite3": "^1.0.20",
+    "debe-sync": "^1.0.20",
+    "debe-sync-server": "^1.0.20"
+  }
+}

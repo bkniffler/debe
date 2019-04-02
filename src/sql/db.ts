@@ -22,16 +22,20 @@ export class SQLDebe extends Debe {
       this.addSkill(softDeleteSkill());
     }
     this.db = db;
-    this.schema = schema.reduce((store, x) => {
+    this.addSkill('sql', sqlSkill(this));
+    this.schema = schema;
+  }
+  async initialize() {
+    const state = await super.initialize({ schema: this.schema });
+    this.schema = (state.schema as any[]).reduce((store, x) => {
       if (!x.columns) {
         x.columns = [];
       }
+      if (!x.index) {
+        x.index = [];
+      }
       return { ...store, [x.name]: x };
     }, {});
-    this.addSkill('sql', sqlSkill(this));
-  }
-  async initialize() {
-    await super.initialize();
     return Promise.all(
       Object.keys(this.schema).map(key => this.db.createTable(this.schema[key]))
     );

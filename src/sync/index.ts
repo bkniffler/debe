@@ -1,25 +1,13 @@
-import { Debe, IItem, IGetItem, generate, ILog, addToQuery } from 'debe';
+import { Debe, IItem, IGetItem, generate, ILog, addToQuery, types } from 'debe';
 import { IService, IBroker } from 'rpc1';
 import { createSocket } from 'rpc1-socket';
 import { ISync, ISyncItem } from './types';
 
-/*function createCache(onSubmit: (items: any[]) => Promise<void>, limit = 100) {
-  let items: any[] = [];
-  function submit() {
-    const itemsToSend = items.slice(0, limit);
-    onSubmit(itemsToSend).then(() => {
-      items = items.slice(itemsToSend.length);
-    });
-  }
-  return function add(item: any) {
-    items.push(item);
-    if (items.length >= limit) {
-      submit();
-    }
-  };
-}*/
-
 const syncstateTable = 'syncstate';
+
+function getLastItemRev(items: IGetItem[] = []) {
+  return items[items.length - 1] ? items[items.length - 1].rev : undefined;
+}
 
 async function createServerChannels(client: Debe, service: IService) {
   service.addMethod('initialFetchChanges', (
@@ -29,37 +17,15 @@ async function createServerChannels(client: Debe, service: IService) {
     where?: [string, ...any[]]
   ) => {
     if (since) {
-      where = addToQuery(where, 'AND', 'rev >= ?', since);
+      where = addToQuery(where, 'AND', 'rev > ?', since);
     }
-    return client
-      .all(table, { where, orderBy: ['rev ASC', 'id ASC'] })
-      .then(result => {
-        return result;
-        /*const response: ISyncInitialResponse = {
-          items: [],
-          request: []
-        };
-        result.forEach(item => {
-          if (!state[item.id]) {
-            response.items.push(item);
-            return;
-          }
-          const comp = state[item.id].localeCompare(item.rev);
-          delete state[item.id];
-          if (comp === -1) {
-            response.items.push(item);
-          } else if (comp === 1) {
-            response.request.push(item.id);
-          }
-        });
-        Object.keys(state).forEach(x => response.request.push(x));
-        return response;*/
-      });
+    return client.all(table, { where });
   });
   service.addMethod(
     'sendChanges',
-    (table: string, items: IItem[], options: any = {}) => {
-      return client.insert(table, items, options);
+    async (table: string, items: IItem[], options: any = {}) => {
+      const newItems = await client.insert(table, items, options);
+      return getLastItemRev(newItems);
     }
   );
   service.addSubscription(
@@ -89,27 +55,28 @@ async function initiateSync(
 ) {
   const id = `${name}-${table}`;
   const server = service.use<ISync>(name);
-  const syncState = await client.get<ISyncItem>(syncstateTable, { id });
-  // const x = await client.insert(syncstateTable, { id });
-  /*const currentState = await client.all(table, {
-    where: syncState ? ['rev >= ?', syncState.lastSync] : undefined,
-    orderBy: ['rev ASC', 'id ASC']
-  });
-  const stateObject = currentState.reduce((state, item) => {
-    state[item.id] = item.rev;
-    return state;
-  }, {});
-  log.info(
-    `Starting sync ${name}:${table}: ${currentState.length} initial items`
-  );*/
+  let syncState = (await client.get<ISyncItem>(syncstateTable, { id })) || {};
+  let insertPromise: Promise<any> = Promise.resolve();
+  // Allow update syncstate, but take care of parallel access
+  const updateSyncState = (local?: string, remote?: string) => {
+    insertPromise = insertPromise.then(() =>
+      client
+        .insert<ISyncItem>(syncstateTable, {
+          id,
+          rev: syncState ? syncState.rev : '',
+          local: local || syncState.local,
+          remote: remote || syncState.remote
+        })
+        .then(i => (syncState = i))
+    );
+  };
   const remoteChanges = await server.initialFetchChanges(
     table,
-    syncState ? syncState.remote : undefined,
+    syncState.remote,
     where
   );
   const localChanges = await client.all(table, {
-    where: syncState ? ['rev >= ?', syncState.local] : undefined,
-    orderBy: ['rev ASC', 'id ASC']
+    where: syncState.local ? ['rev > ?', syncState.local] : undefined
   });
   log.info(
     `Remote sync state ${name}:${table}: ${
@@ -127,9 +94,10 @@ async function initiateSync(
       if (changes.length === 0) {
         return;
       }
-      return client.insert(model, changes, {
+      const newItems = await client.insert(model, changes, {
         syncFrom: name
       });
+      updateSyncState(getLastItemRev(newItems), getLastItemRev(changes));
     }
   );
   const destroyClientListener = client.listen(
@@ -139,43 +107,29 @@ async function initiateSync(
       if (options.syncFrom === name || value.length === 0) {
         return;
       }
-      server.sendChanges(table, value, {
+      const lastFetch = await server.sendChanges(table, value, {
         syncFrom: clientID
       });
+      updateSyncState(getLastItemRev(value), lastFetch);
     }
   );
-  /*const isInitialDone = await Promise.all([
-    client.insert(table, changes.items, {
-      keepRev: true,
-      syncFrom: name
-    }),
-    client.all(table, { id: changes.request }).then(items =>
-      server.sendChanges(table, items, {
-        keepRev: true,
-        syncFrom: clientID
-      })
-    )
-  ]);*/
+
   const isInitialDone = await Promise.all([
-    client.insert(table, remoteChanges, {
-      syncFrom: name
-    }),
-    server.sendChanges(table, localChanges, {
-      syncFrom: clientID
-    })
+    remoteChanges.length > 0
+      ? client.insert(table, remoteChanges, {
+          syncFrom: name
+        })
+      : Promise.resolve(undefined),
+    localChanges.length > 0
+      ? server.sendChanges(table, localChanges, {
+          syncFrom: clientID
+        })
+      : Promise.resolve(undefined)
   ]);
-  const lastRemoteItem = remoteChanges[remoteChanges.length - 1] || {
-    rev: syncState ? syncState.remote : undefined
-  };
-  const lastLocalItem = localChanges[localChanges.length - 1] || {
-    rev: syncState ? syncState.local : undefined
-  };
-  await client.insert<ISyncItem>(syncstateTable, {
-    id,
-    rev: syncState ? syncState.rev : '',
-    remote: lastRemoteItem.rev,
-    local: lastLocalItem.rev
-  });
+  updateSyncState(
+    getLastItemRev(isInitialDone[0]) || getLastItemRev(localChanges),
+    isInitialDone[1] || getLastItemRev(remoteChanges)
+  );
   log.info(`Sync to ${name}:${table} is completed`);
   return [destroyServerListener, destroyClientListener];
 }
@@ -194,6 +148,18 @@ export function sync(
 ) {
   const log = client.createLog('sync');
   const clientID = generate();
+
+  client.addSkill(
+    'sync',
+    (type, payload, flow) => {
+      if (type === types.INITIALIZE && payload.schema) {
+        payload.schema = [...payload.schema, { name: syncstateTable }];
+      }
+      return flow(payload);
+    },
+    'AFTER',
+    'changeListener'
+  );
 
   return {
     connect: (service: IService) => {
