@@ -58,6 +58,11 @@ export const memorySkill = (): ISkill => {
       const [model, arg] = payload;
       ensureModel(model);
       flow.return(store[model].get(arg.id));
+    } else if (type === 'console.log') {
+      const [model] = payload;
+      ensureModel(model);
+      console.log(store[model].values());
+      flow.return(null);
     } else if (type === types.ALL) {
       const [model, query] = payload;
       ensureModel(model);

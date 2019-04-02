@@ -6,13 +6,11 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
   const { revField = defaultRevisionField } = options;
   const queryEmitter = new Emitter();
 
-  function addRev(item: any, keepRev: boolean = false): [any, any] {
+  function addRev(item: any): [any, any] {
     if (!item) {
       return item;
     }
-    if (!keepRev || !item[revField]) {
-      item[revField] = new Date().getTime() / 1000 + '';
-    }
+    item[revField] = new Date().getTime() + '';
     return item;
   }
 
@@ -51,19 +49,12 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
       listener();
       return queryEmitter.on(model, listener);
     } else if (type === types.INSERT) {
-      const keepRev = flow.get('keepRev');
       const syncFrom = flow.get('syncFrom');
       const [model, items] = payload;
       return flow(
-        [
-          model,
-          Array.isArray(items)
-            ? items.map((x: any) => addRev(x, keepRev))
-            : addRev(items, keepRev)
-        ],
+        [model, Array.isArray(items) ? items.map(addRev) : addRev(items)],
         (res, back) => {
           queryEmitter.emit(model, Array.isArray(res) ? res : [res], {
-            keepRev,
             syncFrom
           });
           back(res);

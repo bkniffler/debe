@@ -3,12 +3,12 @@ export function addToQuery(
   type: 'AND' | 'OR' = 'AND',
   additional: string,
   ...args: any[]
-) {
+): [string, ...any[]] {
   if (!query) {
     return [additional, ...args];
   } else {
     const [arg0, ...rest] = query;
-    return [`${arg0} ${type} ${additional}`, ...rest, ...args];
+    return [`${arg0} ${type} ${additional}`, ...rest, ...args] as any;
   }
 }
 
