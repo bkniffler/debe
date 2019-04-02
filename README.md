@@ -33,6 +33,45 @@ _Debe is currently under development, feel free to participate via PR or issues_
 
 https://codesandbox.io/s/y27xmr9rvj
 
+```js
+const { MemoryDebe } = require('debe-memory');
+const { createSocketClient } = require('debe-sync');
+const { createSocketServer } = require('debe-sync-server');
+
+async function generateItems(db, numberOfItems) {
+  const start = new Date().getTime();
+  const items = [];
+  for (let x = 0; x < numberOfItems; x++) {
+    items.push({ goa: 'a' + (x < 10 ? `0${x}` : x) });
+  }
+  await db.insert('lorem', items);
+  console.log(
+    `Generated ${numberOfItems} in ${new Date().getTime() - start}ms`
+  );
+}
+
+async function wait(ms) {
+  await new Promise(yay => setTimeout(yay, ms));
+}
+
+async function work() {
+  // Master
+  const db0 = new MemoryDebe();
+  createSocketServer(db0, { port: 5555 });
+  // Client
+  const db1 = new MemoryDebe();
+  createSocketClient(db1, 'http://localhost:5555', ['lorem']);
+  //
+  await generateItems(db0, 100000);
+  await wait(250);
+  console.log(`Synced ${(await db1.all('lorem')).length} via socket`);
+  //
+  await generateItems(db1, 10000);
+  await wait(250);
+  console.log(`Synced ${(await db0.all('lorem')).length} via socket`);
+}
+```
+
 ## Bindings
 
 - Vanilla Javascript/NodeJS
@@ -52,62 +91,6 @@ https://codesandbox.io/s/y27xmr9rvj
 PouchDB/RxDB are great solutions for replicating databases, but being forced to build your services on top of CouchDB can be unfitting for some users. Debe is a fast and modern one-stop solution if you want to replicate your data in every way imaginable, so master-to-clients, master-to-masters-to-clients or master-to-client-to-master-to-client, ... It currently uses schemaless SQLight/PostgreSQL for persistence (with possibly more to follow). This makes it work wonderfully on React-Native/Expo and ElectronJS, since these all support SQLight fairly easily.
 
 Please note, Debe is currently not supporting relations. If you're interested in relational data and graphs, you might be better off with graphQL, apollo and AppSync. Debe is focused on offline-first, performance, simplicity and being slim.
-
-## Example
-
-This is a small example for replating between master and client
-
-```js
-// Spawn a master on specified port, syncing to other port if provided
-function spawnMaster(port, syncTo) {
-  const db = new MemoryDebe();
-  const destroy = [
-    createSocketServer(db, { port }),
-    syncTo
-      ? createSocketClient(db, `http://localhost:${syncTo}`, ['lorem'])
-      : undefined
-  ];
-  return { db, destroy: () => destroy.forEach(x => x && x()) };
-}
-// Spawn a client syncing to port
-function spawnClient(syncTo) {
-  const db = new MemoryDebe();
-  const destroy = createSocketClient(db, `http://localhost:${syncTo}`, [
-    'lorem'
-  ]);
-  return { db, destroy };
-}
-// Create instances
-const instances = [
-  // Simple master0
-  spawnMaster(5555),
-  // master1 that syncs to master0
-  spawnMaster(5556, 5555),
-  // client0 that syncs to master0
-  spawnClient(5555),
-  // client1 that syncs to master0
-  spawnClient(5555),
-  // client2 that syncs to master0
-  spawnClient(5555),
-  // client3 that syncs to master1
-  spawnClient(5556),
-  // client4 that syncs to master1
-  spawnClient(5556)
-];
-
-// add 10 items to client0
-const items = [];
-for (let x = 0; x < 10; x++) {
-  items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
-}
-await instances[2].db.insert('lorem', items);
-
-// Let it sync
-await new Promise(yay => setTimeout(yay, 3000));
-
-// Check last clients items length
-const length = (await instances[instances.length - 1].db.all('lorem')).length; // => 10
-```
 
 # Credits
 
