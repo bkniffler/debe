@@ -6,15 +6,19 @@ import {
   softDeleteSkill,
   ISkill,
   ICollectionInput,
-  ICollection
+  ICollections
 } from 'debe';
-
 import Dexie, { Table, IndexableType } from 'dexie';
 
 export class DexieDebe extends Debe {
   constructor(
     collections: ICollectionInput[],
-    { changeListener = true, softDelete = false, name = 'debe' } = {}
+    {
+      changeListener = true,
+      softDelete = false,
+      name = 'debe',
+      version = 1
+    } = {}
   ) {
     super(collections);
     if (changeListener) {
@@ -24,29 +28,25 @@ export class DexieDebe extends Debe {
     if (softDelete) {
       this.addSkill(softDeleteSkill());
     }
-    this.addSkill(dexieSkill(name));
+    this.addSkill(dexieSkill(name, version));
     // this.tracker = x => console.log(x);
   }
 }
 
-export const dexieSkill = (name: string): ISkill => {
+export const dexieSkill = (name: string, version: number): ISkill => {
   const db = new Dexie(name);
-  let count = 0;
-  const collections = {};
   return async function dexie(type, payload, flow) {
-    if (type === types.INITIALIZE) {
-      count = payload.collections.length;
-      flow(payload);
-    } else if (type === types.COLLECTION) {
-      const collection = payload as ICollection;
-      collections[collection.name] = [
-        collection.specialFields.id,
-        ...Object.keys(collection.index)
-      ].join(', ');
-      count = count - 1;
-      if (count === 0) {
-        db.version(1).stores(collections);
+    if (type === types.COLLECTIONS) {
+      const collections = payload as ICollections;
+      const schema: any = {};
+      for (var key in collections) {
+        const collection = collections[key];
+        schema[collection.name] = [
+          collection.specialFields.id,
+          ...Object.keys(collection.index)
+        ].join(', ');
       }
+      db.version(version).stores(schema);
       flow(payload);
     } else if (type === types.INSERT) {
       const [collection, arg] = payload;
@@ -72,6 +72,17 @@ export const dexieSkill = (name: string): ISkill => {
   };
 };
 
+const filterMap = {
+  '>=': 'aboveOrEqual',
+  '>': 'above',
+  '<=': 'belowOrEqual',
+  '<': 'below',
+  IN: 'anyOf',
+  '=': 'equals',
+  '==': 'equals',
+  '!=': 'notEqual'
+};
+
 function filter(
   collection: Table<any, IndexableType>,
   query: [string, ...any[]]
@@ -93,20 +104,8 @@ function filter(
   );
   for (var i = 0; i < q.length; i++) {
     const [left, operand, right] = q[i];
-    if (operand === '>=') {
-      collection = collection.where(left).aboveOrEqual(right) as any;
-    } else if (operand === '>') {
-      collection = collection.where(left).above(right) as any;
-    } else if (operand === '<=') {
-      collection = collection.where(left).belowOrEqual(right) as any;
-    } else if (operand === '<') {
-      collection = collection.where(left).below(right) as any;
-    } else if (operand === 'IN') {
-      collection = collection.where(left).anyOf(right) as any;
-    } else if (operand === '=' || operand === '==') {
-      collection = collection.where(left).equals(right) as any;
-    } else if (operand === '!=') {
-      collection = collection.where(left).notEqual(right) as any;
+    if (filterMap[operand]) {
+      collection = collection.where(left)[filterMap[operand]](right) as any;
     }
   }
   return collection;

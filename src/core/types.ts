@@ -7,7 +7,8 @@ export const types = {
   DESTROY: 'destroy',
   REMOVE: 'remove',
   INITIALIZE: 'initialize',
-  COLLECTION: 'collection'
+  COLLECTION: 'collection',
+  COLLECTIONS: 'collections'
 };
 interface IFieldTypeHolder {
   [s: string]: IFieldTypes;

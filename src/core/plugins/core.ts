@@ -64,7 +64,10 @@ export const coreSkill = (options: any = {}): ISkill => {
                 flow.run(types.COLLECTION, collection)
               )
             )) as ICollection[];
-            value.collections = objectify<ICollection>(collections);
+            value.collections = await flow.run(
+              types.COLLECTIONS,
+              objectify<ICollection>(collections)
+            );
           }
           next(value);
         }
