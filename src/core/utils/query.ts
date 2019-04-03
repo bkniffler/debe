@@ -12,6 +12,21 @@ export function addToQuery(
   }
 }
 
+export function queryToArray(query: [string, ...any[]]) {
+  let questions: number = 0;
+  return query[0].split('AND').map((part: string) =>
+    part.split(' ').reduce<string[]>((arr, x) => {
+      x = x.trim();
+      if (x === '?') {
+        arr.push(query[(questions += 1)]);
+      } else if (x) {
+        arr.push(x);
+      }
+      return arr;
+    }, [])
+  );
+}
+
 /*export function mongoToQuery(mongoQuery: any[]) {
   if (!mongoQuery) {
     return [];

@@ -6,7 +6,8 @@ import {
   softDeleteSkill,
   ISkill,
   ICollectionInput,
-  ICollections
+  ICollections,
+  queryToArray
 } from 'debe';
 import Dexie, { Table, IndexableType } from 'dexie';
 
@@ -90,20 +91,9 @@ function filter(
   if (!query.length) {
     return collection;
   }
-  let questions: number = 0;
-  const q = query[0].split('AND').map((part: string) =>
-    part.split(' ').reduce<string[]>((arr, x) => {
-      x = x.trim();
-      if (x === '?') {
-        arr.push(query[(questions += 1)]);
-      } else if (x) {
-        arr.push(x);
-      }
-      return arr;
-    }, [])
-  );
-  for (var i = 0; i < q.length; i++) {
-    const [left, operand, right] = q[i];
+  const array = queryToArray(query);
+  for (var i = 0; i < array.length; i++) {
+    const [left, operand, right] = array[i];
     if (filterMap[operand]) {
       collection = collection.where(left)[filterMap[operand]](right) as any;
     }
