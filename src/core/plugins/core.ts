@@ -23,6 +23,11 @@ export function ensureCollection(collection: ICollectionInput): ICollection {
   }
   if (!collection.index) {
     collection.index = {};
+  } else if (Array.isArray(collection.index)) {
+    collection.index = collection.index.reduce(
+      (result, field) => ({ ...result, [field]: fieldTypes.STRING }),
+      {}
+    );
   }
   if (!collection.specialFields) {
     collection.specialFields = {};
