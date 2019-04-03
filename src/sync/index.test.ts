@@ -36,11 +36,11 @@ function prepare(
   }
   let timeout = setTimeout(done, 10000);
   const destroy = createBroker(async broker => {
-    const db1 = new MemoryDebe();
-    const db2 = new MemoryDebe();
-    await Promise.all([db1.initialize(schema), db2.initialize(schema)]);
-    const sync1 = sync(db1, ['lorem'], ['debe-sync2']);
-    const sync2 = sync(db2, ['lorem'], []);
+    const db1 = new MemoryDebe(schema);
+    const db2 = new MemoryDebe(schema);
+    const sync1 = sync(db1, ['debe-sync2']);
+    const sync2 = sync(db2, []);
+    await Promise.all([db1.initialize(), db2.initialize()]);
     const local1 = broker.local('debe-sync1', sync1.connect);
     const local2 = broker.local('debe-sync2', sync2.connect);
     await init(db1, db2, sync1.forceSync);
@@ -114,16 +114,17 @@ test('sync:socket:simple', async cb => {
   prepare;
   const port = 5554;
   // HOST
-  const dbMaster = new MemoryDebe();
+  const dbMaster = new MemoryDebe(schema);
   const destroyServer = createSocketServer(dbMaster, { port });
+  await dbMaster.initialize();
 
   // CLIENT
-  const dbClient = new MemoryDebe();
+  const dbClient = new MemoryDebe(schema);
   const destroyClient = createSocketClient(
     dbClient,
-    `http://localhost:${port}`,
-    ['lorem']
+    `http://localhost:${port}`
   );
+  await dbClient.initialize();
 
   const items = [];
   for (let x = 0; x < 10; x++) {
@@ -132,12 +133,12 @@ test('sync:socket:simple', async cb => {
   await dbClient.insert('lorem', items);
 
   // CLIENT
-  const dbClient2 = new MemoryDebe();
+  const dbClient2 = new MemoryDebe(schema);
   const destroyClient2 = createSocketClient(
     dbClient2,
-    `http://localhost:${port}`,
-    ['lorem']
+    `http://localhost:${port}`
   );
+  await dbClient2.initialize();
 
   await new Promise(yay => setTimeout(yay, 3000));
   async function isEqualState() {
@@ -173,24 +174,22 @@ test('sync:socket:simple', async cb => {
 }, 10000);
 
 test('sync:socket:crazy', async cb => {
-  function spawnMaster(port: number, syncTo?: number) {
-    const db = new MemoryDebe();
+  async function spawnMaster(port: number, syncTo?: number) {
+    const db = new MemoryDebe(schema);
     const destroy = [
       createSocketServer(db, { port }),
-      syncTo
-        ? createSocketClient(db, `http://localhost:${syncTo}`, ['lorem'])
-        : undefined
+      syncTo ? createSocketClient(db, `http://localhost:${syncTo}`) : undefined
     ];
+    await db.initialize();
     return { db, destroy: () => destroy.forEach(x => x && x()) };
   }
-  function spawnClient(syncTo: number) {
-    const db = new MemoryDebe();
-    const destroy = createSocketClient(db, `http://localhost:${syncTo}`, [
-      'lorem'
-    ]);
+  async function spawnClient(syncTo: number) {
+    const db = new MemoryDebe(schema);
+    const destroy = createSocketClient(db, `http://localhost:${syncTo}`);
+    await db.initialize();
     return { db, destroy };
   }
-  const instances = [
+  const instances = await Promise.all([
     spawnMaster(5555),
     spawnMaster(5556, 5555),
     spawnClient(5555),
@@ -198,7 +197,7 @@ test('sync:socket:crazy', async cb => {
     spawnClient(5555),
     spawnClient(5556),
     spawnClient(5556)
-  ];
+  ]);
 
   const items = [];
   for (let x = 0; x < 1000; x++) {

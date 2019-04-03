@@ -1,7 +1,8 @@
 import { MemoryDebe, createFilter } from './index';
 
+const collections = [{ name: 'lorem' }];
 test('memory:basic', async () => {
-  const client = new MemoryDebe();
+  const client = new MemoryDebe(collections);
   await client.initialize();
   const insertResult = await client.run<any>('insert', [
     'lorem',
@@ -17,7 +18,7 @@ test('memory:basic', async () => {
 });
 
 test('memory:basic', async () => {
-  const client = new MemoryDebe();
+  const client = new MemoryDebe(collections);
   await client.initialize();
   const insertResult = await client.run<any>('insert', [
     'lorem',
@@ -33,7 +34,8 @@ test('memory:basic', async () => {
 });
 
 test('memory:many', async () => {
-  const client = new MemoryDebe();
+  const client = new MemoryDebe(collections);
+  await client.initialize();
   for (let x = 0; x < 100; x++) {
     client.insert('lorem', { goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
   }
@@ -71,7 +73,7 @@ test('memory:filter', async () => {
 }, 10000);
 
 test('memory:change', async () => {
-  const client = new MemoryDebe();
+  const client = new MemoryDebe(collections);
   await client.initialize();
   let calls = 0;
   const unlisten = client.runSync('all', ['lorem'], {
@@ -85,7 +87,7 @@ test('memory:change', async () => {
 });
 
 test('memory:softdelete', async () => {
-  const client = new MemoryDebe({ softDelete: true });
+  const client = new MemoryDebe(collections, { softDelete: true });
   await client.initialize();
   await client.run('insert', ['lorem', { id: '0', name: 'Hallo' }]);
   await client.run('insert', ['lorem', { id: '1', name: 'Hallo' }]);

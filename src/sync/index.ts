@@ -1,12 +1,23 @@
-import { Debe, IItem, IGetItem, generate, ILog, addToQuery, types } from 'debe';
+import {
+  Debe,
+  IItem,
+  IGetItem,
+  generate,
+  ILog,
+  addToQuery,
+  types,
+  ICollection
+} from 'debe';
 import { IService, IBroker } from 'rpc1';
 import { createSocket } from 'rpc1-socket';
 import { ISync, ISyncItem } from './types';
 
 const syncstateTable = 'syncstate';
 
-function getLastItemRev(items: IGetItem[] = []) {
-  return items[items.length - 1] ? items[items.length - 1].rev : undefined;
+function getLastItemRev(items: IGetItem[] = [], revField: string) {
+  return items[items.length - 1]
+    ? items[items.length - 1][revField]
+    : undefined;
 }
 
 async function createServerChannels(client: Debe, service: IService) {
@@ -16,28 +27,36 @@ async function createServerChannels(client: Debe, service: IService) {
     since?: string,
     where?: [string, ...any[]]
   ) => {
+    const collection = client.collections[table];
     if (since) {
-      where = addToQuery(where, 'AND', 'rev > ?', since);
+      where = addToQuery(
+        where,
+        'AND',
+        `${collection.specialFields.rev} > ?`,
+        since
+      );
     }
     return client.all(table, { where });
   });
   service.addMethod(
     'sendChanges',
     async (table: string, items: IItem[], options: any = {}) => {
+      const collection = client.collections[table];
       const newItems = await client.insert(table, items, options);
-      return getLastItemRev(newItems);
+      return getLastItemRev(newItems, collection.specialFields.rev);
     }
   );
   service.addSubscription(
     'listenToChanges',
-    (emit, model: string, clientID: string) => {
+    (emit, table: string, clientID: string) => {
+      const collection = client.collections[table];
       return client.listen(
-        model || '*',
+        collection.name,
         (value: IGetItem[], options: any = {}) => {
           if (options.syncFrom === clientID) {
             return;
           }
-          emit(null, model, value);
+          emit(null, value);
         }
       );
     }
@@ -49,12 +68,14 @@ async function initiateSync(
   clientID: string,
   service: IService,
   name: string,
-  table: string,
+  collection: ICollection,
   where: any,
   log: ILog
 ) {
-  const id = `${name}-${table}`;
+  const { rev } = collection.specialFields;
+  const id = `${name}-${collection.name}`;
   const server = service.use<ISync>(name);
+
   let syncState = (await client.get<ISyncItem>(syncstateTable, { id })) || {};
   let insertPromise: Promise<any> = Promise.resolve();
   // Allow update syncstate, but take care of parallel access
@@ -71,66 +92,76 @@ async function initiateSync(
     );
   };
   const remoteChanges = await server.initialFetchChanges(
-    table,
+    collection.name,
     syncState.remote,
     where
   );
-  const localChanges = await client.all(table, {
-    where: syncState.local ? ['rev > ?', syncState.local] : undefined
+  const localChanges = await client.all(collection.name, {
+    where: syncState.local ? [`${rev} > ?`, syncState.local] : undefined
   });
   log.info(
-    `Remote sync state ${name}:${table}: ${
+    `Remote sync state ${name}:${collection.name}: ${
       remoteChanges.length
     } remote items to get, ${localChanges.length} local items to send`
   );
   const destroyServerListener = server.listenToChanges(
-    table,
+    collection.name,
     clientID,
-    async (err, model, changes) => {
+    async (err, changes) => {
       await isInitialDone;
       log.info(
-        `Sync to ${name}:${table} reporting ${changes.length} new change(s)`
+        `Sync to ${name}:${collection.name} reporting ${
+          changes.length
+        } new change(s)`
       );
       if (changes.length === 0) {
         return;
       }
-      const newItems = await client.insert(model, changes, {
+      const newItems = await client.insert(collection.name, changes, {
         syncFrom: name
       });
-      updateSyncState(getLastItemRev(newItems), getLastItemRev(changes));
+      updateSyncState(
+        getLastItemRev(newItems, collection.specialFields.rev),
+        getLastItemRev(changes, collection.specialFields.rev)
+      );
     }
   );
   const destroyClientListener = client.listen(
-    table,
+    collection.name,
     async (value: IGetItem[], options: any = {}) => {
       await isInitialDone;
       if (options.syncFrom === name || value.length === 0) {
         return;
       }
-      const lastFetch = await server.sendChanges(table, value, {
+      const lastFetch = await server.sendChanges(collection.name, value, {
         syncFrom: clientID
       });
-      updateSyncState(getLastItemRev(value), lastFetch);
+      updateSyncState(
+        getLastItemRev(value, collection.specialFields.rev),
+        lastFetch
+      );
     }
   );
 
   const isInitialDone = await Promise.all([
     remoteChanges.length > 0
-      ? client.insert(table, remoteChanges, {
+      ? client.insert(collection.name, remoteChanges, {
           syncFrom: name
         })
       : Promise.resolve(undefined),
     localChanges.length > 0
-      ? server.sendChanges(table, localChanges, {
+      ? server.sendChanges(collection.name, localChanges, {
           syncFrom: clientID
         })
       : Promise.resolve(undefined)
   ]);
   updateSyncState(
-    getLastItemRev(isInitialDone[0]) || getLastItemRev(localChanges),
-    isInitialDone[1] || getLastItemRev(remoteChanges)
+    getLastItemRev(isInitialDone[0], collection.specialFields.rev) ||
+      getLastItemRev(localChanges, collection.specialFields.rev),
+    isInitialDone[1] ||
+      getLastItemRev(remoteChanges, collection.specialFields.rev)
   );
-  log.info(`Sync to ${name}:${table} is completed`);
+  log.info(`Sync to ${name}:${collection.name} is completed`);
   return [destroyServerListener, destroyClientListener];
 }
 
@@ -140,20 +171,18 @@ async function initiateSync(
   SYNC_REQUEST_LISTENER: 'SYNC_REQUEST_LISTENER'
 };*/
 
-export function sync(
-  client: Debe,
-  tables: string[] = [],
-  others: string[] = [],
-  where?: string[]
-) {
+export function sync(client: Debe, others: string[] = [], where?: string[]) {
   const log = client.createLog('sync');
   const clientID = generate();
 
   client.addSkill(
     'sync',
     (type, payload, flow) => {
-      if (type === types.INITIALIZE && payload.schema) {
-        payload.schema = [...payload.schema, { name: syncstateTable }];
+      if (type === types.INITIALIZE) {
+        payload.collections = [
+          ...payload.collections,
+          { name: syncstateTable }
+        ];
       }
       return flow(payload);
     },
@@ -167,9 +196,19 @@ export function sync(
       // LOgic
       let cancels: false | any[] = [];
       others.forEach(name => {
-        tables.forEach(table =>
-          initiateSync(client, clientID, service, name, table, where, log)
-        );
+        Object.keys(client.collections)
+          .filter(x => x !== syncstateTable)
+          .forEach(table =>
+            initiateSync(
+              client,
+              clientID,
+              service,
+              name,
+              client.collections[table],
+              where,
+              log
+            )
+          );
       });
       return () => {
         if (!cancels) {
@@ -185,13 +224,13 @@ export function sync(
   };
 }
 
-export function createSocketClient(db: Debe, url: string, models: string[]) {
-  const syncer = sync(db, models, ['debe']);
+export function createSocketClient(db: Debe, url: string) {
+  const syncer = sync(db, ['debe']);
   return createSocket(url, syncer.connect);
 }
 
-export function createLocalClient(db: Debe, broker: IBroker, models: string[]) {
-  const syncer = sync(db, models, ['debe']);
+export function createLocalClient(db: Debe, broker: IBroker) {
+  const syncer = sync(db, ['debe']);
   const local = broker.local('debe-sync1', syncer.connect);
   return local;
 }

@@ -5,7 +5,9 @@ import {
   coreSkill,
   changeListenerSkill,
   softDeleteSkill,
-  ISkill
+  ISkill,
+  ICollectionInput,
+  ICollection
 } from 'debe';
 import { createFilter, sort } from './filter';
 export * from './filter';
@@ -15,8 +17,11 @@ interface IStore {
 }
 
 export class MemoryDebe extends Debe {
-  constructor({ changeListener = true, softDelete = false } = {}) {
-    super();
+  constructor(
+    collections: ICollectionInput[],
+    { changeListener = true, softDelete = false } = {}
+  ) {
+    super(collections);
     if (changeListener) {
       this.addSkill(changeListenerSkill());
     }
@@ -35,41 +40,32 @@ export const memorySkill = (): ISkill => {
     store[type].set(item.id, item);
     return item;
   }
-  function ensureModel(model: string) {
-    if (model && !store[model]) {
-      store[model] = new Map();
-    }
-  }
 
   return function memory(type, payload, flow) {
-    if (type === types.INSERT) {
-      const [model, arg] = payload;
-      ensureModel(model);
-      flow.return(arg.map((x: any) => handle(model, x)));
+    if (type === types.COLLECTION) {
+      const collection = payload as ICollection;
+      store[collection.name] = new Map();
+      flow(payload);
+    } else if (type === types.INSERT) {
+      const [collection, arg] = payload;
+      flow.return(arg.map((x: any) => handle(collection, x)));
     } else if (type === types.COUNT) {
-      const [model] = payload;
-      ensureModel(model);
-      flow.return(Array.from(store[model].keys()).length);
+      const [collection] = payload;
+      flow.return(Array.from(store[collection].keys()).length);
     } else if (type === types.REMOVE) {
-      const [model, arg] = payload;
-      ensureModel(model);
-      flow.return(store[model].delete(arg.id));
+      const [collection, arg] = payload;
+      flow.return(store[collection].delete(arg.id));
     } else if (type === types.GET) {
-      const [model, arg] = payload;
-      ensureModel(model);
-      flow.return(store[model].get(arg.id));
+      const [collection, arg] = payload;
+      flow.return(store[collection].get(arg.id));
     } else if (type === 'console.log') {
-      const [model] = payload;
-      ensureModel(model);
-      console.log(store[model].values());
       flow.return(null);
     } else if (type === types.ALL) {
-      const [model, query] = payload;
-      ensureModel(model);
+      const [collection, query] = payload;
       const filter =
         query && query.where ? createFilter(query.where) : undefined;
       const orderBy = query && query.orderBy;
-      let arr = Array.from(store[model].values());
+      let arr = Array.from(store[collection].values());
       if (filter) {
         arr = arr.filter(filter);
       }

@@ -23,8 +23,7 @@ export function debeAutomerge(client: Debe) {
       let item: any;
       if (id) {
         item = await client.get(table, {
-          id,
-          additionalColumns: ['automerge']
+          id
         });
         if (!item) {
           return Promise.reject(new Error('Could not find item with id ' + id));

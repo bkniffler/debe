@@ -1,5 +1,6 @@
-import { IItem, types } from '../types';
+import { IItem, types, fieldTypes } from '../types';
 import { ISkill } from 'flowzilla';
+import { ensureCollection } from './core';
 
 const defaultRevisionField = 'rev';
 export const changeListenerSkill = (options: any = {}): ISkill => {
@@ -10,21 +11,23 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
     if (!item) {
       return item;
     }
-    item[revField] = new Date().getTime() + '';
+    item[revField] = new Date().getTime();
     return item;
   }
 
   return function changeListener(type, payload, flow) {
-    if (type === types.INITIALIZE) {
-      payload.columns = [...payload.columns, revField];
-      payload.indices = [...payload.indices, revField];
+    if (type === types.COLLECTION) {
+      const collection = ensureCollection(payload);
+      collection.specialFields.rev = revField;
+      collection.fields[revField] = fieldTypes.NUMBER;
+      collection.index[revField] = fieldTypes.NUMBER;
       return flow(payload);
     }
     const callback = flow.get('callback');
     if (callback) {
-      const [model] = payload;
+      const [collection] = payload;
       if (type === types.LISTEN) {
-        return queryEmitter.on(model, callback);
+        return queryEmitter.on(collection, callback);
       }
       let lastResult: any = undefined;
       const listener = async () => {
@@ -47,14 +50,14 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
         }
       };
       listener();
-      return queryEmitter.on(model, listener);
+      return queryEmitter.on(collection, listener);
     } else if (type === types.INSERT) {
       const syncFrom = flow.get('syncFrom');
-      const [model, items] = payload;
+      const [collection, items] = payload;
       return flow(
-        [model, Array.isArray(items) ? items.map(addRev) : addRev(items)],
+        [collection, Array.isArray(items) ? items.map(addRev) : addRev(items)],
         (res, back) => {
-          queryEmitter.emit(model, Array.isArray(res) ? res : [res], {
+          queryEmitter.emit(collection, Array.isArray(res) ? res : [res], {
             syncFrom
           });
           back(res);

@@ -1,44 +1,38 @@
-import { IModel, types } from 'debe';
+import { ICollection, types, fieldTypes } from 'debe';
 import { ISkill } from 'flowzilla';
 
-function getModel(name: string): IModel {
-  return { name, columns: [], index: [] };
-}
 export const jsonBodySkill = (options: any = {}): ISkill => {
   const { bodyField = 'body', merge = true } = options;
 
   return function jsonToBody(type, payload, flow) {
-    if (type === types.INITIALIZE) {
-      payload.columns = [...payload.columns, bodyField];
+    if (type === types.COLLECTION) {
+      (payload as ICollection).specialFields.body = bodyField;
+      (payload as ICollection).fields[bodyField] = fieldTypes.JSON;
       return flow(payload);
     }
-    const columns = flow.get('columns', []);
-    const schema = flow.get('schema', {});
-    function filterItem(model: IModel, item: any): [any, any] {
+    const collections = flow.get('collections', {});
+    function filterItem(collection: ICollection, item: any): [any, any] {
       const rest = {};
       return [
         Object.keys(item).reduce((state: any, key: string) => {
-          if (
-            columns.indexOf(key) !== -1 ||
-            (model.columns || []).indexOf(key) !== -1
-          ) {
-            state[key] = item[key] || state[key];
+          if (collection.fields[key]) {
+            state[key] = item[key];
           } else {
-            rest[key] = item[key] || state[key];
+            rest[key] = item[key];
           }
           return state;
         }, {}),
         rest
       ];
     }
-    const transform = (model: IModel, result: any): any => {
+    const transform = (collection: ICollection, result: any): any => {
       if (Array.isArray(result)) {
-        return result.map(x => transform(model, x));
+        return result.map(x => transform(collection, x));
       }
       if (!result) {
         return result;
       }
-      const [obj] = filterItem(model, result);
+      const [obj] = filterItem(collection, result);
       const body =
         obj[bodyField] && typeof obj[bodyField] === 'string'
           ? JSON.parse(obj[bodyField])
@@ -47,21 +41,21 @@ export const jsonBodySkill = (options: any = {}): ISkill => {
       return { ...body, ...obj };
     };
 
-    const transform2 = (model: IModel, result: any): any => {
+    const transform2 = (collection: ICollection, result: any): any => {
       if (Array.isArray(result)) {
-        return result.map(x => transform2(model, x));
+        return result.map(x => transform2(collection, x));
       }
       if (!result) {
         return result;
       }
-      const [obj, rest] = filterItem(model, result);
+      const [obj, rest] = filterItem(collection, result);
       obj[bodyField] = JSON.stringify(rest);
       return obj;
     };
 
     if (type === types.INSERT) {
       const [m, value] = payload;
-      const model = schema[m];
+      const collection = collections[m];
       if (Array.isArray(value) && merge) {
         const ids: string[] = [];
         const indices = {};
@@ -88,29 +82,28 @@ export const jsonBodySkill = (options: any = {}): ISkill => {
                   };
                 }
               });
-              flow([m, transform2(model, value)]);
+              flow([m, transform2(collection, value)]);
             });
         } else {
-          flow([m, transform2(model, value)]);
+          flow([m, transform2(collection, value)]);
         }
       } else if (value.id && merge) {
         flow
           .run(types.GET, [m, { where: { id: value.id } }])
           .then((item: any) =>
-            flow([m, transform2(model, { ...item, ...value })])
+            flow([m, transform2(collection, { ...item, ...value })])
           );
       } else {
         flow(
-          [m, transform2(model, value)],
-          (x, flow) => flow(transform(model, x))
+          [m, transform2(collection, value)],
+          (x, flow) => flow(transform(collection, x))
         );
       }
     } else if (type === types.GET || type === types.ALL) {
       const [m] = payload;
-      const model = getModel(m);
       flow(
         payload,
-        (x, flow) => flow(transform(model, x))
+        (x, flow) => flow(transform(collections[m], x))
       );
     } else {
       flow(payload);

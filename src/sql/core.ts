@@ -1,53 +1,74 @@
-import { IModel, IInsertItem, IGetItem, IQuery, ensureArray } from 'debe';
+import {
+  ICollection,
+  IInsertItem,
+  IGetItem,
+  IQuery,
+  ensureArray,
+  IFieldTypes
+} from 'debe';
 
 export abstract class SQLCore {
-  idField = 'id';
-  columns: string[] = [this.idField];
-  indices: string[] = [];
-
   abstract exec<T>(
     sql: string,
     args: any[],
     type?: 'all' | 'get' | 'count' | 'insert'
   ): Promise<T>;
 
-  createTableIndex(model: string, field: string) {
-    return `CREATE INDEX IF NOT EXISTS "${model}_${field}" ON "${model}" (${field})`;
-  }
-  getColumnType(field: string): string {
-    if (field === this.idField) {
-      return 'TEXT PRIMARY KEY';
+  getColumnType(type: IFieldTypes, secondType?: IFieldTypes): string {
+    if (type === 'boolean') {
+      return 'BOOLEAN';
+    } else if (type === 'json') {
+      return 'JSON';
+    } else if (type === 'number') {
+      return 'BIGINT';
+    } else if (type === 'string') {
+      return 'STRING';
+    } else if (secondType) {
+      return this.getColumnType(secondType);
     }
-    return 'TEXT';
+    return 'STRING';
   }
-  createInsertStatement(model: IModel, columns?: string[]) {
-    columns = columns || [...this.columns, ...model.columns];
-    const base = `INSERT INTO "${model.name}" (${columns.join(
+  createTableIndex(collection: ICollection, field: string, type?: string) {
+    type;
+    return `CREATE INDEX IF NOT EXISTS "${collection.name}_${field}" ON "${
+      collection.name
+    }" (${field})`;
+  }
+  createInsertStatement(collection: ICollection, fields: string[] = []) {
+    fields = fields.length ? fields : Object.keys(collection.fields);
+    const base = `INSERT INTO "${collection.name}" (${fields.join(
       ', '
-    )}) VALUES (${columns.map(() => '?').join(', ')})`;
-    const conflict = columns
-      .filter(x => x !== this.idField)
+    )}) VALUES (${fields.map(() => '?').join(', ')})`;
+    const conflict = fields
+      .filter(x => x !== collection.specialFields.id)
       .map(key => `${key}=EXCLUDED.${key}`)
       .join(', ');
-    return `${base} ON CONFLICT(${this.idField}) DO UPDATE SET ${conflict}`;
+    return `${base} ON CONFLICT(${
+      collection.specialFields.id
+    }) DO UPDATE SET ${conflict}`;
   }
-  /*createInsertStatement(model: IModel, columns?: string[]) {
-      columns = columns || [...this.defaultColumns(), ...model.columns];
-      return `INSERT INTO "${model.name}" (${columns.join(
+  /*createInsertStatement(collection: ICollection, columns?: string[]) {
+      columns = columns || [...this.defaultColumns(), ...collection.columns];
+      return `INSERT INTO "${collection.name}" (${columns.join(
         ', '
       )}) VALUES (${columns.map(() => '?').join(', ')})`;
     }*/
-  createTable(model: IModel) {
+  createTable(collection: ICollection) {
     return this.exec('', [
-      `CREATE TABLE IF NOT EXISTS "${model.name}" (${[
-        ...this.columns.map(field => `${field} ${this.getColumnType(field)}`),
-        ...model.columns.map(field => `${field} ${this.getColumnType(field)}`)
+      `CREATE TABLE IF NOT EXISTS "${collection.name}" (${[
+        ...Object.keys(collection.fields).map(
+          key =>
+            `${key} ${this.getColumnType(collection.fields[key])}${
+              collection.specialFields.id === key ? ' PRIMARY KEY' : ''
+            }`
+        )
       ].join(', ')})`,
-      ...this.indices.map((field: string) =>
-        this.createTableIndex(model.name, field)
-      ),
-      ...model.index.map((field: string) =>
-        this.createTableIndex(model.name, field)
+      ...Object.keys(collection.index).map(key =>
+        this.createTableIndex(
+          collection,
+          key,
+          this.getColumnType(collection.index[key], collection.fields[key])
+        )
       )
     ]);
   }
@@ -55,11 +76,9 @@ export abstract class SQLCore {
   makeCount(statement: string): string {
     return `SELECT COUNT(*) AS count FROM (${statement}) AS src`;
   }
-  createSelect(model: IModel, columns?: string[]): string {
-    if (!columns) {
-      columns = [...this.columns, ...model.columns];
-    }
-    return `SELECT ${columns.join(', ')}`;
+  createSelect(collection: ICollection, fields: string[] = []): string {
+    fields = fields.length ? fields : Object.keys(collection.fields);
+    return `SELECT ${fields.join(', ')}`;
   }
   createOffset(offset?: number): string {
     return offset !== undefined ? `OFFSET ${offset}` : '';
@@ -81,7 +100,7 @@ export abstract class SQLCore {
     return orderBy.length ? `ORDER BY ${orderBy.join(', ')}` : '';
   }
   createQueryStatement(
-    model: IModel,
+    collection: ICollection,
     queryArgs: IQuery = {},
     queryType: string
   ): [string, ...any[]] {
@@ -95,10 +114,10 @@ export abstract class SQLCore {
     const [whereStatement, ...args] =
       id && typeof id === 'string'
         ? this.createWhereId(id)
-        : this.createWhere(model, where);
+        : this.createWhere(collection, where);
     const sql = `
-        ${this.createSelect(model)}
-        FROM "${model.name}" 
+        ${this.createSelect(collection)}
+        FROM "${collection.name}" 
         ${whereStatement}
         ${this.createOrderBy(orderBy)}
         ${this.createLimit(queryType === 'get' ? 1 : limit)}
@@ -106,13 +125,13 @@ export abstract class SQLCore {
       `.trim();
     return [queryType === 'count' ? this.makeCount(sql) : sql, ...args];
   }
-  createWhere(model: IModel, where: string[] | string): any[] {
+  createWhere(collection: ICollection, where: string[] | string): any[] {
     where = ensureArray(where);
     const [clause, ...args] = where;
     return [clause ? `WHERE ${clause}` : ``, ...args];
   }
   /*createWhere(where: string[] | string, removedField: string): any[] {
-    where = ensureArray(where);
+    where = ensureArrICollectionre);
     const [clause, ...args] = where;
     return [
       clause
@@ -131,12 +150,12 @@ export abstract class SQLCore {
     return [`WHERE id IN (?)`, ...id];
   }
   query<T>(
-    model: IModel,
+    collection: ICollection,
     queryArgs: IQuery,
     queryType: 'all' | 'get' | 'count'
   ): Promise<T> {
     const [sql, ...args] = this.createQueryStatement(
-      model,
+      collection,
       queryArgs,
       queryType
     );
@@ -150,15 +169,12 @@ export abstract class SQLCore {
     }
   }
   async insert<T>(
-    model: IModel,
+    collection: ICollection,
     value: (T & IInsertItem)[]
   ): Promise<(T & IGetItem)[]> {
-    const columns = [...this.columns, ...model.columns];
-    const statement = this.createInsertStatement(model, columns);
-    const ids: string[] = [];
+    const statement = this.createInsertStatement(collection);
     const items = value.map(item => {
-      ids.push(item[this.idField]);
-      return columns.map(key => item[key]);
+      return Object.keys(collection.fields).map(key => item[key]);
     });
     await this.exec(statement, items, 'insert');
     return value as any;

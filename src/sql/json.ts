@@ -1,24 +1,20 @@
 import { SQLCore } from './core';
-import { IModel, ensureArray } from 'debe';
+import { ICollection, ensureArray } from 'debe';
 
 export abstract class SQLJsonCore extends SQLCore {
-  bodyField = 'body';
-  getColumnType(field: string): string {
-    if (field === this.bodyField) {
-      return 'JSON';
-    }
-    return super.getColumnType(field);
+  getCollectionBodyField(collection: ICollection) {
+    return collection.specialFields.body;
   }
-  abstract selectJSONField(field: string): string;
-  createWhere(model: IModel, where: string[] | string): any[] {
+  abstract selectJSONField(collection: ICollection, field: string): string;
+  createWhere(collection: ICollection, where: string[] | string): any[] {
     where = ensureArray(where);
     let [clause, ...args] = where;
     if (clause) {
-      for (var i = 0; i < model.index.length; i++) {
-        let field = model.index[i];
+      for (var key in collection.index) {
+        let field = collection.index[key];
         clause = clause.replace(
           new RegExp(`${field} `, 'g'),
-          this.selectJSONField(field)
+          this.selectJSONField(collection, field)
         );
       }
       return [`WHERE ${clause}`, ...args];

@@ -1,6 +1,7 @@
 import { SQLJsonCore, SQLDebe } from 'debe-sql';
 //@ts-ignore
 import * as _sql from 'better-sqlite3';
+import { ICollection } from 'debe';
 const sql = _sql;
 
 export class Sqlite3Debe extends SQLDebe {
@@ -18,16 +19,20 @@ export class SQLite3 extends SQLJsonCore {
     super();
     this.db = sql(dbPath);
   }
-  selectJSONField(field: string) {
-    return `json_extract(${this.bodyField}, '$.${field}')`;
+  selectJSONField(collection: ICollection, field: string) {
+    return `json_extract(${this.getCollectionBodyField(
+      collection
+    )}, '$.${field}')`;
   }
-  createTableIndex(model: string, field: string) {
-    if (this.columns.indexOf(field) !== -1) {
-      return super.createTableIndex(model, field);
+  createTableIndex(collection: ICollection, field: string, type?: string) {
+    if (collection.fields[field]) {
+      return super.createTableIndex(collection, field);
     }
-    return `CREATE INDEX IF NOT EXISTS "${model}_${field}" ON "${model}" (json_extract(${
-      this.bodyField
-    }, '$.${field}'))`;
+    return `CREATE INDEX IF NOT EXISTS "${collection.name}_${field}" ON "${
+      collection.name
+    }" (json_extract(${this.getCollectionBodyField(
+      collection
+    )}, '$.${field}'))`;
   }
   exec<T>(
     sql: string,

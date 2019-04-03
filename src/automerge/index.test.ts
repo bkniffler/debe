@@ -5,7 +5,7 @@ const schema = [
   {
     name: 'lorem',
     index: ['hallo', 'hallo2'],
-    columns: ['automerge', 'changes']
+    fields: ['automerge', 'changes']
   }
 ];
 interface ILorem {
@@ -15,30 +15,30 @@ interface ILorem {
 }
 
 test('automerge:simple', async () => {
-  const db = new MemoryDebe();
-  await db.initialize(schema);
+  const db = new MemoryDebe(schema);
+  await db.initialize();
   const automerge = debeAutomerge(db);
-  const item = await automerge<ILorem>(name, doc => {
+  const item = await automerge<ILorem>('lorem', doc => {
     doc.goa = 'mpu';
   });
-  await automerge<ILorem>(name, item.id, doc => {
+  await automerge<ILorem>('lorem', item.id, doc => {
     doc.goa2 = 'mpu1';
   });
-  await automerge<ILorem>(name, item.id, doc => {
+  await automerge<ILorem>('lorem', item.id, doc => {
     doc.goa2 = 'mpu2';
   });
-  const final = await db.all<ILorem>(name, { id: item.id });
+  const final = await db.all<ILorem>('lorem', { id: item.id });
   expect(final.length).toBe(1);
   expect(final[0].goa).toBe('mpu');
   expect(final[0].goa2).toBe('mpu2');
 });
 
 test('automerge:err', async () => {
-  const db = new MemoryDebe();
-  await db.initialize(schema);
+  const db = new MemoryDebe(schema);
+  await db.initialize();
   const automerge = debeAutomerge(db);
   let err = null;
-  await automerge<ILorem>(name, '10', doc => {
+  await automerge<ILorem>('lorem', '10', doc => {
     doc.goa = 'mpu';
   }).catch(e => (err = e));
   expect(err).toBeTruthy();

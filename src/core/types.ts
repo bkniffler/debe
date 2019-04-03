@@ -6,8 +6,19 @@ export const types = {
   COUNT: 'count',
   DESTROY: 'destroy',
   REMOVE: 'remove',
-  INITIALIZE: 'initialize'
+  INITIALIZE: 'initialize',
+  COLLECTION: 'collection'
 };
+interface IFieldTypeHolder {
+  [s: string]: IFieldTypes;
+}
+export const fieldTypes: IFieldTypeHolder = {
+  NUMBER: 'number',
+  BOOLEAN: 'boolean',
+  STRING: 'string',
+  JSON: 'json'
+};
+export type IFieldTypes = 'number' | 'boolean' | 'string' | 'json';
 export interface IInsertItem {
   [k: string]: any;
   id?: string;
@@ -16,65 +27,50 @@ export interface IGetItem {
   id: string;
   rev: string;
 }
-export interface IItem {
+export interface IItem extends IGetItem {
   [s: string]: any;
-  id: string;
-  rev: string;
 }
 export interface IQuery {
   id?: string[] | string;
   explain?: boolean;
   limit?: number | [number] | [number, number];
   offset?: number;
-  includeBody?: boolean;
   where?: string[] | string;
+  select?: string[] | string;
   orderBy?: string[] | string;
-  additionalColumns?: string[];
 }
-export interface IListenerObject {
-  change: any;
-  model: string;
-  type: 'CREATE' | 'UPDATE' | 'DELETE';
-  properties: string[];
-  newValue: IItem;
-  oldValue?: IItem;
-}
-export type IListenerCallback = (value: IListenerObject) => void;
+
 export type IObserverCallback<T = IItem> = (
   items: T,
   reason: 'INITIAL' | 'CHANGE'
 ) => void;
 
-export interface ISchema {
-  [key: string]: IModel;
-}
-export interface IInsertOptions {
-  explain?: boolean;
-  keepRev?: boolean;
-}
-export interface IDefaultColumns {
-  id: string;
-  rev: string;
-  body: string;
-  removed: string;
-}
-export interface IColumn {
+export interface ICollection {
   name: string;
-  type: 'text' | 'number';
-}
-export interface IDebeSQLEngineOptions {
-  verbose?: boolean;
-  defaultColumnNames?: IDefaultColumns;
-  additionalColumns?: IColumn[];
-}
-export interface IModelCreate {
-  name: string;
-  index?: string[];
-  columns?: string[];
+  index: IFields;
+  fields: IFields;
+  specialFields: ISpecialFields;
 }
 
-export interface IModel {
+export interface ICollectionInput {
   name: string;
-  index: string[];
-  columns: string[];
+  index?: IFields | string[];
+  fields?: IFields | string[];
+  plugins?: IFields | string[];
+  specialFields?: ISpecialFields;
+}
+
+export interface ISpecialFields {
+  [key: string]: string;
+}
+export interface ICollections {
+  [key: string]: ICollection;
+}
+
+export interface IFields {
+  [key: string]: IFieldTypes;
+}
+
+export interface IPlugins {
+  [key: string]: any[];
 }

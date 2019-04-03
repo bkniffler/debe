@@ -1,6 +1,7 @@
 import { SQLDebe, SQLJsonCore } from 'debe-sql';
 //@ts-ignore
 import { Pool } from 'pg';
+import { ICollection } from 'debe';
 
 export class PostgreSQLDebe extends SQLDebe {
   constructor(
@@ -22,16 +23,16 @@ export class PostgreSQL extends SQLJsonCore {
       connectionString
     });
   }
-  selectJSONField(field: string) {
-    return `${this.bodyField} ->> '${field}' `;
+  selectJSONField(collection: ICollection, field: string) {
+    return `${this.getCollectionBodyField(collection)} ->> '${field}' `;
   }
-  createTableIndex(model: string, field: string) {
-    if (this.columns.indexOf(field) !== -1) {
-      return super.createTableIndex(model, field);
+  createTableIndex(collection: ICollection, field: string, type?: string) {
+    if (collection.fields[field]) {
+      return super.createTableIndex(collection, field, type);
     }
-    return `CREATE INDEX IF NOT EXISTS "${model}_${field}" ON "${model}" ((${
-      this.bodyField
-    } ->> '${field}'))`;
+    return `CREATE INDEX IF NOT EXISTS "${collection.name}_${field}" ON "${
+      collection.name
+    }" ((${this.getCollectionBodyField(collection)} ->> '${field}'))`;
   }
   async exec<T>(
     sql: string,

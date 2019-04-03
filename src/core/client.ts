@@ -6,16 +6,32 @@ import {
   IItem,
   IGetItem,
   IInsertItem,
-  types
+  types,
+  ICollections,
+  ICollectionInput
 } from './types';
 
+function throwIfNotInitialized(db: Debe) {
+  if (!db.isInitialized) {
+    throw new Error(
+      'Not yet initialized, did you call and wait for db.initialize()?'
+    );
+  }
+}
+
 export class Debe<TBase = IItem> extends Flowzilla {
+  isInitialized = false;
+  collections: ICollections;
   createLog(name: string) {
     return createLog(name);
   }
   tracker: ITracker | undefined;
-  constructor({ tracker }: { tracker?: boolean } = {}) {
+  constructor(
+    collections: ICollectionInput[],
+    { tracker }: { tracker?: boolean } = {}
+  ) {
     super();
+    this.collections = collections as any;
     if (tracker) {
       this.tracker = args => {
         console.log(args);
@@ -25,112 +41,130 @@ export class Debe<TBase = IItem> extends Flowzilla {
   public destroy() {
     return this.run(types.DESTROY);
   }
-  public async initialize(arg: any = {}) {
-    return await this.run<any>(
+  public async initialize() {
+    const state = await this.run<any>(
       types.INITIALIZE,
-      { ...arg, indices: [], columns: [] },
+      { collections: this.collections },
       this
     );
+    this.collections = state.collections;
+    this.isInitialized = true;
+    return state;
   }
-  public use<T = IItem>(model: string): IDebeUse<T> {
+  public use<T = IItem>(collection: string): IDebeUse<T> {
     const proxy = this;
     return new Proxy<any>(
       {},
       {
         get: function(t: string, methodName: string) {
           return (...args: [any]) => {
-            return proxy[methodName](model, ...args);
+            return proxy[methodName](collection, ...args);
           };
         }
       }
     );
   }
-  public listen(model: string, callback: any): any {
-    return this.runSync(types.LISTEN, [model], { ...this, callback });
+  public listen(collection: string, callback: any): any {
+    throwIfNotInitialized(this);
+    return this.runSync(types.LISTEN, [collection], { ...this, callback });
   }
   public insert<T = IInsertItem>(
-    model: string,
+    collection: string,
     value: (T & IInsertItem)[],
     options?: any
   ): Promise<(T & IGetItem)[]>;
   public insert<T = IInsertItem>(
-    model: string,
+    collection: string,
     value: T & IInsertItem,
     options?: any
   ): Promise<T & IGetItem>;
   public insert<T = IInsertItem>(
-    model: string,
+    collection: string,
     value: (T & IInsertItem)[] | (T & IInsertItem),
     options: any = {}
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
-    return this.run(types.INSERT, [model, value], {
+    throwIfNotInitialized(this);
+    return this.run(types.INSERT, [collection, value], {
       ...options,
       ...this
     });
   }
   // remove
   public remove<T = any>(
-    model: string,
+    collection: string,
     value: string | string[]
   ): Promise<void> {
-    return this.run(types.REMOVE, [model, value]);
+    throwIfNotInitialized(this);
+    return this.run(types.REMOVE, [collection, value]);
   }
   // all
   public all<T = TBase>(
-    model: string,
+    collection: string,
     value?: IQuery
   ): Promise<(T & IGetItem)[]>;
   public all<T = TBase>(
-    model: string,
+    collection: string,
     value?: IQuery,
     callback?: IObserverCallback<(T & IGetItem)[]>
   ): () => void;
   public all<T = TBase>(
-    model: string,
+    collection: string,
     value?: IQuery,
     callback?: IObserverCallback<(T & IGetItem)[]>
   ): Promise<T[]> | (() => void) {
+    throwIfNotInitialized(this);
     if (callback && typeof callback === 'function') {
-      return this.runSync(types.ALL, [model, value], {
+      return this.runSync(types.ALL, [collection, value], {
         ...this,
         callback
       });
     }
-    return this.run(types.ALL, [model, value], this);
+    return this.run(types.ALL, [collection, value], this);
   }
   // count
-  public count(model: string, args?: IQuery): Promise<number>;
+  public count(collection: string, args?: IQuery): Promise<number>;
   public count(
-    model: string,
+    collection: string,
     value?: IQuery,
     callback?: IObserverCallback<number>
   ): () => void;
   public count(
-    model: string,
+    collection: string,
     value?: IQuery,
     callback?: IObserverCallback<number>
   ): Promise<number> | (() => void) {
+    throwIfNotInitialized(this);
     if (callback) {
-      return this.runSync(types.COUNT, [model, value], { ...this, callback });
+      return this.runSync(types.COUNT, [collection, value], {
+        ...this,
+        callback
+      });
     }
-    return this.run(types.COUNT, [model, value], this);
+    return this.run(types.COUNT, [collection, value], this);
   }
   // get
-  public get<T = TBase>(model: string, args?: IQuery): Promise<T & IGetItem>;
   public get<T = TBase>(
-    model: string,
+    collection: string,
+    args?: IQuery
+  ): Promise<T & IGetItem>;
+  public get<T = TBase>(
+    collection: string,
     value?: IQuery,
     callback?: IObserverCallback<T & IGetItem>
   ): () => void;
   public get<T = TBase>(
-    model: string,
+    collection: string,
     value?: IQuery,
     callback?: IObserverCallback<T & IGetItem>
   ): Promise<T> | (() => void) {
+    throwIfNotInitialized(this);
     if (callback) {
-      return this.runSync(types.GET, [model, value], { ...this, callback });
+      return this.runSync(types.GET, [collection, value], {
+        ...this,
+        callback
+      });
     }
-    return this.run(types.GET, [model, value], this);
+    return this.run(types.GET, [collection, value], this);
   }
 }
 

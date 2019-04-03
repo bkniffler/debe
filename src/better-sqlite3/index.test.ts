@@ -21,11 +21,11 @@ test('sqlite3:basic', async () => {
   );
   await client.initialize();
   const insertResult = await client.insert<any>('lorem', {
-    id: 0,
+    id: 'asd',
     name: 'Hallo'
   });
   const queryResult = await client.all<any>('lorem');
-  expect(insertResult.id).toBe('0');
+  expect(insertResult.id).toBe('asd');
   expect(insertResult.name).toBe('Hallo');
   expect(Array.isArray(queryResult)).toBe(true);
   expect(queryResult.length).toBe(1);
