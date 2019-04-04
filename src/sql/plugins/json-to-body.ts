@@ -1,7 +1,7 @@
 import { ICollection, types, fieldTypes, IPlugin, CORE_PLUGIN } from 'debe';
 
 export const jsonBodySkill = (options: any = {}): IPlugin => client => {
-  const { bodyField = 'body', merge = true } = options;
+  const { bodyField = 'body' } = options;
 
   client.addPlugin(
     'jsonToBodyPlugin',
@@ -57,7 +57,7 @@ export const jsonBodySkill = (options: any = {}): IPlugin => client => {
       if (type === types.INSERT) {
         const [m, value] = payload;
         const collection = collections[m];
-        if (Array.isArray(value) && merge) {
+        /*if (Array.isArray(value) && merge) {
           const ids: string[] = [];
           const indices = {};
           value.forEach((x, i) => {
@@ -94,12 +94,12 @@ export const jsonBodySkill = (options: any = {}): IPlugin => client => {
             .then((item: any) =>
               flow([m, transform2(collection, { ...item, ...value })])
             );
-        } else {
-          flow(
-            [m, transform2(collection, value)],
-            (x, flow) => flow(transform(collection, x))
-          );
-        }
+        } else {*/
+        flow(
+          [m, transform2(collection, value)],
+          (x, flow) => flow(transform(collection, x))
+        );
+        //}
       } else if (type === types.GET || type === types.ALL) {
         const [m] = payload;
         flow(
