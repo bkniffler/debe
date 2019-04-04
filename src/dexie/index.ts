@@ -23,6 +23,10 @@ export class DexieAdapter extends DebeAdapter {
   }
   db: Dexie;
   version: number;
+  destroy() {
+    this.db.close();
+    return Promise.resolve();
+  }
   initialize(collections: ICollections) {
     const schema: any = {};
     for (var key in collections) {
