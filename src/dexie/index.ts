@@ -53,29 +53,13 @@ export const dexieSkill = (name: string, version: number): ISkill => {
     } else if (type === types.INSERT) {
       const [collection, arg] = payload;
       flow.return(await db.table(collection).bulkPut(arg));
-    } else if (type === types.COUNT) {
-      const [collection, { where, offset, limit }] = payload as [
-        string,
-        IQuery
-      ];
-      let cursor = db.table(collection);
-      if (where) {
-        cursor = filter(cursor, where);
-      }
-      if (offset) {
-        cursor = cursor.offset(offset) as any;
-      }
-      if (limit) {
-        cursor = cursor.limit(limit) as any;
-      }
-      flow.return(await cursor.count());
     } else if (type === types.REMOVE) {
       const [collection, ids] = payload as [string, string[]];
       flow.return(await db.table(collection).bulkDelete(ids));
     } else if (type === types.GET) {
       const [collection, id] = payload as [string, string];
       flow.return(await db.table(collection).get(id));
-    } else if (type === types.ALL) {
+    } else if (type === types.ALL || type === types.COUNT) {
       const [collection, { where, offset, limit }] = payload as [
         string,
         IQuery
@@ -90,7 +74,9 @@ export const dexieSkill = (name: string, version: number): ISkill => {
       if (limit) {
         cursor = cursor.limit(limit) as any;
       }
-      flow.return(await cursor.toArray());
+      flow.return(
+        (await type) === types.COUNT ? cursor.count() : cursor.toArray()
+      );
     } else {
       flow(payload);
     }
