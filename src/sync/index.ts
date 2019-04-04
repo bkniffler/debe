@@ -6,7 +6,8 @@ import {
   ILog,
   addToQuery,
   types,
-  ICollection
+  ICollection,
+  softDeletePlugin
 } from 'debe';
 import { IService, IBroker } from 'rpc1';
 import { createSocket } from 'rpc1-socket';
@@ -189,6 +190,7 @@ export function sync(client: Debe, others: string[] = [], where?: string[]) {
     'AFTER',
     'changeListenerPlugin'
   );
+  softDeletePlugin()(client);
 
   return {
     connect: (service: IService) => {
