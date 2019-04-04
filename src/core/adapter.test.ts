@@ -24,6 +24,7 @@ export function createAdapterTest(name: string, createAdapter: any) {
     expect(queryResult.length).toBe(1);
     expect(queryResult[0].id).toBe(insertResult.id);
     expect(queryResult[0].name).toBe(insertResult.name);
+    await client.destroy();
   });
 
   test(`${name}:many`, async () => {
@@ -59,6 +60,7 @@ export function createAdapterTest(name: string, createAdapter: any) {
     expect(result.length).toBe(6);
     expect(result[0].id).toBe('a05');
     expect(result[4].id).toBe('a09');
+    await client.destroy();
   }, 10000);
 
   test(`${name}:change`, async () => {
@@ -75,6 +77,7 @@ export function createAdapterTest(name: string, createAdapter: any) {
     unlisten();
     await client.insert(table, { id: '2', name: 'Hallo' });
     expect(calls).toBe(2);
+    await client.destroy();
   });
 
   test(`${name}:softdelete`, async () => {
@@ -96,5 +99,6 @@ export function createAdapterTest(name: string, createAdapter: any) {
     expect(all1.length).toBe(1);
     expect(item0).toBeTruthy();
     expect(item0.id).toBe('asd0');
+    await client.destroy();
   });
 }
