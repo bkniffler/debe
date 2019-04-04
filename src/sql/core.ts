@@ -22,11 +22,11 @@ export abstract class SQLCore {
     } else if (type === 'number') {
       return 'BIGINT';
     } else if (type === 'string') {
-      return 'STRING';
+      return 'TEXT';
     } else if (secondType) {
       return this.getColumnType(secondType);
     }
-    return 'STRING';
+    return 'TEXT';
   }
   createTableIndex(collection: ICollection, field: string, type?: string) {
     type;

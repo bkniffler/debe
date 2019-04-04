@@ -23,7 +23,7 @@ export const adapterPlugin = (adapter: DebeAdapter): IPlugin => client => {
     flow
   ) {
     if (type === types.COLLECTIONS) {
-      adapter.initialize(payload);
+      await adapter.initialize(payload);
       flow(payload);
     } else if (type === types.INSERT) {
       const [collection, arg] = payload;

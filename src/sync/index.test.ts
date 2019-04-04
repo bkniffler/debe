@@ -137,7 +137,7 @@ test('sync:socket:simple', async cb => {
   );
   await dbClient2.initialize();
 
-  await new Promise(yay => setTimeout(yay, 3000));
+  await new Promise(yay => setTimeout(yay, 8000));
   async function isEqualState() {
     const allOnClient = await dbClient.all<ILorem>('lorem', {
       orderBy: ['rev ASC', 'id ASC']
@@ -161,14 +161,14 @@ test('sync:socket:simple', async cb => {
   await dbMaster.insert('lorem', { goa: 'a1002' });
   await dbMaster.insert('lorem', { goa: 'a1003' });
   await dbMaster.insert('lorem', { goa: 'a1004' });
-  await new Promise(yay => setTimeout(yay, 1000));
+  await new Promise(yay => setTimeout(yay, 5000));
   await isEqualState();
 
   destroyServer();
   destroyClient();
   destroyClient2();
   cb();
-}, 10000);
+}, 20000);
 
 test('sync:socket:crazy', async cb => {
   async function spawnMaster(port: number, syncTo?: number) {
