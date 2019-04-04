@@ -98,9 +98,11 @@ work().catch(err => console.log(err));
 
 ## Adapters
 
-- Memory
-- SQLite
-- PostgreSQL
+- Memory (universal)
+- SQL (nodeJS, electron)
+  - SQLite
+  - PostgreSQL
+- Dexie (browser)
 - MongoDB \*not yet :(
 
 ## Why
