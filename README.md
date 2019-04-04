@@ -40,17 +40,18 @@
 https://codesandbox.io/s/y27xmr9rvj
 
 ```js
-const { MemoryDebe } = require('debe-memory');
-const { createSocketClient } = require('debe-sync');
-const { createSocketServer } = require('debe-sync-server');
+const { Debe } = require("debe");
+const { MemoryAdapter } = require("debe-memory");
+const { createSocketClient } = require("debe-sync");
+const { createSocketServer } = require("debe-sync-server");
 
 async function generateItems(db, numberOfItems) {
   const start = new Date().getTime();
   const items = [];
   for (let x = 0; x < numberOfItems; x++) {
-    items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
+    items.push({ name: "a" + (x < 10 ? `0${x}` : x) });
   }
-  await db.insert('lorem', items);
+  await db.insert("lorem", items);
   console.log(
     `Generated ${numberOfItems} in ${new Date().getTime() - start}ms`
   );
@@ -60,30 +61,32 @@ async function wait(ms) {
   await new Promise(yay => setTimeout(yay, ms));
 }
 
+const schema = [{ name: "lorem", index: ["name"] }];
+
 async function work() {
+  console.log("Start");
   // Master
-  const db0 = new MemoryDebe();
+  const db0 = new Debe(new MemoryAdapter(), schema);
   createSocketServer(db0, { port: 5555 });
-
   // Client
-  const db1 = new MemoryDebe();
-  createSocketClient(db1, 'http://localhost:5555', ['lorem']);
-  //
-  await generateItems(db0, 100000);
+  const db1 = new Debe(new MemoryAdapter(), schema);
+  createSocketClient(db1, "http://localhost:5555", ["lorem"]);
+  // Init
+  await db0.initialize();
+  await db1.initialize();
+  console.log("Initialized");
+  // Step1
+  await generateItems(db0, 10000);
   await wait(250);
-  console.log(`Synced ${await db1.count('lorem')} via socket`);
-  //
-  await generateItems(db1, 10000);
+  console.log(`Synced ${await db1.count("lorem")} items via socket`);
+  // Step2
+  await generateItems(db1, 1000);
   await wait(250);
-  console.log(`Synced ${await db0.count('lorem')} via socket`);
-
-  // Query
-  console.log(
-    `Items < a50 = ${
-      (await db1.all('lorem', { where: ['name < ?', 'a50'] })).length
-    }`
-  );
+  console.log(`Synced ${await db0.count("lorem")} items via socket`);
 }
+
+work().catch(err => console.log(err));
+
 ```
 
 ## Bindings
