@@ -13,7 +13,7 @@ interface IStore {
 
 export class MemoryAdapter extends DebeAdapter {
   private store: IStore = {};
-  filter = createMemoryFilter();
+  filter = createMemoryFilter().filter;
   initialize(collections: ICollections) {
     for (var key in collections) {
       const collection = collections[key];
@@ -27,7 +27,7 @@ export class MemoryAdapter extends DebeAdapter {
   all(collection: string, query: IQuery) {
     let items = Array.from(this.store[collection].values());
     if (query.where) {
-      items = items.filter(this.filter.filter(query.where));
+      items = items.filter(this.filter(query.where));
     }
     if (query.orderBy) {
       items = sortArray(items, query.orderBy);
@@ -37,7 +37,7 @@ export class MemoryAdapter extends DebeAdapter {
   count(collection: string, query: IQuery) {
     let items = Array.from(this.store[collection].values());
     if (query.where) {
-      items = items.filter(this.filter.filter(query.where));
+      items = items.filter(this.filter(query.where));
     }
     return Promise.resolve(items.length);
   }

@@ -15,7 +15,7 @@ import { sortArray, createMemoryFilter } from 'debe-memory';
 });*/
 
 export class DexieAdapter extends DebeAdapter {
-  filter = createMemoryFilter();
+  filter = createMemoryFilter().filter;
   constructor(name = 'debe', version = 1) {
     super();
     this.db = new Dexie(name);
@@ -69,7 +69,7 @@ export class DexieAdapter extends DebeAdapter {
       // cursor = filter.reduce(cursor, where);
     }*/
     if (where) {
-      cursor = cursor.filter(this.filter.filter(where)) as any;
+      cursor = cursor.filter(this.filter(where)) as any;
     }
     if (offset) {
       cursor = cursor.offset(offset) as any;
