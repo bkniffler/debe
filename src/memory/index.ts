@@ -32,14 +32,17 @@ export class MemoryAdapter extends DebeAdapter {
     if (query.orderBy) {
       items = sortArray(items, query.orderBy);
     }
+    if (query.offset) {
+      items = items.slice(query.offset);
+    }
+    if (query.limit) {
+      items = items.slice(0, query.limit);
+    }
     return Promise.resolve([...items]);
   }
   count(collection: string, query: IQuery) {
-    let items = Array.from(this.store[collection].values());
-    if (query.where) {
-      items = items.filter(this.filter(query.where));
-    }
-    return Promise.resolve(items.length);
+    delete query.orderBy;
+    return this.all(collection, query).then(x => x.length);
   }
   insert(collection: string, items: any[]) {
     items.forEach((x: any) => this.handle(collection, x));

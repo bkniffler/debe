@@ -26,16 +26,29 @@ export function createAdapterTest(name: string, createAdapter: any) {
     const client = new Debe(createAdapter(), collections);
     await client.initialize();
     for (let x = 0; x < 100; x++) {
-      client.insert('lorem', { name2: 1, name: 'a' + (x < 10 ? `0${x}` : x) });
+      client.insert('lorem', { id: 'a' + (x < 10 ? `0${x}` : x) });
     }
-    const final1 = await client.all('lorem', {
-      where: ['name < ?', 'a50']
+    let result = await client.all('lorem', {
+      where: ['id < ?', 'a50']
     } as any);
-    const final2 = await client.all('lorem', {
-      where: ['name >= ?', 'a50']
+    expect(result.length).toBe(50);
+    result = await client.all('lorem', {
+      where: ['id >= ?', 'a50']
     } as any);
-    expect(final1.length).toBe(50);
-    expect(final2.length).toBe(50);
+    expect(result.length).toBe(50);
+    result = await client.all('lorem', {
+      limit: 5
+    } as any);
+    expect(result.length).toBe(5);
+    expect(result[0].id).toBe('a00');
+    expect(result[4].id).toBe('a04');
+    result = await client.all('lorem', {
+      limit: 6,
+      offset: 5
+    } as any);
+    expect(result.length).toBe(6);
+    expect(result[0].id).toBe('a05');
+    expect(result[4].id).toBe('a09');
   }, 10000);
 
   test(`${name}:change`, async () => {
