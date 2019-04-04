@@ -1,7 +1,8 @@
 language: node_js
 node_js:
   - '10'
-
+services:
+  - postgresql
 sudo: false
 
 cache: yarn
@@ -9,6 +10,8 @@ cache: yarn
 install:
   - yarn
 
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres
 script:
-  - yarn test --collect-coverage
+  - PG_CONNECTIONSTRING=postgresql://postgres@localhost:5432/travis_ci_test yarn test --collect-coverage
   - yarn coverage
