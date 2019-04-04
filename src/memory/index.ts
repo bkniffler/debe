@@ -1,6 +1,11 @@
-import { IGetItem, IQuery, DebeAdapter, ICollections } from 'debe';
-import { createFilter, sort } from './filter';
-export * from './filter';
+import {
+  IGetItem,
+  IQuery,
+  DebeAdapter,
+  ICollections,
+  FilterReducer,
+  ensureArray
+} from 'debe';
 
 interface IStore {
   [s: string]: Map<string, IGetItem>;
@@ -8,6 +13,7 @@ interface IStore {
 
 export class MemoryAdapter extends DebeAdapter {
   private store: IStore = {};
+  filter = createMemoryFilter();
   initialize(collections: ICollections) {
     for (var key in collections) {
       const collection = collections[key];
@@ -19,14 +25,21 @@ export class MemoryAdapter extends DebeAdapter {
     return Promise.resolve(item ? { ...item } : item);
   }
   all(collection: string, query: IQuery) {
-    return Promise.resolve([
-      ...this.filter(Array.from(this.store[collection].values()), query)
-    ]);
+    let items = Array.from(this.store[collection].values());
+    if (query.where) {
+      items = items.filter(this.filter.filter(query.where));
+    }
+    if (query.orderBy) {
+      items = sortArray(items, query.orderBy);
+    }
+    return Promise.resolve([...items]);
   }
   count(collection: string, query: IQuery) {
-    return Promise.resolve(
-      this.filter(Array.from(this.store[collection].values()), query).length
-    );
+    let items = Array.from(this.store[collection].values());
+    if (query.where) {
+      items = items.filter(this.filter.filter(query.where));
+    }
+    return Promise.resolve(items.length);
   }
   insert(collection: string, items: any[]) {
     items.forEach((x: any) => this.handle(collection, x));
@@ -41,15 +54,34 @@ export class MemoryAdapter extends DebeAdapter {
     this.store[type].set(item.id, item);
     return item;
   }
-  private filter(array: any[], query: IQuery) {
-    const filter = query && query.where ? createFilter(query.where) : undefined;
-    const orderBy = query && query.orderBy;
-    if (filter) {
-      array = array.filter(filter);
-    }
-    if (orderBy) {
-      array = sort(array, orderBy);
-    }
-    return array;
+}
+
+export const createMemoryFilter = () =>
+  new FilterReducer<any, boolean>({
+    '!=': (col, field, value) => (col[field] || null) != (value || null),
+    '<': (col, field, value) => col[field] < value,
+    '<=': (col, field, value) => col[field] <= value,
+    '=': (col, field, value) => (col[field] || null) == (value || null),
+    '>': (col, field, value) => col[field] > value,
+    '>=': (col, field, value) => col[field] >= value,
+    IN: (col, field, value) => ensureArray(value).indexOf(col[field]) >= 0,
+    'NOT IN': (col, field, value) => ensureArray(value).indexOf(col[field]) < 0,
+    'IS NULL': (col, field) => (col[field] || null) === null
+  });
+
+export function sortArray(arr: any[], orderer: string | string[]): any[] {
+  if (Array.isArray(orderer)) {
+    return orderer.reduce((arr, str) => sortArray(arr, str), arr);
   }
+  const [fieldName = '', direction = ''] = (orderer || '').split(' ');
+  if (fieldName) {
+    const isDesc = direction.toUpperCase() === 'DESC';
+    const compare = (a: any, b: any) => {
+      if (a[fieldName] < b[fieldName]) return isDesc ? 1 : -1;
+      if (a[fieldName] > b[fieldName]) return isDesc ? -1 : 1;
+      return 0;
+    };
+    return arr.sort(compare);
+  }
+  return arr;
 }

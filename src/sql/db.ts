@@ -12,7 +12,7 @@ export class SQLAdapter extends DebeAdapter {
   }
   connect(debe: Debe) {
     super.connect(debe);
-    debe.addPlugin(jsonBodySkill({ merge: false }), 'AFTER', 'corePlugin');
+    jsonBodySkill({ merge: false })(debe);
   }
   async initialize(collections: ICollections) {
     this.collections = collections;

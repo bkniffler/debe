@@ -1,7 +1,8 @@
-import { ICollections, IQuery, DebeAdapter, FilterReducer } from 'debe';
-import Dexie, { Table, IndexableType } from 'dexie';
+import { ICollections, IQuery, DebeAdapter } from 'debe';
+import Dexie from 'dexie';
+import { sortArray, createMemoryFilter } from 'debe-memory';
 
-const filter = new FilterReducer<Table<any, IndexableType>>({
+/*const filter = new FilterReducer<Table<any, IndexableType>>({
   '!=': (col, field, value) => col.where(field).notEqual(value) as any,
   '<': (col, field, value) => col.where(field).below(value) as any,
   '<=': (col, field, value) => col.where(field).belowOrEqual(value) as any,
@@ -9,11 +10,13 @@ const filter = new FilterReducer<Table<any, IndexableType>>({
   '>': (col, field, value) => col.where(field).above(value) as any,
   '>=': (col, field, value) => col.where(field).aboveOrEqual(value) as any,
   IN: (col, field, value) => col.where(field).anyOf(value) as any,
-  'NOT IN': (col, field, value) => col.where(field).noneOf(value) as any
-});
+  'NOT IN': (col, field, value) => col.where(field).noneOf(value) as any,
+  'IS NULL': (col, field) => col.where(field).equals(null). as any
+});*/
 
 export class DexieAdapter extends DebeAdapter {
-  constructor({ version = 1, name = 'debe' } = {}) {
+  filter = createMemoryFilter();
+  constructor(name = 'debe', version = 1) {
     super();
     this.db = new Dexie(name);
     this.version = version;
@@ -46,16 +49,27 @@ export class DexieAdapter extends DebeAdapter {
   get(collection: string, id: string) {
     return this.db.table(collection).get(id);
   }
-  all(collection: string, query: IQuery) {
-    return this.baseQuery(collection, query).toArray();
+  async all(collection: string, query: IQuery) {
+    let result = await this.baseQuery(collection, query).toArray();
+    if (query.orderBy) {
+      result = sortArray(result, query.orderBy);
+    }
+    return result;
   }
   count(collection: string, query: IQuery) {
     return this.baseQuery(collection, query).count();
   }
   private baseQuery(collection: string, { where, offset, limit }: IQuery) {
     let cursor = this.db.table(collection);
+    /*if (where) {
+      //const filter = createFilter(where);
+      if (filter) {
+        cursor = cursor.filter(filter) as any;
+      }
+      // cursor = filter.reduce(cursor, where);
+    }*/
     if (where) {
-      cursor = filter.reduce(cursor, where);
+      cursor = cursor.filter(this.filter.filter(where)) as any;
     }
     if (offset) {
       cursor = cursor.offset(offset) as any;

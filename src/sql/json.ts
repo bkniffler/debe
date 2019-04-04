@@ -11,10 +11,12 @@ export abstract class SQLJsonCore extends SQLCore {
     let [clause, ...args] = where;
     if (clause) {
       for (var key in collection.index) {
-        clause = clause.replace(
-          new RegExp(`${key} `, 'g'),
-          this.selectJSONField(collection, key)
-        );
+        if (!collection.fields[key]) {
+          clause = clause.replace(
+            new RegExp(`${key} `, 'g'),
+            this.selectJSONField(collection, key)
+          );
+        }
       }
       return [`WHERE ${clause}`, ...args];
     }

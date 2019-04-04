@@ -16,23 +16,36 @@ function fetchLast(arr: any[]) {
   return arr[arr.length - 1] && arr[arr.length - 1];
 }
 
-export interface IFilterReducer<T> {
-  '>=': (state: T, field: string, value: any) => T;
-  '>': (state: T, field: string, value: any) => T;
-  '<=': (state: T, field: string, value: any) => T;
-  '<': (state: T, field: string, value: any) => T;
-  IN: (state: T, field: string, value: any) => T;
-  'NOT IN': (state: T, field: string, value: any) => T;
-  '=': (state: T, field: string, value: any) => T;
-  '!=': (state: T, field: string, value: any) => T;
+export interface IFilterReducer<T = any, T2 = T> {
+  '>=': (state: T, field: string, value: any) => T2;
+  '>': (state: T, field: string, value: any) => T2;
+  '<=': (state: T, field: string, value: any) => T2;
+  '<': (state: T, field: string, value: any) => T2;
+  IN: (state: T, field: string, value: any) => T2;
+  'NOT IN': (state: T, field: string, value: any) => T2;
+  'IS NULL': (state: T, field: string, value: any) => T2;
+  '=': (state: T, field: string, value: any) => T2;
+  '!=': (state: T, field: string, value: any) => T2;
 }
 
-export class FilterReducer<T = any> {
-  map: IFilterReducer<T>;
-  constructor(map: IFilterReducer<T>) {
+export class FilterReducer<T = any, T2 = T> {
+  map: IFilterReducer<T, T2>;
+  constructor(map: IFilterReducer<T, T2>) {
     this.map = map;
   }
-  reduce(state: T, query: [string, ...any[]]): T {
+  filter = (query: [string, ...any[]]): any => {
+    const array = queryToArray(query);
+    return (item: T) => {
+      for (var i = 0; i < array.length; i++) {
+        const [left, operand, right] = array[i];
+        if (!this.map[operand] || !this.map[operand](item, left, right)) {
+          return false;
+        }
+      }
+      return true;
+    };
+  };
+  reduce = (state: T, query: [string, ...any[]]): T => {
     const array = queryToArray(query);
     for (var i = 0; i < array.length; i++) {
       let [left, operand, right] = array[i];
@@ -41,7 +54,7 @@ export class FilterReducer<T = any> {
       }
     }
     return state;
-  }
+  };
 }
 
 export function queryToArray(query: [string, ...any[]]) {
@@ -56,12 +69,29 @@ export function queryToArray(query: [string, ...any[]]) {
           (fetchLast(arr) === '=' || fetchLast(arr) === '==')
         ) {
           arr[arr.length - 1] = `IN`;
+          arr.push(arg as any);
+        } else if (
+          (arg === undefined || arg === null) &&
+          (fetchLast(arr) === '=' ||
+            fetchLast(arr) === '==' ||
+            fetchLast(arr) === 'IS')
+        ) {
+          arr[arr.length - 1] = `IS NULL`;
+        } else if (
+          (arg === undefined || arg === null) &&
+          fetchLast(arr) === '!='
+        ) {
+          arr[arr.length - 1] = `IS NOT NULL`;
         } else if (Array.isArray(arg) && fetchLast(arr) === '!=') {
           arr[arr.length - 1] = `NOT IN`;
+          arr.push(arg as any);
+        } else {
+          arr.push(arg);
         }
-        arr.push(arg);
       } else if (x) {
         if (fetchLast(arr) === 'NOT') {
+          arr[arr.length - 1] = `${arr[arr.length - 1]} ${x}`;
+        } else if (x === 'NULL') {
           arr[arr.length - 1] = `${arr[arr.length - 1]} ${x}`;
         } else {
           arr.push(x === '==' ? '=' : x);
@@ -71,19 +101,3 @@ export function queryToArray(query: [string, ...any[]]) {
     }, [])
   );
 }
-
-/*export function mongoToQuery(mongoQuery: any[]) {
-  if (!mongoQuery) {
-    return [];
-  } else {
-    const array = Object.keys(mongoQuery);
-    let result = '';
-    const params = [];
-    for (var i = 0; i < array.length; i++) {
-      const key = array[i];
-      result = (result ? result : `${result} `) + `${key} = ?`;
-      params.push(mongoQuery[key]);
-    }
-    return [result, ...params];
-  }
-}*/

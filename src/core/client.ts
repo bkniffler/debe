@@ -115,7 +115,7 @@ export class Debe<TBase = IItem> {
     value: string | string[]
   ): Promise<void> {
     throwIfNotInitialized(this);
-    return this.flow.run(types.REMOVE, [collection, value]);
+    return this.flow.run(types.REMOVE, [collection, value], this);
   }
   // all
   public all<T = TBase>(

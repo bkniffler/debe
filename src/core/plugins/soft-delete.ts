@@ -1,5 +1,5 @@
 import { types, fieldTypes, ICollection } from '../types';
-import { ensureArray, toISO, addToQuery } from '../utils';
+import { ensureArray, addToQuery, toISO } from '../utils';
 import { IPlugin, Debe } from '../client';
 
 export const softDeletePlugin = (options: any = {}): IPlugin => (
@@ -11,13 +11,13 @@ export const softDeletePlugin = (options: any = {}): IPlugin => (
     (type, payload, flow) => {
       if (type === types.COLLECTION) {
         (payload as ICollection).specialFields.rem = removedField;
-        (payload as ICollection).fields[removedField] = fieldTypes.NUMBER;
-        (payload as ICollection).index[removedField] = fieldTypes.NUMBER;
+        (payload as ICollection).fields[removedField] = fieldTypes.STRING;
+        (payload as ICollection).index[removedField] = fieldTypes.STRING;
         return flow(payload);
       }
       if (type === 'all' || type === 'count') {
         const [collection, arg = {}] = payload;
-        arg.where = addToQuery(arg.where, 'AND', `${removedField} = ?`, null);
+        arg.where = addToQuery(arg.where, 'AND', `${removedField} IS NULL`);
         flow([collection, arg]);
       } else if (type === 'remove') {
         const [collection, arg = {}] = payload;
