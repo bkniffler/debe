@@ -20,6 +20,9 @@ export class SQLAdapter extends DebeAdapter {
       Object.keys(collections).map(key => this.db.createTable(collections[key]))
     );
   }
+  destroy() {
+    return this.db.destroy();
+  }
   insert(collection: string, items: any[]) {
     return this.db.insert(this.collections[collection], items);
   }

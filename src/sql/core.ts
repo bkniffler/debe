@@ -14,6 +14,9 @@ export abstract class SQLCore {
     type?: 'all' | 'get' | 'count' | 'insert' | 'remove'
   ): Promise<T>;
 
+  destroy(): Promise<void> {
+    return Promise.resolve();
+  }
   getColumnType(type: IFieldTypes, secondType?: IFieldTypes): string {
     if (type === 'boolean') {
       return 'BOOLEAN';

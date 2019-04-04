@@ -10,12 +10,15 @@ export class PostgreSQLAdapter extends SQLAdapter {
 }
 
 export class PostgreSQL extends SQLJsonCore {
-  pool: any;
+  pool: Pool;
   constructor(connectionString: string) {
     super();
     this.pool = new Pool({
       connectionString
     });
+  }
+  destroy() {
+    return this.pool.end();
   }
   selectJSONField(collection: ICollection, field: string) {
     return `${this.getCollectionBodyField(collection)} ->> '${field}' `;
