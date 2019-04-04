@@ -4,9 +4,9 @@ import { Debe, IPlugin } from './client';
 
 export abstract class DebeAdapter {
   connect(debe: Debe) {
-    debe.addPlugin(changeListenerPlugin());
-    debe.addPlugin(corePlugin());
-    debe.addPlugin(adapterPlugin(this));
+    changeListenerPlugin()(debe);
+    corePlugin()(debe);
+    adapterPlugin(this)(debe);
   }
   abstract initialize(collections: ICollections): Promise<void> | void;
   abstract get(collection: string, id: string): Promise<any>;
@@ -16,8 +16,12 @@ export abstract class DebeAdapter {
   abstract insert(collection: string, items: any[]): Promise<any[]>;
 }
 
-export const adapterPlugin = (adapter: DebeAdapter): IPlugin => {
-  return async function adapterPlugin(type, payload, flow) {
+export const adapterPlugin = (adapter: DebeAdapter): IPlugin => client => {
+  client.addPlugin('adapterPlugin', async function adapterPlugin(
+    type,
+    payload,
+    flow
+  ) {
     if (type === types.COLLECTIONS) {
       adapter.initialize(payload);
       flow(payload);
@@ -41,5 +45,5 @@ export const adapterPlugin = (adapter: DebeAdapter): IPlugin => {
     } else {
       flow(payload);
     }
-  };
+  });
 };

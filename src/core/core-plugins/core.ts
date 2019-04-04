@@ -41,7 +41,8 @@ export function ensureCollection(collection: ICollectionInput): ICollection {
   }
   return collection as ICollection;
 }
-export const corePlugin = (options: any = {}): IPlugin => {
+export const CORE_PLUGIN = 'corePlugin';
+export const corePlugin = (options: any = {}): IPlugin => client => {
   const { idField = 'id' } = options;
   function transformForStorage(item: any) {
     if (!item) {
@@ -55,7 +56,7 @@ export const corePlugin = (options: any = {}): IPlugin => {
     }
     return item;
   }
-  return async function corePlugin(type, payload, flow) {
+  client.addPlugin(CORE_PLUGIN, async function corePlugin(type, payload, flow) {
     if (type === types.COLLECTION) {
       const collection = ensureCollection(payload as ICollectionInput);
       collection.specialFields.id = idField;
@@ -127,7 +128,7 @@ export const corePlugin = (options: any = {}): IPlugin => {
     } else {
       flow(payload);
     }
-  };
+  });
 };
 
 function cleanQuery(value: IQueryInput): IQuery {

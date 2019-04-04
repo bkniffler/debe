@@ -13,7 +13,8 @@ import {
   IInsertInput
 } from './types';
 
-export interface IPlugin extends ISkill {}
+export type IPlugin = (debe: Debe) => void;
+
 function throwIfNotInitialized(db: Debe) {
   if (!db.isInitialized) {
     throw new Error(
@@ -33,7 +34,7 @@ export class Debe<TBase = IItem> {
   constructor(
     adapter: DebeAdapter,
     collections: ICollectionInput[],
-    { tracker }: { tracker?: boolean } = {}
+    { tracker, plugins = [] }: { tracker?: boolean; plugins?: IPlugin[] } = {}
   ) {
     adapter.connect(this);
     this.collections = collections as any;
@@ -42,25 +43,17 @@ export class Debe<TBase = IItem> {
         console.log(args);
       };
     }
+    if (plugins) {
+      plugins.map(x => x(this));
+    }
   }
   addPlugin<T = any>(
-    plugin: IPlugin | IPlugin[],
-    position?: IPosition,
-    anchor?: IPlugin | IPlugin[] | string | string[]
-  ): void;
-  addPlugin<T = any>(
     name: string,
-    plugin: IPlugin | IPlugin[],
+    plugin: ISkill,
     position?: IPosition,
-    anchor?: IPlugin | IPlugin[] | string | string[]
-  ): void;
-  addPlugin<T = any>(
-    n: string | IPlugin | IPlugin[] | undefined,
-    s?: IPlugin | IPlugin[] | IPosition,
-    p?: IPosition | IPlugin | IPlugin[],
-    o?: IPlugin | IPlugin[] | string | string[]
-  ) {
-    return this.flow.addSkill(n as any, s as any, p as any, o as any);
+    anchor?: ISkill | ISkill[] | string | string[]
+  ): void {
+    return this.flow.addSkill(name, plugin, position, anchor);
   }
   public destroy() {
     return this.flow.run(types.DESTROY);

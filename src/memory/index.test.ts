@@ -1,4 +1,4 @@
-import { Debe, addSoftDelete } from 'debe';
+import { Debe, softDeletePlugin } from 'debe';
 import { MemoryAdapter, createFilter } from './index';
 
 const collections = [{ name: 'lorem' }];
@@ -86,8 +86,9 @@ test('memory:change', async () => {
 });
 
 test('memory:softdelete', async () => {
-  const client = new Debe(new MemoryAdapter(), collections);
-  addSoftDelete(client);
+  const client = new Debe(new MemoryAdapter(), collections, {
+    plugins: [softDeletePlugin()]
+  });
   await client.initialize();
   await client.insert('lorem', { id: '0', name: 'Hallo' });
   await client.insert('lorem', { id: '1', name: 'Hallo' });

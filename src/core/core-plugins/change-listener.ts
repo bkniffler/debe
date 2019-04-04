@@ -2,8 +2,9 @@ import { IItem, types, fieldTypes } from '../types';
 import { ensureCollection } from './core';
 import { IPlugin } from '../client';
 
+export const CHANGE_LISTENER_PLUGIN = 'changeListenerPlugin';
 const defaultRevisionField = 'rev';
-export const changeListenerPlugin = (options: any = {}): IPlugin => {
+export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
   const { revField = defaultRevisionField } = options;
   const queryEmitter = new Emitter();
 
@@ -15,7 +16,11 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => {
     return item;
   }
 
-  return function changeListenerPlugin(type, payload, flow) {
+  client.addPlugin(CHANGE_LISTENER_PLUGIN, function changeListenerPlugin(
+    type,
+    payload,
+    flow
+  ) {
     if (type === types.COLLECTION) {
       const collection = ensureCollection(payload);
       collection.specialFields.rev = revField;
@@ -66,7 +71,7 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => {
     } else {
       return flow(payload);
     }
-  };
+  });
 };
 
 export function isEqual(
