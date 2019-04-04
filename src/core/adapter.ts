@@ -1,4 +1,4 @@
-import { changeListenerPlugin, corePlugin } from './plugins';
+import { changeListenerPlugin, corePlugin } from './core-plugins';
 import { ICollections, IQuery, types } from './types';
 import { Debe, IPlugin } from './client';
 

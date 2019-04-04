@@ -1,11 +1,10 @@
 import { types, fieldTypes, ICollection } from '../types';
 import { ensureArray, toISO, addToQuery } from '../utils';
-import { IPlugin } from '../client';
+import { IPlugin, Debe } from '../client';
 
-export const softDeletePlugin = (options: any = {}): IPlugin => {
+export const addSoftDelete = (client: Debe, options: any = {}) => {
   const { removedField = 'rem' } = options;
-
-  return function softDeletePlugin(type, payload, flow) {
+  const softDeletePlugin: IPlugin = (type, payload, flow) => {
     if (type === types.COLLECTION) {
       (payload as ICollection).specialFields.rem = removedField;
       (payload as ICollection).fields[removedField] = fieldTypes.NUMBER;
@@ -29,4 +28,5 @@ export const softDeletePlugin = (options: any = {}): IPlugin => {
       flow(payload);
     }
   };
+  client.addPlugin('softDeletePlugin', softDeletePlugin, 'AFTER', 'corePlugin');
 };
