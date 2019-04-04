@@ -12,15 +12,31 @@ export function addToQuery(
   }
 }
 
+function fetchLast(arr: any[]) {
+  return arr[arr.length - 1] && arr[arr.length - 1];
+}
 export function queryToArray(query: [string, ...any[]]) {
   let questions: number = 0;
   return query[0].split('AND').map((part: string) =>
     part.split(' ').reduce<string[]>((arr, x) => {
       x = x.trim();
-      if (x === '?') {
-        arr.push(query[(questions += 1)]);
+      if (x === '?' || x === '(?)') {
+        const arg = query[(questions += 1)];
+        if (
+          Array.isArray(arg) &&
+          (fetchLast(arr) === '=' || fetchLast(arr) === '==')
+        ) {
+          arr[arr.length - 1] = `IN`;
+        } else if (Array.isArray(arg) && fetchLast(arr) === '!=') {
+          arr[arr.length - 1] = `NOT IN`;
+        }
+        arr.push(arg);
       } else if (x) {
-        arr.push(x);
+        if (fetchLast(arr) === 'NOT') {
+          arr[arr.length - 1] = `${arr[arr.length - 1]} ${x}`;
+        } else {
+          arr.push(x);
+        }
       }
       return arr;
     }, [])

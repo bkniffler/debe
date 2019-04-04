@@ -104,26 +104,32 @@ export abstract class SQLCore {
     queryArgs: IQuery = {},
     queryType: string
   ): [string, ...any[]] {
-    const {
-      id = undefined,
-      where = [],
-      orderBy = [],
-      limit = undefined,
-      offset = undefined
-    } = queryArgs;
-    const [whereStatement, ...args] =
-      id && typeof id === 'string'
-        ? this.createWhereId(id)
-        : this.createWhere(collection, where);
-    const sql = `
-        ${this.createSelect(collection)}
-        FROM "${collection.name}" 
-        ${whereStatement}
-        ${this.createOrderBy(orderBy)}
-        ${this.createLimit(queryType === 'get' ? 1 : limit)}
-        ${this.createOffset(offset)}
-      `.trim();
-    return [queryType === 'count' ? this.makeCount(sql) : sql, ...args];
+    if (typeof queryArgs === 'string' || Array.isArray(queryArgs)) {
+      const [whereStatement, ...args] = this.createWhereId(queryArgs);
+      const sql = `
+          ${this.createSelect(collection)}
+          FROM "${collection.name}" 
+          ${whereStatement}
+        `.trim();
+      return [queryType === 'count' ? this.makeCount(sql) : sql, ...args];
+    } else {
+      const {
+        where = [],
+        orderBy = [],
+        limit = undefined,
+        offset = undefined
+      } = queryArgs;
+      const [whereStatement, ...args] = this.createWhere(collection, where);
+      const sql = `
+          ${this.createSelect(collection)}
+          FROM "${collection.name}" 
+          ${whereStatement}
+          ${this.createOrderBy(orderBy)}
+          ${this.createLimit(queryType === 'get' ? 1 : limit)}
+          ${this.createOffset(offset)}
+        `.trim();
+      return [queryType === 'count' ? this.makeCount(sql) : sql, ...args];
+    }
   }
   createWhere(collection: ICollection, where: string[] | string): any[] {
     where = ensureArray(where);

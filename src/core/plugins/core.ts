@@ -119,7 +119,7 @@ export const coreSkill = (options: any = {}): ISkill => {
       } else if (value && (Array.isArray(value) || Array.isArray(value.id))) {
         flow([
           collection,
-          { where: [`id = ?`, value['id'] || value] } as IQuery
+          { where: [`id IN (?)`, value['id'] || value] } as IQuery
         ]);
       } else {
         flow([collection, cleanQuery(value)]);

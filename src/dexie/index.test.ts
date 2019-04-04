@@ -33,6 +33,25 @@ test('dexie:basic', async () => {
     name: 'Hallo'
   });
   const queryResult = await client.all<any>('lorem');
+  const queryResult1 = await client.get<any>('lorem', 'asd');
+  const queryResult2 = await client.all<any>('lorem', ['asd']);
+  const queryResult3 = await client.all<any>('lorem', {
+    where: ['id = ?', ['asd']]
+  });
+  const queryResult4 = await client.all<any>('lorem', {
+    where: ['id != ?', ['asda']]
+  });
+  const queryResult5 = await client.all<any>('lorem', {
+    where: ['id != ?', ['asd']]
+  });
+  expect(queryResult5.length).toBe(0);
+  expect(queryResult4.length).toBe(1);
+  expect(queryResult3.length).toBe(1);
+  expect(queryResult2.length).toBe(1);
+  expect(queryResult2[0].id).toBe('asd');
+  expect(queryResult3[0].id).toBe('asd');
+  expect(queryResult1).toBeTruthy();
+  expect(queryResult1.id).toBe('asd');
   expect(Array.isArray(queryResult)).toBe(true);
   expect(queryResult.length).toBe(1);
   expect(queryResult[0].id).toBe('asd');

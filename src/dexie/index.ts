@@ -94,6 +94,7 @@ function filter(
     '<=': 'belowOrEqual',
     '<': 'below',
     IN: 'anyOf',
+    'NOT IN': 'noneOf',
     '=': 'equals',
     '==': 'equals',
     '!=': 'notEqual'
@@ -105,11 +106,6 @@ function filter(
   const array = queryToArray(query);
   for (var i = 0; i < array.length; i++) {
     let [left, operand, right] = array[i];
-    if ((operand === '=' || operand === '==') && Array.isArray(right)) {
-      operand = 'anyOf';
-    } else if (operand === '!=' && Array.isArray(right)) {
-      operand = 'noneOf';
-    }
     if (filterMap[operand]) {
       collection = collection.where(left)[filterMap[operand]](right) as any;
     }
