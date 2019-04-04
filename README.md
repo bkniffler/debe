@@ -26,7 +26,7 @@
     <img src="https://img.shields.io/github/license/bkniffler/debe.svg?style=flat-square" alt="License">
   </a>
   <a href="https://github.com/bkniffler/debe">
-    <img src="https://flat.badgen.net/bundlephobia/minzip/debe-memory" alt="License">
+    <img src="https://flat.badgen.net/bundlephobia/minzip/debe" alt="License">
   </a>
   <a href="https://github.com/bkniffler/debe">
     <img src="https://img.shields.io/david/bkniffler/debe.svg?style=flat-square" alt="Dependencies">
