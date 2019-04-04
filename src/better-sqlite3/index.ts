@@ -16,6 +16,9 @@ export class SQLite3 extends SQLJsonCore {
     super();
     this.db = sql(dbPath);
   }
+  destroy() {
+    return this.db.close();
+  }
   selectJSONField(collection: ICollection, field: string) {
     return `json_extract(${this.getCollectionBodyField(
       collection
