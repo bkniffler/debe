@@ -16,7 +16,6 @@ export abstract class SQLJsonCore extends SQLCore {
           this.selectJSONField(collection, key)
         );
       }
-      console.log(clause, collection);
       return [`WHERE ${clause}`, ...args];
     }
     return [``, ...args];

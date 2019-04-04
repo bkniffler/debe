@@ -2,13 +2,13 @@ import { Flowzilla, ITracker } from 'flowzilla';
 import { createLog } from './utils';
 import {
   IObserverCallback,
-  IQuery,
   IItem,
   IGetItem,
   IInsertItem,
   types,
   ICollections,
-  ICollectionInput
+  ICollectionInput,
+  IQueryInput
 } from './types';
 
 function throwIfNotInitialized(db: Debe) {
@@ -100,16 +100,16 @@ export class Debe<TBase = IItem> extends Flowzilla {
   // all
   public all<T = TBase>(
     collection: string,
-    value?: IQuery
+    value?: string[] | IQueryInput
   ): Promise<(T & IGetItem)[]>;
   public all<T = TBase>(
     collection: string,
-    value?: IQuery,
+    value?: string[] | IQueryInput,
     callback?: IObserverCallback<(T & IGetItem)[]>
   ): () => void;
   public all<T = TBase>(
     collection: string,
-    value?: IQuery,
+    value?: string[] | IQueryInput,
     callback?: IObserverCallback<(T & IGetItem)[]>
   ): Promise<T[]> | (() => void) {
     throwIfNotInitialized(this);
@@ -122,15 +122,15 @@ export class Debe<TBase = IItem> extends Flowzilla {
     return this.run(types.ALL, [collection, value], this);
   }
   // count
-  public count(collection: string, args?: IQuery): Promise<number>;
+  public count(collection: string, args?: IQueryInput): Promise<number>;
   public count(
     collection: string,
-    value?: IQuery,
+    value?: IQueryInput,
     callback?: IObserverCallback<number>
   ): () => void;
   public count(
     collection: string,
-    value?: IQuery,
+    value?: IQueryInput,
     callback?: IObserverCallback<number>
   ): Promise<number> | (() => void) {
     throwIfNotInitialized(this);
@@ -145,16 +145,16 @@ export class Debe<TBase = IItem> extends Flowzilla {
   // get
   public get<T = TBase>(
     collection: string,
-    args?: IQuery
+    args?: IQueryInput | string
   ): Promise<T & IGetItem>;
   public get<T = TBase>(
     collection: string,
-    value?: IQuery,
+    value?: IQueryInput | string,
     callback?: IObserverCallback<T & IGetItem>
   ): () => void;
   public get<T = TBase>(
     collection: string,
-    value?: IQuery,
+    value?: IQueryInput | string,
     callback?: IObserverCallback<T & IGetItem>
   ): Promise<T> | (() => void) {
     throwIfNotInitialized(this);
@@ -169,22 +169,28 @@ export class Debe<TBase = IItem> extends Flowzilla {
 }
 
 export interface IDebeUse<T> {
-  all(queryArgs: IQuery): Promise<T[]>;
-  all(queryArgs: IQuery, cb?: IObserverCallback<T[]>): () => void;
+  all(queryArgs: string[] | IQueryInput): Promise<T[]>;
   all(
-    queryArgs: IQuery,
+    queryArgs: string[] | IQueryInput,
+    cb?: IObserverCallback<T[]>
+  ): () => void;
+  all(
+    queryArgs: string[] | IQueryInput,
     cb?: IObserverCallback<T[]>
   ): Promise<T[]> | (() => void);
-  count(queryArgs: IQuery): Promise<number>;
-  count(queryArgs: IQuery, cb?: IObserverCallback<number>): () => void;
+  count(queryArgs: IQueryInput): Promise<number>;
+  count(queryArgs: IQueryInput, cb?: IObserverCallback<number>): () => void;
   count(
-    queryArgs: IQuery,
+    queryArgs: IQueryInput,
     cb?: IObserverCallback<number>
   ): Promise<number> | (() => void);
-  get(queryArgs: IQuery): Promise<T>;
-  get(queryArgs: IQuery, cb?: IObserverCallback<T>): () => void;
-  get(queryArgs: IQuery, cb?: IObserverCallback<T>): Promise<T> | (() => void);
-  remove(query: IQuery): Promise<void>;
+  get(queryArgs: IQueryInput | string): Promise<T>;
+  get(queryArgs: IQueryInput | string, cb?: IObserverCallback<T>): () => void;
+  get(
+    queryArgs: IQueryInput | string,
+    cb?: IObserverCallback<T>
+  ): Promise<T> | (() => void);
+  remove(query: string | string[]): Promise<void>;
   insert<T = any>(
     value: (T & IInsertItem)[] | T & IInsertItem
   ): Promise<T & IGetItem>;

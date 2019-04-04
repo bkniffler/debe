@@ -7,7 +7,8 @@ import {
   softDeleteSkill,
   ISkill,
   ICollectionInput,
-  ICollection
+  ICollection,
+  IQuery
 } from 'debe';
 import { createFilter, sort } from './filter';
 export * from './filter';
@@ -50,31 +51,33 @@ export const memorySkill = (): ISkill => {
       const [collection, arg] = payload;
       flow.return(arg.map((x: any) => handle(collection, x)));
     } else if (type === types.COUNT) {
-      const [collection] = payload;
-      flow.return(Array.from(store[collection].keys()).length);
+      const [collection, query] = payload as [string, IQuery];
+      flow.return(filter(Array.from(store[collection].values()), query).length);
     } else if (type === types.REMOVE) {
-      const [collection, arg] = payload;
-      flow.return(store[collection].delete(arg.id));
+      const [collection, ids] = payload as [string, string[]];
+      flow.return(ids.map(id => store[collection].delete(id)));
     } else if (type === types.GET) {
-      const [collection, arg] = payload;
-      flow.return(store[collection].get(arg.id));
+      const [collection, id] = payload as [string, string];
+      flow.return(store[collection].get(id));
     } else if (type === 'console.log') {
       flow.return(null);
     } else if (type === types.ALL) {
-      const [collection, query] = payload;
-      const filter =
-        query && query.where ? createFilter(query.where) : undefined;
-      const orderBy = query && query.orderBy;
-      let arr = Array.from(store[collection].values());
-      if (filter) {
-        arr = arr.filter(filter);
-      }
-      if (orderBy) {
-        arr = sort(arr, orderBy);
-      }
-      flow.return(arr);
+      const [collection, query] = payload as [string, IQuery];
+      flow.return(filter(Array.from(store[collection].values()), query));
     } else {
       flow(payload);
     }
   };
 };
+
+function filter(array: any[], query: IQuery) {
+  const filter = query && query.where ? createFilter(query.where) : undefined;
+  const orderBy = query && query.orderBy;
+  if (filter) {
+    array = array.filter(filter);
+  }
+  if (orderBy) {
+    array = sort(array, orderBy);
+  }
+  return array;
+}

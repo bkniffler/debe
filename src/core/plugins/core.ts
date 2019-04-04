@@ -1,4 +1,11 @@
-import { types, fieldTypes, ICollectionInput, ICollection } from '../types';
+import {
+  types,
+  fieldTypes,
+  ICollectionInput,
+  ICollection,
+  IQueryInput,
+  IQuery
+} from '../types';
 import { ensureArray, generate } from '../utils';
 import { ISkill } from 'flowzilla';
 
@@ -48,7 +55,7 @@ export const coreSkill = (options: any = {}): ISkill => {
     }
     return item;
   }
-  return function core(type, payload, flow) {
+  return async function core(type, payload, flow) {
     if (type === types.COLLECTION) {
       const collection = ensureCollection(payload as ICollectionInput);
       collection.specialFields.id = idField;
@@ -80,21 +87,48 @@ export const coreSkill = (options: any = {}): ISkill => {
         [collection, ensureArray(value).map(transformForStorage)],
         (result: any, flow: any) => flow(isArray ? result : result[0])
       );
-    } /*else if (type === types.ALL || type === types.GET) {
-      const [collection, value] = payload;
-      if (collection && value && !value.where) {
-        value.where = [];
-      } else if (
-        value &&
-        value.where &&
-        Array.isArray(value.where) &&
-        typeof value.where[0] === 'string'
-      ) {
-        value.where = [value.where];
+    } else if (type === types.GET) {
+      const [collection, value = {}] = payload as [
+        string,
+        IQueryInput | string
+      ];
+      if (typeof value === 'object' && value.id) {
+        flow([collection, Array.isArray(value.id) ? value.id[0] : value.id]);
+      } else if (typeof value === 'object') {
+        flow.return((await flow.run(types.ALL, value))[0]);
+      } else {
+        flow([collection, value]);
       }
-      flow(payload);
-    }*/ else {
+    } else if (type === types.REMOVE) {
+      const [collection, value = []] = payload as [string, string[] | string];
+      flow([collection, ensureArray(value)]);
+    } else if (type === types.ALL || type === types.COUNT) {
+      const [collection, value = {}] = payload as [
+        string,
+        IQueryInput | string | string[]
+      ];
+      if (typeof value === 'string') {
+        flow.return(ensureArray(await flow.run(types.ALL, value)));
+      } else if (value && (Array.isArray(value) || Array.isArray(value.id))) {
+        flow([collection, { id: value['id'] || value } as IQuery]);
+      } else {
+        flow([collection, cleanQuery(value)]);
+      }
+    } else {
       flow(payload);
     }
   };
 };
+
+function cleanQuery(value: IQueryInput): IQuery {
+  if (Array.isArray(value.limit) && value.limit.length === 2) {
+    value.offset = value.limit[1];
+    value.limit = value.limit[0];
+  } else if (Array.isArray(value.limit) && value.limit.length === 1) {
+    value.limit = value.limit[0];
+  }
+  value.select = ensureArray(value.select);
+  value.orderBy = ensureArray(value.orderBy);
+  value.id = ensureArray(value.id);
+  return value as IQuery;
+}

@@ -31,14 +31,21 @@ export interface IGetItem {
 export interface IItem extends IGetItem {
   [s: string]: any;
 }
-export interface IQuery {
+export interface IQueryInput {
   id?: string[] | string;
-  explain?: boolean;
   limit?: number | [number] | [number, number];
   offset?: number;
-  where?: string[] | string;
+  where?: [string, ...any[]];
   select?: string[] | string;
   orderBy?: string[] | string;
+}
+export interface IQuery {
+  id?: string[];
+  limit?: number;
+  offset?: number;
+  where?: [string, ...any[]];
+  select?: string[];
+  orderBy?: string[];
 }
 
 export type IObserverCallback<T = IItem> = (
