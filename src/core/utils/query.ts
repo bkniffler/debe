@@ -15,6 +15,35 @@ export function addToQuery(
 function fetchLast(arr: any[]) {
   return arr[arr.length - 1] && arr[arr.length - 1];
 }
+
+export interface IFilterReducer<T> {
+  '>=': (state: T, field: string, value: any) => T;
+  '>': (state: T, field: string, value: any) => T;
+  '<=': (state: T, field: string, value: any) => T;
+  '<': (state: T, field: string, value: any) => T;
+  IN: (state: T, field: string, value: any) => T;
+  'NOT IN': (state: T, field: string, value: any) => T;
+  '=': (state: T, field: string, value: any) => T;
+  '!=': (state: T, field: string, value: any) => T;
+}
+
+export class FilterReducer<T = any> {
+  map: IFilterReducer<T>;
+  constructor(map: IFilterReducer<T>) {
+    this.map = map;
+  }
+  reduce(state: T, query: [string, ...any[]]): T {
+    const array = queryToArray(query);
+    for (var i = 0; i < array.length; i++) {
+      let [left, operand, right] = array[i];
+      if (this.map[operand]) {
+        state = this.map[operand](state, left, right);
+      }
+    }
+    return state;
+  }
+}
+
 export function queryToArray(query: [string, ...any[]]) {
   let questions: number = 0;
   return query[0].split('AND').map((part: string) =>
@@ -35,7 +64,7 @@ export function queryToArray(query: [string, ...any[]]) {
         if (fetchLast(arr) === 'NOT') {
           arr[arr.length - 1] = `${arr[arr.length - 1]} ${x}`;
         } else {
-          arr.push(x);
+          arr.push(x === '==' ? '=' : x);
         }
       }
       return arr;

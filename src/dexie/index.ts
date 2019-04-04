@@ -1,5 +1,16 @@
-import { ICollections, queryToArray, IQuery, DebeAdapter } from 'debe';
+import { ICollections, IQuery, DebeAdapter, FilterReducer } from 'debe';
 import Dexie, { Table, IndexableType } from 'dexie';
+
+const filter = new FilterReducer<Table<any, IndexableType>>({
+  '!=': (col, field, value) => col.where(field).notEqual(value) as any,
+  '<': (col, field, value) => col.where(field).below(value) as any,
+  '<=': (col, field, value) => col.where(field).belowOrEqual(value) as any,
+  '=': (col, field, value) => col.where(field).equals(value) as any,
+  '>': (col, field, value) => col.where(field).above(value) as any,
+  '>=': (col, field, value) => col.where(field).aboveOrEqual(value) as any,
+  IN: (col, field, value) => col.where(field).anyOf(value) as any,
+  'NOT IN': (col, field, value) => col.where(field).noneOf(value) as any
+});
 
 export class DexieAdapter extends DebeAdapter {
   constructor({ version = 1, name = 'debe' } = {}) {
@@ -44,7 +55,7 @@ export class DexieAdapter extends DebeAdapter {
   private baseQuery(collection: string, { where, offset, limit }: IQuery) {
     let cursor = this.db.table(collection);
     if (where) {
-      cursor = this.filter(cursor, where);
+      cursor = filter.reduce(cursor, where);
     }
     if (offset) {
       cursor = cursor.offset(offset) as any;
@@ -53,33 +64,5 @@ export class DexieAdapter extends DebeAdapter {
       cursor = cursor.limit(limit) as any;
     }
     return cursor;
-  }
-  private filter(
-    collection: Table<any, IndexableType>,
-    query?: [string, ...any[]]
-  ): Table<any, IndexableType> {
-    const filterMap = {
-      '>=': 'aboveOrEqual',
-      '>': 'above',
-      '<=': 'belowOrEqual',
-      '<': 'below',
-      IN: 'anyOf',
-      'NOT IN': 'noneOf',
-      '=': 'equals',
-      '==': 'equals',
-      '!=': 'notEqual'
-    };
-
-    if (!query || !query.length) {
-      return collection;
-    }
-    const array = queryToArray(query);
-    for (var i = 0; i < array.length; i++) {
-      let [left, operand, right] = array[i];
-      if (filterMap[operand]) {
-        collection = collection.where(left)[filterMap[operand]](right) as any;
-      }
-    }
-    return collection;
   }
 }
