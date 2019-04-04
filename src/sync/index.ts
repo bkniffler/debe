@@ -119,7 +119,7 @@ async function initiateSync(
       }
       const newItems = await client.insert(collection.name, changes, {
         syncFrom: name
-      });
+      } as any);
       updateSyncState(
         getLastItemRev(newItems, collection.specialFields.rev),
         getLastItemRev(changes, collection.specialFields.rev)
@@ -147,7 +147,7 @@ async function initiateSync(
     remoteChanges.length > 0
       ? client.insert(collection.name, remoteChanges, {
           syncFrom: name
-        })
+        } as any)
       : Promise.resolve(undefined),
     localChanges.length > 0
       ? server.sendChanges(collection.name, localChanges, {

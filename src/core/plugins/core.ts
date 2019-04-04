@@ -81,11 +81,18 @@ export const coreSkill = (options: any = {}): ISkill => {
       );
     }
     if (type === types.INSERT) {
+      const refetchResult = flow.get('refetchResult', false);
       const [collection, value] = payload;
       const isArray = Array.isArray(value);
+      const newItems = ensureArray(value).map(transformForStorage);
       flow(
-        [collection, ensureArray(value).map(transformForStorage)],
-        (result: any, flow: any) => flow(isArray ? result : result[0])
+        [collection, newItems],
+        async (result: any, flo: any) => {
+          if (refetchResult) {
+            result = await flow.run(types.ALL, newItems.map(x => x.id));
+          }
+          flo(isArray ? result : result[0]);
+        }
       );
     } else if (type === types.GET) {
       const [collection, value = {}] = payload as [
@@ -108,9 +115,12 @@ export const coreSkill = (options: any = {}): ISkill => {
         IQueryInput | string | string[]
       ];
       if (typeof value === 'string') {
-        flow.return(ensureArray(await flow.run(types.ALL, value)));
+        flow.return(ensureArray(await flow.run(types.GET, value)));
       } else if (value && (Array.isArray(value) || Array.isArray(value.id))) {
-        flow([collection, { id: value['id'] || value } as IQuery]);
+        flow([
+          collection,
+          { where: [`id = ?`, value['id'] || value] } as IQuery
+        ]);
       } else {
         flow([collection, cleanQuery(value)]);
       }

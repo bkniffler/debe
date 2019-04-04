@@ -4,10 +4,10 @@ const collections = [{ name: 'lorem' }];
 test('memory:basic', async () => {
   const client = new MemoryDebe(collections);
   await client.initialize();
-  const insertResult = await client.run<any>('insert', [
-    'lorem',
-    { id: 0, name: 'Hallo' }
-  ]);
+  const insertResult = await client.insert<any>('lorem', {
+    id: 0,
+    name: 'Hallo'
+  });
   const queryResult = await client.run<any>('all', ['lorem']);
   expect(insertResult.id).toBe('0');
   expect(insertResult.name).toBe('Hallo');
@@ -20,10 +20,10 @@ test('memory:basic', async () => {
 test('memory:basic', async () => {
   const client = new MemoryDebe(collections);
   await client.initialize();
-  const insertResult = await client.run<any>('insert', [
-    'lorem',
-    { id: 0, name: 'Hallo' }
-  ]);
+  const insertResult = await client.insert<any>('lorem', {
+    id: 0,
+    name: 'Hallo'
+  });
   const queryResult = await client.run<any>('all', ['lorem']);
   expect(insertResult.id).toBe('0');
   expect(insertResult.name).toBe('Hallo');

@@ -8,7 +8,8 @@ import {
   types,
   ICollections,
   ICollectionInput,
-  IQueryInput
+  IQueryInput,
+  IInsertInput
 } from './types';
 
 function throwIfNotInitialized(db: Debe) {
@@ -71,17 +72,17 @@ export class Debe<TBase = IItem> extends Flowzilla {
   public insert<T = IInsertItem>(
     collection: string,
     value: (T & IInsertItem)[],
-    options?: any
+    options?: IInsertInput
   ): Promise<(T & IGetItem)[]>;
   public insert<T = IInsertItem>(
     collection: string,
     value: T & IInsertItem,
-    options?: any
+    options?: IInsertInput
   ): Promise<T & IGetItem>;
   public insert<T = IInsertItem>(
     collection: string,
     value: (T & IInsertItem)[] | (T & IInsertItem),
-    options: any = {}
+    options: IInsertInput = {}
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
     throwIfNotInitialized(this);
     return this.run(types.INSERT, [collection, value], {
@@ -192,6 +193,7 @@ export interface IDebeUse<T> {
   ): Promise<T> | (() => void);
   remove(query: string | string[]): Promise<void>;
   insert<T = any>(
-    value: (T & IInsertItem)[] | T & IInsertItem
+    value: (T & IInsertItem)[] | T & IInsertItem,
+    options?: IInsertInput
   ): Promise<T & IGetItem>;
 }

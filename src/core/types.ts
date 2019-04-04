@@ -40,12 +40,14 @@ export interface IQueryInput {
   orderBy?: string[] | string;
 }
 export interface IQuery {
-  id?: string[];
   limit?: number;
   offset?: number;
   where?: [string, ...any[]];
   select?: string[];
   orderBy?: string[];
+}
+export interface IInsertInput {
+  refetchResult?: boolean;
 }
 
 export type IObserverCallback<T = IItem> = (

@@ -52,7 +52,8 @@ export const dexieSkill = (name: string, version: number): ISkill => {
       flow(payload);
     } else if (type === types.INSERT) {
       const [collection, arg] = payload;
-      flow.return(await db.table(collection).bulkPut(arg));
+      await db.table(collection).bulkPut(arg);
+      flow.return(arg);
     } else if (type === types.REMOVE) {
       const [collection, ids] = payload as [string, string[]];
       flow.return(await db.table(collection).bulkDelete(ids));
@@ -103,7 +104,12 @@ function filter(
   }
   const array = queryToArray(query);
   for (var i = 0; i < array.length; i++) {
-    const [left, operand, right] = array[i];
+    let [left, operand, right] = array[i];
+    if ((operand === '=' || operand === '==') && Array.isArray(right)) {
+      operand = 'anyOf';
+    } else if (operand === '!=' && Array.isArray(right)) {
+      operand = 'noneOf';
+    }
     if (filterMap[operand]) {
       collection = collection.where(left)[filterMap[operand]](right) as any;
     }
