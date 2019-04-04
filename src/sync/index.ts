@@ -175,7 +175,7 @@ export function sync(client: Debe, others: string[] = [], where?: string[]) {
   const log = client.createLog('sync');
   const clientID = generate();
 
-  client.addSkill(
+  client.addPlugin(
     'sync',
     (type, payload, flow) => {
       if (type === types.INITIALIZE) {
@@ -187,7 +187,7 @@ export function sync(client: Debe, others: string[] = [], where?: string[]) {
       return flow(payload);
     },
     'AFTER',
-    'changeListener'
+    'changeListenerPlugin'
   );
 
   return {

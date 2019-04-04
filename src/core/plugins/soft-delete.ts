@@ -1,11 +1,11 @@
 import { types, fieldTypes, ICollection } from '../types';
 import { ensureArray, toISO, addToQuery } from '../utils';
-import { ISkill } from 'flowzilla';
+import { IPlugin } from '../client';
 
-export const softDeleteSkill = (options: any = {}): ISkill => {
+export const softDeletePlugin = (options: any = {}): IPlugin => {
   const { removedField = 'rem' } = options;
 
-  return function softDelete(type, payload, flow) {
+  return function softDeletePlugin(type, payload, flow) {
     if (type === types.COLLECTION) {
       (payload as ICollection).specialFields.rem = removedField;
       (payload as ICollection).fields[removedField] = fieldTypes.NUMBER;

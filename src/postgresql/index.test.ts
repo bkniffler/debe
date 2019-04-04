@@ -1,19 +1,18 @@
-import { generate } from 'debe';
-import { PostgreSQLDebe } from './index';
+import { generate, Debe } from 'debe';
+import { PostgreSQLAdapter } from './index';
 
 if (process.env.PG_CONNECTIONSTRING) {
+  const schema = [
+    {
+      name,
+      index: ['name']
+    }
+  ];
   test('posgresql:basic', async () => {
     const name = 'lorem' + generate().substr(0, 4);
-    const client = new PostgreSQLDebe(
-      [
-        {
-          name,
-          index: ['name']
-        }
-      ],
-      {
-        connectionString: process.env.PG_CONNECTIONSTRING
-      }
+    const client = new Debe(
+      new PostgreSQLAdapter(process.env.PG_CONNECTIONSTRING + ''),
+      schema
     );
     await client.initialize();
     const insertResult = await client.insert<any>(name, {
@@ -31,26 +30,19 @@ if (process.env.PG_CONNECTIONSTRING) {
 
   test('posgresql:many', async () => {
     const name = 'lorem' + generate().substr(0, 4);
-    const client = new PostgreSQLDebe(
-      [
-        {
-          name,
-          index: ['goa']
-        }
-      ],
-      {
-        connectionString: process.env.PG_CONNECTIONSTRING
-      }
+    const client = new Debe(
+      new PostgreSQLAdapter(process.env.PG_CONNECTIONSTRING + ''),
+      schema
     );
     await client.initialize();
     const items = [];
     for (let x = 0; x < 100; x++) {
-      items.push({ goa: 'a' + (x < 10 ? `0${x}` : x) });
+      items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
     }
     await client.insert(name, items);
     const queryResult = await client.all<any>(name);
     const queryResult2 = await client.all<any>(name, {
-      where: ['goa < ?', 'a50']
+      where: ['name < ?', 'a50']
     });
     expect(Array.isArray(queryResult)).toBe(true);
     expect(queryResult.length).toBe(100);

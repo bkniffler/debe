@@ -1,17 +1,11 @@
-import { SQLDebe, SQLJsonCore } from 'debe-sql';
+import { SQLAdapter, SQLJsonCore } from 'debe-sql';
 //@ts-ignore
 import { Pool } from 'pg';
 import { ICollection } from 'debe';
 
-export class PostgreSQLDebe extends SQLDebe {
-  constructor(
-    schema: any[],
-    { softDelete = false, jsonBody = true, connectionString = '' }
-  ) {
-    super(schema, new PostgreSQL(connectionString), {
-      softDelete,
-      jsonBody
-    });
+export class PostgreSQLAdapter extends SQLAdapter {
+  constructor(connectionString: string) {
+    super(new PostgreSQL(connectionString));
   }
 }
 

@@ -1,5 +1,5 @@
-import { generate } from 'debe';
-import { Sqlite3Debe } from './index';
+import { generate, Debe } from 'debe';
+import { Sqlite3Adapter } from './index';
 import { join } from 'path';
 import { removeSync, ensureDirSync } from 'fs-extra';
 
@@ -8,17 +8,12 @@ removeSync(dbDir);
 ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');
 test('sqlite3:basic', async () => {
-  const client = new Sqlite3Debe(
-    [
-      {
-        name: 'lorem',
-        index: ['name']
-      }
-    ],
+  const client = new Debe(new Sqlite3Adapter(getDBDir()), [
     {
-      dbPath: getDBDir()
+      name: 'lorem',
+      index: ['name']
     }
-  );
+  ]);
   await client.initialize();
   const insertResult = await client.insert<any>('lorem', {
     id: 'asd',
@@ -34,26 +29,21 @@ test('sqlite3:basic', async () => {
 });
 
 test('sqlite3:many', async () => {
-  const client = new Sqlite3Debe(
-    [
-      {
-        name: 'lorem',
-        index: ['goa']
-      }
-    ],
+  const client = new Debe(new Sqlite3Adapter(getDBDir()), [
     {
-      dbPath: getDBDir()
+      name: 'lorem',
+      index: ['name']
     }
-  );
+  ]);
   await client.initialize();
   const items = [];
   for (let x = 0; x < 100; x++) {
-    items.push({ goa: 'a' + (x < 10 ? `0${x}` : x) });
+    items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
   }
   await client.insert('lorem', items);
   const queryResult = await client.all<any>('lorem');
   const queryResult2 = await client.all<any>('lorem', {
-    where: ['goa < ?', 'a50']
+    where: ['name < ?', 'a50']
   });
   expect(Array.isArray(queryResult)).toBe(true);
   expect(queryResult.length).toBe(100);

@@ -11,7 +11,7 @@ export abstract class SQLCore {
   abstract exec<T>(
     sql: string,
     args: any[],
-    type?: 'all' | 'get' | 'count' | 'insert'
+    type?: 'all' | 'get' | 'count' | 'insert' | 'remove'
   ): Promise<T>;
 
   getColumnType(type: IFieldTypes, secondType?: IFieldTypes): string {
@@ -101,7 +101,7 @@ export abstract class SQLCore {
   }
   createQueryStatement(
     collection: ICollection,
-    queryArgs: IQuery = {},
+    queryArgs: IQuery | string | string[] = {},
     queryType: string
   ): [string, ...any[]] {
     if (typeof queryArgs === 'string' || Array.isArray(queryArgs)) {
@@ -157,7 +157,7 @@ export abstract class SQLCore {
   }
   query<T>(
     collection: ICollection,
-    queryArgs: IQuery,
+    queryArgs: IQuery | string | string[],
     queryType: 'all' | 'get' | 'count'
   ): Promise<T> {
     const [sql, ...args] = this.createQueryStatement(
@@ -184,5 +184,13 @@ export abstract class SQLCore {
     });
     await this.exec(statement, items, 'insert');
     return value as any;
+  }
+  async remove<T>(
+    collection: ICollection,
+    value: string[]
+  ): Promise<(T & IGetItem)[]> {
+    collection;
+    value;
+    return null as any;
   }
 }

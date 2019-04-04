@@ -1,5 +1,6 @@
-import { Flowzilla, ITracker } from 'flowzilla';
+import { ITracker, ISkill, IPosition, Flowzilla } from 'flowzilla';
 import { createLog } from './utils';
+import { DebeAdapter } from './adapter';
 import {
   IObserverCallback,
   IItem,
@@ -12,6 +13,7 @@ import {
   IInsertInput
 } from './types';
 
+export interface IPlugin extends ISkill {}
 function throwIfNotInitialized(db: Debe) {
   if (!db.isInitialized) {
     throw new Error(
@@ -20,18 +22,20 @@ function throwIfNotInitialized(db: Debe) {
   }
 }
 
-export class Debe<TBase = IItem> extends Flowzilla {
+export class Debe<TBase = IItem> {
+  private flow = new Flowzilla();
   isInitialized = false;
   collections: ICollections;
   createLog(name: string) {
     return createLog(name);
   }
-  tracker: ITracker | undefined;
+  tracker: ITracker;
   constructor(
+    adapter: DebeAdapter,
     collections: ICollectionInput[],
     { tracker }: { tracker?: boolean } = {}
   ) {
-    super();
+    adapter.connect(this);
     this.collections = collections as any;
     if (tracker) {
       this.tracker = args => {
@@ -39,11 +43,30 @@ export class Debe<TBase = IItem> extends Flowzilla {
       };
     }
   }
+  addPlugin<T = any>(
+    plugin: IPlugin | IPlugin[],
+    position?: IPosition,
+    anchor?: IPlugin | IPlugin[] | string | string[]
+  ): void;
+  addPlugin<T = any>(
+    name: string,
+    plugin: IPlugin | IPlugin[],
+    position?: IPosition,
+    anchor?: IPlugin | IPlugin[] | string | string[]
+  ): void;
+  addPlugin<T = any>(
+    n: string | IPlugin | IPlugin[] | undefined,
+    s?: IPlugin | IPlugin[] | IPosition,
+    p?: IPosition | IPlugin | IPlugin[],
+    o?: IPlugin | IPlugin[] | string | string[]
+  ) {
+    return this.flow.addSkill(n as any, s as any, p as any, o as any);
+  }
   public destroy() {
-    return this.run(types.DESTROY);
+    return this.flow.run(types.DESTROY);
   }
   public async initialize() {
-    const state = await this.run<any>(
+    const state = await this.flow.run<any>(
       types.INITIALIZE,
       { collections: this.collections },
       this
@@ -67,7 +90,10 @@ export class Debe<TBase = IItem> extends Flowzilla {
   }
   public listen(collection: string, callback: any): any {
     throwIfNotInitialized(this);
-    return this.runSync(types.LISTEN, [collection], { ...this, callback });
+    return this.flow.runSync(types.LISTEN, [collection], {
+      ...this,
+      callback
+    });
   }
   public insert<T = IInsertItem>(
     collection: string,
@@ -85,7 +111,7 @@ export class Debe<TBase = IItem> extends Flowzilla {
     options: IInsertInput = {}
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
     throwIfNotInitialized(this);
-    return this.run(types.INSERT, [collection, value], {
+    return this.flow.run(types.INSERT, [collection, value], {
       ...options,
       ...this
     });
@@ -96,7 +122,7 @@ export class Debe<TBase = IItem> extends Flowzilla {
     value: string | string[]
   ): Promise<void> {
     throwIfNotInitialized(this);
-    return this.run(types.REMOVE, [collection, value]);
+    return this.flow.run(types.REMOVE, [collection, value]);
   }
   // all
   public all<T = TBase>(
@@ -105,22 +131,30 @@ export class Debe<TBase = IItem> extends Flowzilla {
   ): Promise<(T & IGetItem)[]>;
   public all<T = TBase>(
     collection: string,
-    value?: string[] | IQueryInput,
     callback?: IObserverCallback<(T & IGetItem)[]>
   ): () => void;
   public all<T = TBase>(
     collection: string,
     value?: string[] | IQueryInput,
     callback?: IObserverCallback<(T & IGetItem)[]>
+  ): () => void;
+  public all<T = TBase>(
+    collection: string,
+    value?: string[] | IQueryInput | IObserverCallback<(T & IGetItem)[]>,
+    callback?: IObserverCallback<(T & IGetItem)[]>
   ): Promise<T[]> | (() => void) {
     throwIfNotInitialized(this);
+    if (value && typeof value === 'function') {
+      callback = value;
+      value = undefined;
+    }
     if (callback && typeof callback === 'function') {
-      return this.runSync(types.ALL, [collection, value], {
+      return this.flow.runSync(types.ALL, [collection, value], {
         ...this,
         callback
       });
     }
-    return this.run(types.ALL, [collection, value], this);
+    return this.flow.run(types.ALL, [collection, value], this);
   }
   // count
   public count(collection: string, args?: IQueryInput): Promise<number>;
@@ -136,12 +170,12 @@ export class Debe<TBase = IItem> extends Flowzilla {
   ): Promise<number> | (() => void) {
     throwIfNotInitialized(this);
     if (callback) {
-      return this.runSync(types.COUNT, [collection, value], {
+      return this.flow.runSync(types.COUNT, [collection, value], {
         ...this,
         callback
       });
     }
-    return this.run(types.COUNT, [collection, value], this);
+    return this.flow.run(types.COUNT, [collection, value], this);
   }
   // get
   public get<T = TBase>(
@@ -160,12 +194,12 @@ export class Debe<TBase = IItem> extends Flowzilla {
   ): Promise<T> | (() => void) {
     throwIfNotInitialized(this);
     if (callback) {
-      return this.runSync(types.GET, [collection, value], {
+      return this.flow.runSync(types.GET, [collection, value], {
         ...this,
         callback
       });
     }
-    return this.run(types.GET, [collection, value], this);
+    return this.flow.run(types.GET, [collection, value], this);
   }
 }
 

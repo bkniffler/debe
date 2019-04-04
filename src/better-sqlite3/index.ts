@@ -1,15 +1,12 @@
-import { SQLJsonCore, SQLDebe } from 'debe-sql';
+import { SQLJsonCore, SQLAdapter } from 'debe-sql';
 //@ts-ignore
 import * as _sql from 'better-sqlite3';
 import { ICollection } from 'debe';
 const sql = _sql;
 
-export class Sqlite3Debe extends SQLDebe {
-  constructor(
-    schema: any[],
-    { softDelete = false, jsonBody = true, dbPath = '' }
-  ) {
-    super(schema, new SQLite3(dbPath), { softDelete, jsonBody });
+export class Sqlite3Adapter extends SQLAdapter {
+  constructor(dbPath: string) {
+    super(new SQLite3(dbPath));
   }
 }
 

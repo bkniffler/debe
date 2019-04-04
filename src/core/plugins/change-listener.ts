@@ -1,9 +1,9 @@
 import { IItem, types, fieldTypes } from '../types';
-import { ISkill } from 'flowzilla';
 import { ensureCollection } from './core';
+import { IPlugin } from '../client';
 
 const defaultRevisionField = 'rev';
-export const changeListenerSkill = (options: any = {}): ISkill => {
+export const changeListenerPlugin = (options: any = {}): IPlugin => {
   const { revField = defaultRevisionField } = options;
   const queryEmitter = new Emitter();
 
@@ -15,7 +15,7 @@ export const changeListenerSkill = (options: any = {}): ISkill => {
     return item;
   }
 
-  return function changeListener(type, payload, flow) {
+  return function changeListenerPlugin(type, payload, flow) {
     if (type === types.COLLECTION) {
       const collection = ensureCollection(payload);
       collection.specialFields.rev = revField;

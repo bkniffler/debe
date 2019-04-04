@@ -1,7 +1,6 @@
-import { ICollection, types, fieldTypes } from 'debe';
-import { ISkill } from 'flowzilla';
+import { ICollection, types, fieldTypes, IPlugin } from 'debe';
 
-export const jsonBodySkill = (options: any = {}): ISkill => {
+export const jsonBodySkill = (options: any = {}): IPlugin => {
   const { bodyField = 'body', merge = true } = options;
 
   return function jsonToBody(type, payload, flow) {

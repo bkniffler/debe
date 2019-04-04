@@ -7,7 +7,7 @@ import {
   IQuery
 } from '../types';
 import { ensureArray, generate } from '../utils';
-import { ISkill } from 'flowzilla';
+import { IPlugin } from '../client';
 
 interface IHasName {
   name: string;
@@ -41,7 +41,7 @@ export function ensureCollection(collection: ICollectionInput): ICollection {
   }
   return collection as ICollection;
 }
-export const coreSkill = (options: any = {}): ISkill => {
+export const corePlugin = (options: any = {}): IPlugin => {
   const { idField = 'id' } = options;
   function transformForStorage(item: any) {
     if (!item) {
@@ -55,7 +55,7 @@ export const coreSkill = (options: any = {}): ISkill => {
     }
     return item;
   }
-  return async function core(type, payload, flow) {
+  return async function corePlugin(type, payload, flow) {
     if (type === types.COLLECTION) {
       const collection = ensureCollection(payload as ICollectionInput);
       collection.specialFields.id = idField;
@@ -137,8 +137,8 @@ function cleanQuery(value: IQueryInput): IQuery {
   } else if (Array.isArray(value.limit) && value.limit.length === 1) {
     value.limit = value.limit[0];
   }
-  value.select = ensureArray(value.select);
-  value.orderBy = ensureArray(value.orderBy);
-  value.id = ensureArray(value.id);
+  value.select = value.select ? ensureArray(value.select) : undefined;
+  value.orderBy = value.orderBy ? ensureArray(value.orderBy) : undefined;
+  value.id = value.id ? ensureArray(value.id) : undefined;
   return value as IQuery;
 }

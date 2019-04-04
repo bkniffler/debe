@@ -1,4 +1,5 @@
-import { MemoryDebe } from 'debe-memory';
+import { Debe } from 'debe';
+import { MemoryAdapter } from 'debe-memory';
 import { createBroker } from 'rpc1';
 import { sync, createSocketClient } from './index';
 //import { isEqual } from 'debe';
@@ -18,11 +19,7 @@ interface ILorem {
 }
 function prepare(
   cb: any,
-  init: (
-    db1: MemoryDebe,
-    db2: MemoryDebe,
-    forceSync: () => Promise<any>
-  ) => Promise<void>
+  init: (db1: Debe, db2: Debe, forceSync: () => Promise<any>) => Promise<void>
 ) {
   function done(cleanup?: any) {
     clearTimeout(timeout);
@@ -36,8 +33,8 @@ function prepare(
   }
   let timeout = setTimeout(done, 10000);
   const destroy = createBroker(async broker => {
-    const db1 = new MemoryDebe(schema);
-    const db2 = new MemoryDebe(schema);
+    const db1 = new Debe(new MemoryAdapter(), schema);
+    const db2 = new Debe(new MemoryAdapter(), schema);
     const sync1 = sync(db1, ['debe-sync2']);
     const sync2 = sync(db2, []);
     await Promise.all([db1.initialize(), db2.initialize()]);
@@ -114,12 +111,12 @@ test('sync:socket:simple', async cb => {
   prepare;
   const port = 5554;
   // HOST
-  const dbMaster = new MemoryDebe(schema);
+  const dbMaster = new Debe(new MemoryAdapter(), schema);
   const destroyServer = createSocketServer(dbMaster, { port });
   await dbMaster.initialize();
 
   // CLIENT
-  const dbClient = new MemoryDebe(schema);
+  const dbClient = new Debe(new MemoryAdapter(), schema);
   const destroyClient = createSocketClient(
     dbClient,
     `http://localhost:${port}`
@@ -133,7 +130,7 @@ test('sync:socket:simple', async cb => {
   await dbClient.insert('lorem', items);
 
   // CLIENT
-  const dbClient2 = new MemoryDebe(schema);
+  const dbClient2 = new Debe(new MemoryAdapter(), schema);
   const destroyClient2 = createSocketClient(
     dbClient2,
     `http://localhost:${port}`
@@ -175,7 +172,7 @@ test('sync:socket:simple', async cb => {
 
 test('sync:socket:crazy', async cb => {
   async function spawnMaster(port: number, syncTo?: number) {
-    const db = new MemoryDebe(schema);
+    const db = new Debe(new MemoryAdapter(), schema);
     const destroy = [
       createSocketServer(db, { port }),
       syncTo ? createSocketClient(db, `http://localhost:${syncTo}`) : undefined
@@ -184,7 +181,7 @@ test('sync:socket:crazy', async cb => {
     return { db, destroy: () => destroy.forEach(x => x && x()) };
   }
   async function spawnClient(syncTo: number) {
-    const db = new MemoryDebe(schema);
+    const db = new Debe(new MemoryAdapter(), schema);
     const destroy = createSocketClient(db, `http://localhost:${syncTo}`);
     await db.initialize();
     return { db, destroy };

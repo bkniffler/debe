@@ -1,65 +1,38 @@
-import {
-  Debe,
-  coreSkill,
-  changeListenerSkill,
-  softDeleteSkill,
-  ISkill,
-  types,
-  ICollectionInput
-} from 'debe';
+import { DebeAdapter, ICollections, IQuery, Debe } from 'debe';
 import { jsonBodySkill } from './plugins';
+import { SQLCore } from './core';
 
-export class SQLDebe extends Debe {
+export class SQLAdapter extends DebeAdapter {
   dbPath: string;
-  db: any;
-  constructor(
-    collections: ICollectionInput[],
-    db: any,
-    { softDelete = false, jsonBody = true }
-  ) {
-    super(collections);
-    this.addSkill([changeListenerSkill(), coreSkill()]);
-    if (jsonBody) {
-      this.addSkill(jsonBodySkill({ merge: false }));
-    }
-    if (softDelete) {
-      this.addSkill(softDeleteSkill());
-    }
+  db: SQLCore;
+  collections: ICollections;
+  constructor(db: SQLCore) {
+    super();
     this.db = db;
-    this.addSkill('sql', sqlSkill(this));
   }
-  async initialize() {
-    const state = await super.initialize();
-    return Promise.all(
-      Object.keys(state.collections).map(key =>
-        this.db.createTable(this.collections[key])
-      )
+  connect(debe: Debe) {
+    super.connect(debe);
+    debe.addPlugin(jsonBodySkill({ merge: false }), 'AFTER', 'corePlugin');
+  }
+  async initialize(collections: ICollections) {
+    this.collections = collections;
+    await Promise.all(
+      Object.keys(collections).map(key => this.db.createTable(collections[key]))
     );
   }
-}
-
-export function sqlSkill(debe: SQLDebe): ISkill {
-  return async function sqlSkill(type, payload: [string, any], flow) {
-    if (type === types.INSERT) {
-      const [collection, value] = payload;
-      flow.return(await debe.db.insert(debe.collections[collection], value));
-    } else if (type === types.COUNT) {
-      const [collection, value] = payload;
-      flow.return(
-        await debe.db.query(debe.collections[collection], value, 'count')
-      );
-    } else if (type === types.GET) {
-      const [collection, value] = payload;
-      flow.return(
-        await debe.db.query(debe.collections[collection], value, 'get')
-      );
-    } else if (type === types.ALL) {
-      const [collection, value] = payload;
-      flow.return(
-        await debe.db.query(debe.collections[collection], value, 'all')
-      );
-    } else {
-      flow(payload);
-    }
-  };
+  insert(collection: string, items: any[]) {
+    return this.db.insert(this.collections[collection], items);
+  }
+  count(collection: string, query: IQuery) {
+    return this.db.query<number>(this.collections[collection], query, 'count');
+  }
+  get(collection: string, id: string) {
+    return this.db.query(this.collections[collection], id, 'get');
+  }
+  all(collection: string, query: IQuery) {
+    return this.db.query<any>(this.collections[collection], query, 'all');
+  }
+  remove(collection: string, ids: string[]) {
+    return this.db.remove(this.collections[collection], ids).then(x => ids);
+  }
 }

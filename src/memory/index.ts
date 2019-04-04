@@ -1,15 +1,4 @@
-import {
-  Debe,
-  IGetItem,
-  types,
-  coreSkill,
-  changeListenerSkill,
-  softDeleteSkill,
-  ISkill,
-  ICollectionInput,
-  ICollection,
-  IQuery
-} from 'debe';
+import { IGetItem, IQuery, DebeAdapter, ICollections } from 'debe';
 import { createFilter, sort } from './filter';
 export * from './filter';
 
@@ -17,67 +6,50 @@ interface IStore {
   [s: string]: Map<string, IGetItem>;
 }
 
-export class MemoryDebe extends Debe {
-  constructor(
-    collections: ICollectionInput[],
-    { changeListener = true, softDelete = false } = {}
-  ) {
-    super(collections);
-    if (changeListener) {
-      this.addSkill(changeListenerSkill());
+export class MemoryAdapter extends DebeAdapter {
+  private store: IStore = {};
+  initialize(collections: ICollections) {
+    for (var key in collections) {
+      const collection = collections[key];
+      this.store[collection.name] = new Map();
     }
-    this.addSkill(coreSkill());
-    if (softDelete) {
-      this.addSkill(softDeleteSkill());
-    }
-    this.addSkill(memorySkill());
-    // this.tracker = x => console.log(x);
   }
-}
-
-export const memorySkill = (): ISkill => {
-  const store: IStore = {};
-  function handle(type: string, item: IGetItem) {
-    store[type].set(item.id, item);
+  get(collection: string, id: string) {
+    const item = this.store[collection].get(id);
+    return Promise.resolve(item ? { ...item } : item);
+  }
+  all(collection: string, query: IQuery) {
+    return Promise.resolve([
+      ...this.filter(Array.from(this.store[collection].values()), query)
+    ]);
+  }
+  count(collection: string, query: IQuery) {
+    return Promise.resolve(
+      this.filter(Array.from(this.store[collection].values()), query).length
+    );
+  }
+  insert(collection: string, items: any[]) {
+    items.forEach((x: any) => this.handle(collection, x));
+    return Promise.resolve(items);
+  }
+  remove(collection: string, ids: string[]) {
+    ids.forEach(id => this.store[collection].delete(id));
+    return Promise.resolve(ids);
+  }
+  // Helpers
+  private handle(type: string, item: IGetItem) {
+    this.store[type].set(item.id, item);
     return item;
   }
-
-  return function memory(type, payload, flow) {
-    if (type === types.COLLECTION) {
-      const collection = payload as ICollection;
-      store[collection.name] = new Map();
-      flow(payload);
-    } else if (type === types.INSERT) {
-      const [collection, arg] = payload;
-      flow.return(arg.map((x: any) => handle(collection, x)));
-    } else if (type === types.COUNT) {
-      const [collection, query] = payload as [string, IQuery];
-      flow.return(filter(Array.from(store[collection].values()), query).length);
-    } else if (type === types.REMOVE) {
-      const [collection, ids] = payload as [string, string[]];
-      flow.return(ids.map(id => store[collection].delete(id)));
-    } else if (type === types.GET) {
-      const [collection, id] = payload as [string, string];
-      flow.return(store[collection].get(id));
-    } else if (type === 'console.log') {
-      flow.return(null);
-    } else if (type === types.ALL) {
-      const [collection, query] = payload as [string, IQuery];
-      flow.return(filter(Array.from(store[collection].values()), query));
-    } else {
-      flow(payload);
+  private filter(array: any[], query: IQuery) {
+    const filter = query && query.where ? createFilter(query.where) : undefined;
+    const orderBy = query && query.orderBy;
+    if (filter) {
+      array = array.filter(filter);
     }
-  };
-};
-
-function filter(array: any[], query: IQuery) {
-  const filter = query && query.where ? createFilter(query.where) : undefined;
-  const orderBy = query && query.orderBy;
-  if (filter) {
-    array = array.filter(filter);
+    if (orderBy) {
+      array = sort(array, orderBy);
+    }
+    return array;
   }
-  if (orderBy) {
-    array = sort(array, orderBy);
-  }
-  return array;
 }

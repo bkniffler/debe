@@ -1,14 +1,15 @@
-import { MemoryDebe, createFilter } from './index';
+import { Debe, softDeletePlugin } from 'debe';
+import { MemoryAdapter, createFilter } from './index';
 
 const collections = [{ name: 'lorem' }];
 test('memory:basic', async () => {
-  const client = new MemoryDebe(collections);
+  const client = new Debe(new MemoryAdapter(), collections);
   await client.initialize();
   const insertResult = await client.insert<any>('lorem', {
     id: 0,
     name: 'Hallo'
   });
-  const queryResult = await client.run<any>('all', ['lorem']);
+  const queryResult = await client.all<any>('lorem');
   expect(insertResult.id).toBe('0');
   expect(insertResult.name).toBe('Hallo');
   expect(Array.isArray(queryResult)).toBe(true);
@@ -18,13 +19,13 @@ test('memory:basic', async () => {
 });
 
 test('memory:basic', async () => {
-  const client = new MemoryDebe(collections);
+  const client = new Debe(new MemoryAdapter(), collections);
   await client.initialize();
   const insertResult = await client.insert<any>('lorem', {
     id: 0,
     name: 'Hallo'
   });
-  const queryResult = await client.run<any>('all', ['lorem']);
+  const queryResult = await client.all<any>('lorem');
   expect(insertResult.id).toBe('0');
   expect(insertResult.name).toBe('Hallo');
   expect(Array.isArray(queryResult)).toBe(true);
@@ -34,7 +35,7 @@ test('memory:basic', async () => {
 });
 
 test('memory:many', async () => {
-  const client = new MemoryDebe(collections);
+  const client = new Debe(new MemoryAdapter(), collections);
   await client.initialize();
   for (let x = 0; x < 100; x++) {
     client.insert('lorem', { goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
@@ -73,28 +74,27 @@ test('memory:filter', async () => {
 }, 10000);
 
 test('memory:change', async () => {
-  const client = new MemoryDebe(collections);
+  const client = new Debe(new MemoryAdapter(), collections);
   await client.initialize();
   let calls = 0;
-  const unlisten = client.runSync('all', ['lorem'], {
-    callback: () => (calls = calls + 1)
-  });
-  await client.run('insert', ['lorem', { id: '0', name: 'Hallo' }]);
-  await client.run('insert', ['lorem', { id: '1', name: 'Hallo' }]);
+  const unlisten = client.all('lorem', {}, () => (calls = calls + 1));
+  await client.insert('lorem', { id: '0', name: 'Hallo' });
+  await client.insert('lorem', { id: '1', name: 'Hallo' });
   unlisten();
-  await client.run('insert', ['lorem', { id: '2', name: 'Hallo' }]);
+  await client.insert('lorem', { id: '2', name: 'Hallo' });
   expect(calls).toBe(2);
 });
 
 test('memory:softdelete', async () => {
-  const client = new MemoryDebe(collections, { softDelete: true });
+  const client = new Debe(new MemoryAdapter(), collections);
+  client.addPlugin(softDeletePlugin(), 'AFTER', 'corePlugin');
   await client.initialize();
-  await client.run('insert', ['lorem', { id: '0', name: 'Hallo' }]);
-  await client.run('insert', ['lorem', { id: '1', name: 'Hallo' }]);
-  await client.run('remove', ['lorem', { id: '0' }]);
-  const all0 = await client.run('all', ['lorem', { where: ['id != ?', null] }]);
-  const all1 = await client.run('all', ['lorem', {}]);
-  const item0 = await client.run('get', ['lorem', { id: '0' }]);
+  await client.insert('lorem', { id: '0', name: 'Hallo' });
+  await client.insert('lorem', { id: '1', name: 'Hallo' });
+  await client.remove('lorem', '0');
+  const all0 = await client.all('lorem', { where: ['id != ?', null] });
+  const all1 = await client.all('lorem', {});
+  const item0 = await client.get('lorem', { id: '0' });
   expect(all0.length).toBe(1);
   expect(all1.length).toBe(1);
   expect(item0).toBeTruthy();

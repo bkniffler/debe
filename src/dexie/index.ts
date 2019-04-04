@@ -1,114 +1,85 @@
-import {
-  Debe,
-  types,
-  coreSkill,
-  changeListenerSkill,
-  softDeleteSkill,
-  ISkill,
-  ICollectionInput,
-  ICollections,
-  queryToArray,
-  IQuery
-} from 'debe';
+import { ICollections, queryToArray, IQuery, DebeAdapter } from 'debe';
 import Dexie, { Table, IndexableType } from 'dexie';
 
-export class DexieDebe extends Debe {
-  constructor(
-    collections: ICollectionInput[],
-    {
-      changeListener = true,
-      softDelete = false,
-      name = 'debe',
-      version = 1
-    } = {}
-  ) {
-    super(collections);
-    if (changeListener) {
-      this.addSkill(changeListenerSkill());
-    }
-    this.addSkill(coreSkill());
-    if (softDelete) {
-      this.addSkill(softDeleteSkill());
-    }
-    this.addSkill(dexieSkill(name, version));
-    // this.tracker = x => console.log(x);
+export class DexieAdapter extends DebeAdapter {
+  constructor({ version = 1, name = 'debe' } = {}) {
+    super();
+    this.db = new Dexie(name);
+    this.version = version;
   }
-}
-
-export const dexieSkill = (name: string, version: number): ISkill => {
-  const db = new Dexie(name);
-  return async function dexie(type, payload, flow) {
-    if (type === types.COLLECTIONS) {
-      const collections = payload as ICollections;
-      const schema: any = {};
-      for (var key in collections) {
-        const collection = collections[key];
-        schema[collection.name] = [
-          collection.specialFields.id,
-          ...Object.keys(collection.index)
-        ].join(', ');
-      }
-      db.version(version).stores(schema);
-      flow(payload);
-    } else if (type === types.INSERT) {
-      const [collection, arg] = payload;
-      await db.table(collection).bulkPut(arg);
-      flow.return(arg);
-    } else if (type === types.REMOVE) {
-      const [collection, ids] = payload as [string, string[]];
-      flow.return(await db.table(collection).bulkDelete(ids));
-    } else if (type === types.GET) {
-      const [collection, id] = payload as [string, string];
-      flow.return(await db.table(collection).get(id));
-    } else if (type === types.ALL || type === types.COUNT) {
-      const [collection, { where, offset, limit }] = payload as [
-        string,
-        IQuery
-      ];
-      let cursor = db.table(collection);
-      if (where) {
-        cursor = filter(cursor, where);
-      }
-      if (offset) {
-        cursor = cursor.offset(offset) as any;
-      }
-      if (limit) {
-        cursor = cursor.limit(limit) as any;
-      }
-      flow.return(
-        (await type) === types.COUNT ? cursor.count() : cursor.toArray()
-      );
-    } else {
-      flow(payload);
+  db: Dexie;
+  version: number;
+  initialize(collections: ICollections) {
+    const schema: any = {};
+    for (var key in collections) {
+      const collection = collections[key];
+      schema[collection.name] = [
+        collection.specialFields.id,
+        ...Object.keys(collection.index)
+      ].join(', ');
     }
-  };
-};
+    this.db.version(this.version).stores(schema);
+  }
+  insert(collection: string, items: any[]) {
+    return this.db
+      .table(collection)
+      .bulkPut(items)
+      .then(() => items);
+  }
+  remove(collection: string, ids: string[]) {
+    return this.db
+      .table(collection)
+      .bulkDelete(ids)
+      .then(() => ids);
+  }
+  get(collection: string, id: string) {
+    return this.db.table(collection).get(id);
+  }
+  all(collection: string, query: IQuery) {
+    return this.baseQuery(collection, query).toArray();
+  }
+  count(collection: string, query: IQuery) {
+    return this.baseQuery(collection, query).count();
+  }
+  private baseQuery(collection: string, { where, offset, limit }: IQuery) {
+    let cursor = this.db.table(collection);
+    if (where) {
+      cursor = this.filter(cursor, where);
+    }
+    if (offset) {
+      cursor = cursor.offset(offset) as any;
+    }
+    if (limit) {
+      cursor = cursor.limit(limit) as any;
+    }
+    return cursor;
+  }
+  private filter(
+    collection: Table<any, IndexableType>,
+    query?: [string, ...any[]]
+  ): Table<any, IndexableType> {
+    const filterMap = {
+      '>=': 'aboveOrEqual',
+      '>': 'above',
+      '<=': 'belowOrEqual',
+      '<': 'below',
+      IN: 'anyOf',
+      'NOT IN': 'noneOf',
+      '=': 'equals',
+      '==': 'equals',
+      '!=': 'notEqual'
+    };
 
-function filter(
-  collection: Table<any, IndexableType>,
-  query?: [string, ...any[]]
-): Table<any, IndexableType> {
-  const filterMap = {
-    '>=': 'aboveOrEqual',
-    '>': 'above',
-    '<=': 'belowOrEqual',
-    '<': 'below',
-    IN: 'anyOf',
-    'NOT IN': 'noneOf',
-    '=': 'equals',
-    '==': 'equals',
-    '!=': 'notEqual'
-  };
-
-  if (!query || !query.length) {
+    if (!query || !query.length) {
+      return collection;
+    }
+    const array = queryToArray(query);
+    for (var i = 0; i < array.length; i++) {
+      let [left, operand, right] = array[i];
+      if (filterMap[operand]) {
+        collection = collection.where(left)[filterMap[operand]](right) as any;
+      }
+    }
     return collection;
   }
-  const array = queryToArray(query);
-  for (var i = 0; i < array.length; i++) {
-    let [left, operand, right] = array[i];
-    if (filterMap[operand]) {
-      collection = collection.where(left)[filterMap[operand]](right) as any;
-    }
-  }
-  return collection;
 }

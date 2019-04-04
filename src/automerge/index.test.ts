@@ -1,4 +1,5 @@
-import { MemoryDebe } from 'debe-memory';
+import { Debe } from 'debe';
+import { MemoryAdapter } from 'debe-memory';
 import { debeAutomerge } from 'debe-automerge';
 
 const schema = [
@@ -15,7 +16,7 @@ interface ILorem {
 }
 
 test('automerge:simple', async () => {
-  const db = new MemoryDebe(schema);
+  const db = new Debe(new MemoryAdapter(), schema);
   await db.initialize();
   const automerge = debeAutomerge(db);
   const item = await automerge<ILorem>('lorem', doc => {
@@ -34,7 +35,7 @@ test('automerge:simple', async () => {
 });
 
 test('automerge:err', async () => {
-  const db = new MemoryDebe(schema);
+  const db = new Debe(new MemoryAdapter(), schema);
   await db.initialize();
   const automerge = debeAutomerge(db);
   let err = null;
