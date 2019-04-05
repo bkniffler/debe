@@ -1,9 +1,9 @@
 import { Debe } from 'debe';
 import { MemoryAdapter } from 'debe-memory';
 import { createBroker } from 'rpc1';
-import { sync, createSocketClient } from './index';
+import { sync, createSyncClient } from './index';
 //import { isEqual } from 'debe';
-import { createSocketServer } from 'debe-sync-server';
+import { createSyncServer } from 'debe-sync-server';
 
 const schema = [
   {
@@ -112,15 +112,12 @@ test('sync:socket:simple', async cb => {
   const port = 5554;
   // HOST
   const dbMaster = new Debe(new MemoryAdapter(), schema);
-  const destroyServer = createSocketServer(dbMaster, { port });
+  const destroyServer = createSyncServer(dbMaster, { port });
   await dbMaster.initialize();
 
   // CLIENT
   const dbClient = new Debe(new MemoryAdapter(), schema);
-  const destroyClient = createSocketClient(
-    dbClient,
-    `http://localhost:${port}`
-  );
+  const destroyClient = createSyncClient(dbClient, `http://localhost:${port}`);
   await dbClient.initialize();
 
   const items = [];
@@ -131,7 +128,7 @@ test('sync:socket:simple', async cb => {
 
   // CLIENT
   const dbClient2 = new Debe(new MemoryAdapter(), schema);
-  const destroyClient2 = createSocketClient(
+  const destroyClient2 = createSyncClient(
     dbClient2,
     `http://localhost:${port}`
   );
@@ -174,15 +171,15 @@ test('sync:socket:crazy', async cb => {
   async function spawnMaster(port: number, syncTo?: number) {
     const db = new Debe(new MemoryAdapter(), schema);
     const destroy = [
-      createSocketServer(db, { port }),
-      syncTo ? createSocketClient(db, `http://localhost:${syncTo}`) : undefined
+      createSyncServer(db, { port }),
+      syncTo ? createSyncClient(db, `http://localhost:${syncTo}`) : undefined
     ];
     await db.initialize();
     return { db, destroy: () => destroy.forEach(x => x && x()) };
   }
   async function spawnClient(syncTo: number) {
     const db = new Debe(new MemoryAdapter(), schema);
-    const destroy = createSocketClient(db, `http://localhost:${syncTo}`);
+    const destroy = createSyncClient(db, `http://localhost:${syncTo}`);
     await db.initialize();
     return { db, destroy };
   }

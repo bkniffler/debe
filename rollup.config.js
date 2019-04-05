@@ -76,6 +76,7 @@ const projects = Object.keys(paths).forEach(key => {
           namedExports: {
             'node_modules/flowzilla/lib/index.umd.js': ['Flowzilla'],
             'node_modules/rpc1/index.umd.js': [
+              'waitFor',
               'createLog',
               'requestReply',
               'createBroker'

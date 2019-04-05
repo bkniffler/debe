@@ -226,12 +226,12 @@ export function sync(client: Debe, others: string[] = [], where?: string[]) {
   };
 }
 
-export function createSocketClient(db: Debe, url: string) {
+export function createSyncClient(db: Debe, url: string) {
   const syncer = sync(db, ['debe']);
   return createSocket(url, syncer.connect);
 }
 
-export function createLocalClient(db: Debe, broker: IBroker) {
+export function createLocalSyncClient(db: Debe, broker: IBroker) {
   const syncer = sync(db, ['debe']);
   const local = broker.local('debe-sync1', syncer.connect);
   return local;
