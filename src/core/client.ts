@@ -34,10 +34,11 @@ export class Debe<TBase = IItem> {
   constructor(
     adapter: DebeAdapter | any,
     collections: ICollectionInput[],
-    { tracker, plugins = [] }: { tracker?: boolean; plugins?: IPlugin[] } = {}
+    options: { tracker?: boolean; plugins?: IPlugin[]; [s: string]: any } = {}
   ) {
+    const { tracker, plugins = [] } = options;
     if (adapter.connect) {
-      adapter.connect(this);
+      adapter.connect(this, options);
     }
 
     this.collections = collections as any;

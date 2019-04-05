@@ -1,6 +1,6 @@
 import { ICollection, types, fieldTypes, IPlugin, CORE_PLUGIN } from 'debe';
 
-export const jsonBodySkill = (options: any = {}): IPlugin => client => {
+export const jsonBodyPlugin = (options: any = {}): IPlugin => client => {
   const { bodyField = 'body' } = options;
 
   client.addPlugin(

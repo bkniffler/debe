@@ -3,9 +3,9 @@ import { ICollections, IQuery, types } from './types';
 import { Debe, IPlugin } from './client';
 
 export abstract class DebeAdapter {
-  connect(debe: Debe) {
-    changeListenerPlugin()(debe);
-    corePlugin()(debe);
+  connect(debe: Debe, options?: any) {
+    changeListenerPlugin(options)(debe);
+    corePlugin(options)(debe);
     adapterPlugin(this)(debe);
   }
   destroy(): Promise<void> {

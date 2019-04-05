@@ -1,5 +1,4 @@
 import { DebeAdapter, ICollections, IQuery, Debe } from 'debe';
-import { jsonBodySkill } from './plugins';
 import { SQLCore } from './core';
 
 export class SQLAdapter extends DebeAdapter {
@@ -10,15 +9,15 @@ export class SQLAdapter extends DebeAdapter {
     super();
     this.db = db;
   }
-  connect(debe: Debe) {
-    super.connect(debe);
-    jsonBodySkill()(debe);
-  }
   async initialize(collections: ICollections) {
     this.collections = collections;
     await Promise.all(
       Object.keys(collections).map(key => this.db.createTable(collections[key]))
     );
+  }
+  connect(debe: Debe, options?: any) {
+    super.connect(debe, options);
+    this.db.initialize(debe, options);
   }
   destroy() {
     return this.db.destroy();

@@ -4,7 +4,8 @@ import {
   IGetItem,
   IQuery,
   ensureArray,
-  IFieldTypes
+  IFieldTypes,
+  Debe
 } from 'debe';
 
 export abstract class SQLCore {
@@ -14,6 +15,9 @@ export abstract class SQLCore {
     type?: 'all' | 'get' | 'count' | 'insert' | 'remove'
   ): Promise<T>;
 
+  initialize(debe: Debe, options?: any): Promise<void> {
+    return Promise.resolve();
+  }
   destroy(): Promise<void> {
     return Promise.resolve();
   }

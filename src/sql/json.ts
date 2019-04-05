@@ -1,7 +1,12 @@
 import { SQLCore } from './core';
-import { ICollection, ensureArray } from 'debe';
+import { ICollection, ensureArray, Debe } from 'debe';
+import { jsonBodyPlugin } from './plugins';
 
 export abstract class SQLJsonCore extends SQLCore {
+  initialize(debe: Debe, options?: any): Promise<void> {
+    jsonBodyPlugin(options)(debe);
+    return Promise.resolve();
+  }
   getCollectionBodyField(collection: ICollection) {
     return collection.specialFields.body;
   }
