@@ -41,11 +41,12 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
           const newValue = await flow.run(type, payload, {
             callback: undefined
           });
+
           // Check is results changed
           if (!isEqual(lastResult, newValue as any, revField)) {
             callback(
               undefined,
-              (newValue || undefined) as any,
+              (newValue === null ? undefined : newValue) as any,
               isInitial ? 'INITIAL' : 'CHANGE'
             );
           }
@@ -78,6 +79,7 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
   });
 };
 
+const isNullOrUndefined = (x: any) => x === null || x === undefined;
 export function isEqual(
   rowsA: IItem[] | IItem | null,
   rowsB: IItem[] | IItem | null,
@@ -92,11 +94,25 @@ export function isEqual(
   if (rowsA === rowsB) {
     return true;
   }
-  if (!rowsA && !rowsB) {
+  if (isNullOrUndefined(rowsA) && isNullOrUndefined(rowsB)) {
     return true;
   }
   if ((!rowsA && rowsB) || (rowsA && !rowsB)) {
     return false;
+  }
+  if (
+    typeof rowsA === 'bigint' ||
+    typeof rowsA === 'boolean' ||
+    typeof rowsA === 'number' ||
+    typeof rowsA === 'string'
+  ) {
+    return rowsA === rowsB;
+  }
+  if (rowsA instanceof Date) {
+    if (!(rowsB instanceof Date)) {
+      return false;
+    }
+    return +rowsA === +rowsB;
   }
   function extrapolate(item: IItem) {
     return `${item.id}|${item[revisionField]}`;

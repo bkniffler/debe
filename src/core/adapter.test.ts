@@ -134,12 +134,20 @@ export function createAdapterTest(
     const client = new Debe(createAdapter(2), collections);
     await client.initialize();
     let calls = 0;
+    let countCalls = 0;
     const unlisten = client.all(table, {}, () => (calls = calls + 1));
+    const unlisten2 = client.count(
+      table,
+      {},
+      () => (countCalls = countCalls + 1)
+    );
     await client.insert(table, { id: '0', name: 'Hallo' });
     await client.insert(table, { id: '1', name: 'Hallo' });
     unlisten();
+    unlisten2();
     await client.insert(table, { id: '2', name: 'Hallo' });
     expect(calls).toBe(2);
+    expect(countCalls).toBe(2);
     await client.destroy();
     await ini();
   });
