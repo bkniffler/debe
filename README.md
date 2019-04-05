@@ -37,13 +37,52 @@
 
 ## Get started
 
+### Basic
+
+https://codesandbox.io/s/5wn340ovn
+
+```js
+const { Debe } = require('debe');
+const { MemoryAdapter } = require('debe-memory');
+
+const schema = [{ name: 'lorem', index: ['name'] }];
+
+async function work() {
+  console.log('Start');
+  const db = new Debe(new MemoryAdapter(), schema);
+  await db.initialize();
+  console.log('Initialized');
+  await generateItems(db, 10000);
+  const items = await db.all('lorem', {
+    where: ['name < ?', 'a10']
+  });
+  console.log(`Fetched ${items.length} items`);
+}
+
+async function generateItems(db, numberOfItems) {
+  const start = new Date().getTime();
+  const items = [];
+  for (let x = 0; x < numberOfItems; x++) {
+    items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
+  }
+  await db.insert('lorem', items);
+  console.log(
+    `Generated ${numberOfItems} in ${new Date().getTime() - start}ms`
+  );
+}
+
+work().catch(err => console.log(err));
+```
+
+### Replication
+
 https://codesandbox.io/s/y27xmr9rvj
 
 ```js
 const { Debe } = require('debe');
 const { MemoryAdapter } = require('debe-memory');
-const { createSocketClient } = require('debe-sync');
-const { createSocketServer } = require('debe-sync-server');
+const { createSyncClient } = require('debe-sync');
+const { createSyncServer } = require('debe-sync-server');
 
 async function generateItems(db, numberOfItems) {
   const start = new Date().getTime();
@@ -67,10 +106,10 @@ async function work() {
   console.log('Start');
   // Master
   const db0 = new Debe(new MemoryAdapter(), schema);
-  createSocketServer(db0, { port: 5555 });
+  createSyncServer(db0, { port: 5555 });
   // Client
   const db1 = new Debe(new MemoryAdapter(), schema);
-  createSocketClient(db1, 'http://localhost:5555', ['lorem']);
+  createSyncClient(db1, 'http://localhost:5555', ['lorem']);
   // Init
   await db0.initialize();
   await db1.initialize();
