@@ -72,6 +72,12 @@ export function createAdapterTest(
     expect(result.length).toBe(6);
     expect(result[0].id).toBe('a05');
     expect(result[4].id).toBe('a09');
+    const single = await client.get(table, {
+      where: ['id <= ?', 'a50'],
+      orderBy: ['id ASC']
+    } as any);
+    expect(single).toBeTruthy();
+    expect(single.id).toBe('a00');
     await client.destroy();
     await ini();
   }, 10000);

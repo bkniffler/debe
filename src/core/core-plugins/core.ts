@@ -103,7 +103,7 @@ export const corePlugin = (options: any = {}): IPlugin => client => {
       if (typeof value === 'object' && value.id) {
         flow([collection, Array.isArray(value.id) ? value.id[0] : value.id]);
       } else if (typeof value === 'object') {
-        flow.return((await flow.run(types.ALL, value))[0]);
+        flow.return((await flow.run(types.ALL, [collection, value]))[0]);
       } else {
         flow([collection, value]);
       }
