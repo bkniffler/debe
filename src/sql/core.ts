@@ -76,7 +76,7 @@ export abstract class SQLCore {
     await Promise.all(
       Object.keys(collection.fields).map(key =>
         this.exec('', [
-          `ALTER TABLE ${collection.name} ADD ${key} ${this.getColumnType(
+          `ALTER TABLE "${collection.name}" ADD ${key} ${this.getColumnType(
             collection.fields[key]
           )}${collection.specialFields.id === key ? ' PRIMARY KEY' : ''}`
         ]).catch(() => {})
