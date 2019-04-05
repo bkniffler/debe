@@ -82,6 +82,47 @@ export function createAdapterTest(
     await ini();
   }, 10000);
 
+  test(`${name}:insert`, async () => {
+    const collections = [
+      { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
+    ];
+    const ini = await init(collections, 1);
+    const table = collections[0].name;
+    const client = new Debe(createAdapter(1), collections);
+    await client.initialize();
+    async function isMatch(item?: any) {
+      const single = item || (await client.get(table, 'a0'));
+      return (
+        single &&
+        single.id === 'a0' &&
+        single.fieldBool === true &&
+        single.fieldString === 'abc' &&
+        single.fieldNumber === 5
+      );
+    }
+    const single = await client.insert(table, {
+      id: 'a0',
+      fieldString: 'abc',
+      fieldBool: true,
+      fieldNumber: 5
+    });
+    expect(await isMatch(single)).toBe(true);
+    expect(await isMatch()).toBe(true);
+    const newItem = await client.insert(
+      table,
+      {
+        id: 'a0',
+        newField: 'abc2'
+      },
+      { update: true }
+    );
+    expect(await isMatch()).toBe(true);
+    expect(newItem.newField).toBe('abc2');
+    expect((await client.get(table, 'a0')).newField).toBe('abc2');
+    await client.destroy();
+    await ini();
+  }, 10000);
+
   test(`${name}:change`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }

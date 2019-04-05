@@ -82,15 +82,40 @@ export const corePlugin = (options: any = {}): IPlugin => client => {
       );
     }
     if (type === types.INSERT) {
-      const refetchResult = flow.get('refetchResult', false);
-      const [collection, value] = payload;
+      const [collection, value, options = {}] = payload;
+      const { refetchResult = false, update = false } = options;
       const isArray = Array.isArray(value);
-      const newItems = ensureArray(value).map(transformForStorage);
+      let newItems: any[];
+      if (update !== false) {
+        // Fetch existing items and patch new ones with existing values
+        newItems = ensureArray(value);
+        const ids = newItems.map(x => x.id).filter(x => x);
+        const existing = ids
+          ? (await flow.run(types.ALL, [collection, ids])).reduce(
+              (state, item) => {
+                state[item.id] = item;
+                return state;
+              },
+              {}
+            )
+          : {};
+        newItems = newItems.map(item => {
+          if (item.id && existing[item.id]) {
+            item = { ...existing[item.id], ...item };
+          }
+          return transformForStorage(item);
+        });
+      } else {
+        newItems = ensureArray(value).map(transformForStorage);
+      }
       flow(
         [collection, newItems],
         async (result: any, flo: any) => {
           if (refetchResult) {
-            result = await flow.run(types.ALL, newItems.map(x => x.id));
+            result = await flow.run(types.ALL, [
+              collection,
+              newItems.map(x => x.id)
+            ]);
           }
           flo(isArray ? result : result[0]);
         }

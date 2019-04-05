@@ -113,10 +113,7 @@ export class Debe<TBase = IItem> {
     options: IInsertInput = {}
   ): Promise<(T & IGetItem)[] | T & IGetItem> {
     throwIfNotInitialized(this);
-    return this.flow.run(types.INSERT, [collection, value], {
-      ...options,
-      ...this
-    });
+    return this.flow.run(types.INSERT, [collection, value, options], this);
   }
   // remove
   public remove<T = any>(

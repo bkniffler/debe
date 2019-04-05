@@ -57,10 +57,14 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
       listener();
       return queryEmitter.on(collection, listener);
     } else if (type === types.INSERT) {
-      const syncFrom = flow.get('syncFrom');
-      const [collection, items] = payload;
+      const [collection, items, options = {}] = payload;
+      const { syncFrom } = options;
       return flow(
-        [collection, Array.isArray(items) ? items.map(addRev) : addRev(items)],
+        [
+          collection,
+          Array.isArray(items) ? items.map(addRev) : addRev(items),
+          options
+        ],
         (res, back) => {
           queryEmitter.emit(collection, Array.isArray(res) ? res : [res], {
             syncFrom
