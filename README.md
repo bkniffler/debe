@@ -116,7 +116,7 @@ Please note, Debe is currently not supporting relations, and probably never real
 
 Querying is simple and similar to SQL. You can subscribe to query changes by providing a callback
 
-```jsx
+```tsx
 // Javascript
 const value = await db1.all('lorem', {
   where: ['name < ? AND lastChanged > ?', 'a50', +new Date()],
@@ -134,13 +134,10 @@ const unsubscribe = db1.all(
 );
 
 // Typescript
-db1.all <
-  ILorem >
-  ('lorem',
-  {
-    where: ['name < ? AND lastChanged > ?', 'a50', +new Date()],
-    orderBy: ['name', 'rev DESC']
-  });
+db1.all<ILorem>('lorem', {
+  where: ['name < ? AND lastChanged > ?', 'a50', +new Date()],
+  orderBy: ['name', 'rev DESC']
+});
 
 // Or in a react component
 function MyComponent(props) {
