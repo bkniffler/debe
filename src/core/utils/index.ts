@@ -2,6 +2,7 @@ export * from './ensure-array';
 export * from './time';
 export * from './generate';
 export * from './query';
+export * from './chunk';
 export * from './log';
 // Do function arguments contain a cb function?
 export function isArgsWithCallback(args: any[]) {

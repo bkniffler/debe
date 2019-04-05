@@ -89,16 +89,22 @@ export const corePlugin = (options: any = {}): IPlugin => client => {
       if (update === true) {
         // Fetch existing items and patch new ones with existing values
         newItems = ensureArray(value);
-        const ids = newItems.map(x => x.id).filter(x => x);
-        const existing = ids
-          ? (await flow.run(types.ALL, [collection, ids])).reduce(
-              (state, item) => {
-                state[item.id] = item;
-                return state;
-              },
-              {}
-            )
-          : {};
+        /*const ids = chunk(newItems.map(x => x.id).filter(x => x), 100);
+        const existing = {};
+        if (ids && ids.length && ids[0].length) {
+          const chunks = await Promise.all(
+            ids.map(ids => flow.run(types.ALL, [collection, ids]))
+          );
+          chunks.forEach(chunk =>
+            chunk.forEach(item => (existing[item.id] = item))
+          );
+        }*/
+        const existingItems = await flow.run(types.ALL, [
+          collection,
+          newItems.map(x => x.id).filter(x => x)
+        ]);
+        const existing = {};
+        existingItems.forEach(item => (existing[item.id] = item));
         newItems = newItems.map(item => {
           if (item.id && existing[item.id]) {
             item = { ...existing[item.id], ...item };

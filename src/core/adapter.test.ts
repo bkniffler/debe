@@ -46,9 +46,11 @@ export function createAdapterTest(
     const table = collections[0].name;
     const client = new Debe(createAdapter(1), collections);
     await client.initialize();
+    const items = [];
     for (let x = 0; x < 100; x++) {
-      client.insert(table, { id: 'a' + (x < 10 ? `0${x}` : x) });
+      items.push({ id: 'a' + (x < 10 ? `0${x}` : x) });
     }
+    await client.insert(table, items);
     let result = await client.all(table, {
       where: ['id < ?', 'a50']
     } as any);

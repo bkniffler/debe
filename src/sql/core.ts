@@ -187,6 +187,13 @@ export abstract class SQLCore {
       queryType
     );
 
+    // Work around args being arrays
+    args.forEach((arg, i) => {
+      if (Array.isArray(arg)) {
+        args[i] = arg.join(', ');
+      }
+    });
+
     if (queryType === 'count') {
       return this.exec<any>(sql, args, queryType);
     } else if (queryType === 'get') {
