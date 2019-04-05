@@ -8,10 +8,11 @@ let port = 5560;
 createAdapterTest(
   'socketadapter',
   i => new SocketAdapter(`http://localhost:${port + i}`) as any,
-  (collections, i) => {
+  async (collections, i) => {
     const db = new Debe(new MemoryAdapter(), collections);
+    await db.initialize();
     let unmount = createSocketServer(db, port + i);
     unmount['db'] = db;
-    return Promise.resolve(unmount);
+    return unmount;
   }
 );

@@ -1,21 +1,12 @@
-import { createBroker } from 'rpc1';
+import { createBroker, IService } from 'rpc1';
 import { pluginSocketBroker } from 'rpc1-socket-server';
 import { Debe } from 'debe';
 
 export const createSocketServer = (db: Debe, port: number) => {
   let local: any;
   const destroy = createBroker(async broker => {
-    await db.initialize();
     broker.plugin(pluginSocketBroker({ port }));
-    local = broker.local('debe', service => {
-      service.addMethod('run', (type: string, payload: any) =>
-        db[type](...payload)
-      );
-      service.addSubscription(
-        'subscribe',
-        (emit: any, type: string, payload: any) => db[type](...payload, emit)
-      );
-    });
+    local = broker.local('debe', service => attachSocketService(service, db));
   });
   return async function unmount() {
     destroy();
@@ -24,4 +15,14 @@ export const createSocketServer = (db: Debe, port: number) => {
     }
     await new Promise(yay => setTimeout(yay, 200));
   };
+};
+
+export const attachSocketService = (service: IService, db: Debe) => {
+  service.addMethod('run', (type: string, payload: any) =>
+    db[type](...payload)
+  );
+  service.addSubscription(
+    'subscribe',
+    (emit: any, type: string, payload: any) => db[type](...payload, emit)
+  );
 };
