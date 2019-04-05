@@ -40,18 +40,18 @@
 https://codesandbox.io/s/y27xmr9rvj
 
 ```js
-const { Debe } = require("debe");
-const { MemoryAdapter } = require("debe-memory");
-const { createSocketClient } = require("debe-sync");
-const { createSocketServer } = require("debe-sync-server");
+const { Debe } = require('debe');
+const { MemoryAdapter } = require('debe-memory');
+const { createSocketClient } = require('debe-sync');
+const { createSocketServer } = require('debe-sync-server');
 
 async function generateItems(db, numberOfItems) {
   const start = new Date().getTime();
   const items = [];
   for (let x = 0; x < numberOfItems; x++) {
-    items.push({ name: "a" + (x < 10 ? `0${x}` : x) });
+    items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
   }
-  await db.insert("lorem", items);
+  await db.insert('lorem', items);
   console.log(
     `Generated ${numberOfItems} in ${new Date().getTime() - start}ms`
   );
@@ -61,32 +61,31 @@ async function wait(ms) {
   await new Promise(yay => setTimeout(yay, ms));
 }
 
-const schema = [{ name: "lorem", index: ["name"] }];
+const schema = [{ name: 'lorem', index: ['name'] }];
 
 async function work() {
-  console.log("Start");
+  console.log('Start');
   // Master
   const db0 = new Debe(new MemoryAdapter(), schema);
   createSocketServer(db0, { port: 5555 });
   // Client
   const db1 = new Debe(new MemoryAdapter(), schema);
-  createSocketClient(db1, "http://localhost:5555", ["lorem"]);
+  createSocketClient(db1, 'http://localhost:5555', ['lorem']);
   // Init
   await db0.initialize();
   await db1.initialize();
-  console.log("Initialized");
+  console.log('Initialized');
   // Step1
   await generateItems(db0, 10000);
   await wait(250);
-  console.log(`Synced ${await db1.count("lorem")} items via socket`);
+  console.log(`Synced ${await db1.count('lorem')} items via socket`);
   // Step2
   await generateItems(db1, 1000);
   await wait(250);
-  console.log(`Synced ${await db0.count("lorem")} items via socket`);
+  console.log(`Synced ${await db0.count('lorem')} items via socket`);
 }
 
 work().catch(err => console.log(err));
-
 ```
 
 ## Adapters
@@ -105,19 +104,51 @@ work().catch(err => console.log(err));
 
 ## Why
 
-PouchDB/RxDB are great solutions for replicating databases, but being forced to build your services on top of CouchDB can be unfitting for some users. Debe is a fast and modern one-stop solution if you want to replicate your data in every way imaginable, so master-to-clients, master-to-masters-to-clients or master-to-client-to-master-to-client, ... It currently uses schemaless SQLight/PostgreSQL for persistence (with possibly more to follow). This makes it work wonderfully on React-Native/Expo and ElectronJS, since these all support SQLight fairly easily.
+PouchDB/RxDB are great and very mature solutions for replicating databases, but being forced to build your services on top of CouchDB can be unfitting for some users. Debe is a fast and modern solution if you want to replicate and fetch your data in every way imaginable, so master-to-clients, master-to-masters-to-clients or master-to-client-to-master-to-client. There are multiple adapters available and implementing new ones is super simple due to the simple API surface. For a starting point, you can always take a look at memory-adapter. Also, there is a headless socket client adapter that connects to any remote debe instance to perform queries. This works great for electronJS where you might want to pipe all requests to another thread that performs the data access or for non-offline web applications that should not persist nor replicate locally.
 
-Please note, Debe is currently not supporting relations. If you're interested in relational data and graphs, you might be better off with graphQL, apollo and AppSync. Debe is focused on offline-first, performance, simplicity and being slim.
+PouchDB also stores data in a way that makes it really hard to query the underlying database directly. Debes SQL adapters store the data body as JSON type and make use of neat JSON indexing SQLite and PostgreSQL provide, so you get great performance without sacrificing flexibility of your schema or direct queryability. Also there is no need for external index tables.
+
+Also, doing complex authorization with CouchDB is difficult, thats why the one-database-per-user approach is the most popular choice for separating data between the users. With debe and the whole data flow in Javascript/NodeJS some cool possibilities to control data access and filter & transform incoming/outgoing data according to what user tries to access it opens up.
+
+Please note, Debe is currently not supporting relations, and probably never really will. If you're interested in relational data and graphs, you might be better off with graphQL, apollo and AppSync. Debe is focused on offline-first, performance, simplicity and being super slim.
 
 # Querying
 
-Querying is simple and similar to SQL.
+Querying is simple and similar to SQL. You can subscribe to query changes by providing a callback
 
-```
-db1.all('lorem', {
-  where: ['name < ?', 'a50'],
+```jsx
+// Javascript
+const value = await db1.all('lorem', {
+  where: ['name < ? AND lastChanged > ?', 'a50', +new Date()],
   orderBy: ['name', 'rev DESC']
-}));
+});
+
+// With Subscription
+const unsubscribe = db1.all(
+  'lorem',
+  {
+    where: ['name < ? AND lastChanged > ?', 'a50', +new Date()],
+    orderBy: ['name', 'rev DESC']
+  },
+  value => console.log(value)
+);
+
+// Typescript
+db1.all <
+  ILorem >
+  ('lorem',
+  {
+    where: ['name < ? AND lastChanged > ?', 'a50', +new Date()],
+    orderBy: ['name', 'rev DESC']
+  });
+
+// Or in a react component
+function MyComponent(props) {
+  // useAll is reactive by default and will fire each time the results change
+  const [items, loading] = useAll('lorem', {
+    where: ['name < ? AND lastChanged > ?', props.filterName, props.lastChanged]
+  });
+}
 ```
 
 # Replication
