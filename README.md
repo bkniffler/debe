@@ -89,21 +89,19 @@ work().catch(err => console.log(err));
 
 ```
 
+## Adapters
+
+- Memory: Universal inmemory adapter for no persistence
+- Socket: Universal Socket client that connects to a socket-server debe instance remotely
+- SQL
+  - SQLite: NodeJS, react-native, electron adapter that uses SQLite
+  - PostgreSQL: NodeJS, electron adapter for PostgreSQL
+- Dexie: Browser-only adapter for the supercool dexie database / indexeddb
+
 ## Bindings
 
 - Vanilla Javascript/NodeJS
 - React/React Native via hooks
-- Workers \*not yet
-- ElectronJS
-
-## Adapters
-
-- Memory (universal)
-- SQL
-  - SQLite (nodeJS, react-native, electron)
-  - PostgreSQL (nodeJS, electron)
-- Dexie (browser)
-- MongoDB \*not yet :(
 
 ## Why
 
