@@ -60,8 +60,9 @@ export abstract class SQLCore {
         ', '
       )}) VALUES (${columns.map(() => '?').join(', ')})`;
     }*/
-  createTable(collection: ICollection) {
-    return this.exec('', [
+  async createTable(collection: ICollection) {
+    // Table
+    await this.exec('', [
       `CREATE TABLE IF NOT EXISTS "${collection.name}" (${[
         ...Object.keys(collection.fields).map(
           key =>
@@ -69,7 +70,20 @@ export abstract class SQLCore {
               collection.specialFields.id === key ? ' PRIMARY KEY' : ''
             }`
         )
-      ].join(', ')})`,
+      ].join(', ')})`
+    ]);
+    // Force creating of all columns
+    await Promise.all(
+      Object.keys(collection.fields).map(key =>
+        this.exec('', [
+          `ALTER TABLE ${collection.name} ADD ${key} ${this.getColumnType(
+            collection.fields[key]
+          )}${collection.specialFields.id === key ? ' PRIMARY KEY' : ''}`
+        ]).catch(() => {})
+      )
+    );
+    // Indexes
+    await this.exec('', [
       ...Object.keys(collection.index).map(key =>
         this.createTableIndex(
           collection,
