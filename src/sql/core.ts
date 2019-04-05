@@ -102,7 +102,7 @@ export abstract class SQLCore {
     }
     return '';
   }
-  createOrderBy(orderBy: string[] | string): string {
+  createOrderBy(collection: ICollection, orderBy: string[] | string): string {
     orderBy = ensureArray(orderBy);
     return orderBy.length ? `ORDER BY ${orderBy.join(', ')}` : '';
   }
@@ -131,7 +131,7 @@ export abstract class SQLCore {
           ${this.createSelect(collection)}
           FROM "${collection.name}" 
           ${whereStatement}
-          ${this.createOrderBy(orderBy)}
+          ${this.createOrderBy(collection, orderBy)}
           ${this.createLimit(queryType === 'get' ? 1 : limit)}
           ${this.createOffset(offset)}
         `.trim();

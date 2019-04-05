@@ -27,4 +27,18 @@ export abstract class SQLJsonCore extends SQLCore {
     }
     return [``, ...args];
   }
+  createOrderBy(collection: ICollection, orderBy: string[] | string): string {
+    let clause = super.createOrderBy(collection, orderBy);
+    if (clause) {
+      for (var key in collection.index) {
+        if (!collection.fields[key]) {
+          clause = clause.replace(
+            new RegExp(`${key} `, 'g'),
+            this.selectJSONField(collection, key)
+          );
+        }
+      }
+    }
+    return clause;
+  }
 }
