@@ -150,6 +150,35 @@ function MyComponent(props) {
 
 # Replication
 
+# Roadmap/ToDo
+
+All contributions welcome :)
+
+- Docs
+  - Write real docs :(
+- Replication
+  - Progress
+  - Chunking
+  - Batching
+  - Conflict Resolution (automerge?)
+- Subscription
+  - Batching
+- Adapters
+  - MongoDB
+  - AWS DynamoDB
+  - MS CosmosDB
+  - CouchDB/Cloudant
+  - RocksDB
+  - Redis
+- Bindings
+  - React
+  - Vue
+- Testing
+  - Improve testing
+  - Performance testing & benchmarking against others
+- Insights
+  - Better tracking of what happens inside
+
 # Credits
 
 ## Assets
