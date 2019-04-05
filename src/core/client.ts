@@ -32,11 +32,14 @@ export class Debe<TBase = IItem> {
   }
   tracker: ITracker;
   constructor(
-    adapter: DebeAdapter,
+    adapter: DebeAdapter | any,
     collections: ICollectionInput[],
     { tracker, plugins = [] }: { tracker?: boolean; plugins?: IPlugin[] } = {}
   ) {
-    adapter.connect(this);
+    if (adapter.connect) {
+      adapter.connect(this);
+    }
+
     this.collections = collections as any;
     if (tracker) {
       this.tracker = args => {
@@ -59,14 +62,19 @@ export class Debe<TBase = IItem> {
     return this.flow.run(types.DESTROY);
   }
   public async initialize() {
-    const state = await this.flow.run<any>(
-      types.INITIALIZE,
-      { collections: this.collections },
-      this
-    );
-    this.collections = state.collections;
-    this.isInitialized = true;
-    return state;
+    try {
+      const state = await this.flow.run<any>(
+        types.INITIALIZE,
+        { collections: this.collections },
+        this
+      );
+      this.collections = state.collections;
+      this.isInitialized = true;
+      return state;
+    } catch (err) {
+      console.log('error during initialization', err);
+      throw err;
+    }
   }
   public use<T = IItem>(collection: string): IDebeUse<T> {
     const proxy = this;

@@ -31,6 +31,7 @@
     "pub": "yarn test && yarn build && yarn pub:npm",
     "pub:npm": "foreach --no-C -g \"lib/*\" -x \"npm publish #{path} --registry=https://registry.npmjs.org/\"",
     "test": "jest --verbose=false",
+    "vtest": "jest --verbose=true",
     "test2": "PG_CONNECTIONSTRING=postgresql://postgres@localhost:5432/test yarn test",
     "coverage": "codecov"
   },
@@ -63,6 +64,14 @@
     "preset": "ts-jest",
     "globals": {
       "ts-jest": {
+        "diagnostics": {
+          "ignoreCodes": [
+            2571,
+            6031,
+            18003,
+            151001
+          ]
+        },
         "tsConfig": "./tsconfig.json"
       }
     },

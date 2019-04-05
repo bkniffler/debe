@@ -132,6 +132,9 @@ export const corePlugin = (options: any = {}): IPlugin => client => {
 };
 
 function cleanQuery(value: IQueryInput): IQuery {
+  if (!value) {
+    value = {};
+  }
   if (Array.isArray(value.limit) && value.limit.length === 2) {
     value.offset = value.limit[1];
     value.limit = value.limit[0];

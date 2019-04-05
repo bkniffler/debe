@@ -1,0 +1,9 @@
+{
+  "name": "debe-socket-server",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "rpc1": "^1.0.1",
+    "rpc1-socket-server": "^1.0.1"
+  }
+}
