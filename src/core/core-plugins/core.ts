@@ -83,10 +83,10 @@ export const corePlugin = (options: any = {}): IPlugin => client => {
     }
     if (type === types.INSERT) {
       const [collection, value, options = {}] = payload;
-      const { refetchResult = false, update = false } = options;
+      const { refetchResult = false, update = true } = options;
       const isArray = Array.isArray(value);
       let newItems: any[];
-      if (update !== false) {
+      if (update === true) {
         // Fetch existing items and patch new ones with existing values
         newItems = ensureArray(value);
         const ids = newItems.map(x => x.id).filter(x => x);
