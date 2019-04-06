@@ -1,9 +1,4 @@
-/*/@ts-ignore
-import * as uuidv4 from 'uuid4';
-
-export let _generate =
-  typeof window !== undefined && window['uuid4'] ? window['uuid4'] : uuidv4;*/
-let _generate = e7;
+let _generate = fastGuid;
 export function setIdGenerator(generator: () => string) {
   _generate = generator as any;
 }
@@ -15,7 +10,7 @@ var lut: string[] = [];
 for (var i = 0; i < 256; i++) {
   lut[i] = (i < 16 ? '0' : '') + i.toString(16);
 }
-function e7() {
+function fastGuid() {
   var d0 = (Math.random() * 0xffffffff) | 0;
   var d1 = (Math.random() * 0xffffffff) | 0;
   var d2 = (Math.random() * 0xffffffff) | 0;
