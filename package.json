@@ -4,6 +4,12 @@
   "private": true,
   "license": "MIT",
   "keywords": [
+    "sync",
+    "replicate",
+    "replication",
+    "dexie",
+    "sql",
+    "socket",
     "sqlite",
     "database",
     "electron",

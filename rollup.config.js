@@ -26,6 +26,10 @@ const projects = Object.keys(paths).forEach(key => {
     packageJSON.dependencies = {};
   }
   fs.writeFileSync(
+    join(lib, 'README.md'),
+    `Find out more on ${mainPackageJSON.repository.url.replace('.git', '')}`
+  );
+  fs.writeFileSync(
     join(lib, 'package.json'),
     JSON.stringify(
       {
