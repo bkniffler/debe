@@ -61,13 +61,14 @@ export interface ICollection {
   index: IFields;
   fields: IFields;
   specialFields: ISpecialFields;
+  plugins: string[];
 }
 
 export interface ICollectionInput {
   name: string;
   index?: IFields | string[];
   fields?: IFields | string[];
-  plugins?: IFields | string[];
+  plugins?: string[];
   specialFields?: ISpecialFields;
 }
 

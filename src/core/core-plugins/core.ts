@@ -36,6 +36,9 @@ export function ensureCollection(collection: ICollectionInput): ICollection {
       {}
     );
   }
+  if (!collection.plugins) {
+    collection.plugins = [];
+  }
   if (!collection.specialFields) {
     collection.specialFields = {};
   }
