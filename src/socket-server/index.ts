@@ -1,23 +1,20 @@
-import { createBroker, IService } from 'rpc1';
+import { Broker, LocalAdapter, Service } from 'rpc1';
 import { pluginSocketBroker } from 'rpc1-socket-server';
 import { Debe } from 'debe';
 
 export const createSocketServer = (db: Debe, port: number) => {
-  let local: any;
-  const destroy = createBroker(async broker => {
-    broker.plugin(pluginSocketBroker({ port }));
-    local = broker.local('debe', service => attachSocketService(service, db));
-  });
+  const broker = new Broker();
+  broker.plugin(pluginSocketBroker({ port }));
+  const service = new Service('debe', new LocalAdapter(broker));
+  attachSocketService(service, db);
   return async function unmount() {
-    destroy();
-    if (local) {
-      local();
-    }
+    broker.close();
+    service.close();
     await new Promise(yay => setTimeout(yay, 200));
   };
 };
 
-export const attachSocketService = (service: IService, db: Debe) => {
+export const attachSocketService = (service: Service, db: Debe) => {
   service.addMethod('run', (type: string, payload: any) =>
     db[type](...payload)
   );

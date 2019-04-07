@@ -3,7 +3,7 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
-    "rpc1": "^1.0.1",
-    "rpc1-socket": "^1.0.1"
+    "rpc1": "^2.0.1",
+    "rpc1-socket": "^2.0.1"
   }
 }

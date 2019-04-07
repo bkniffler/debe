@@ -1,6 +1,6 @@
 import { Debe } from 'debe';
 import { MemoryAdapter } from 'debe-memory';
-import { createBroker } from 'rpc1';
+import { Broker, Service, LocalAdapter } from 'rpc1';
 import { sync, createSyncClient } from './index';
 //import { isEqual } from 'debe';
 import { createSyncServer } from 'debe-sync-server';
@@ -17,35 +17,36 @@ interface ILorem {
   goa2?: string;
   hallo?: string;
 }
-function prepare(
+async function prepare(
   cb: any,
   init: (db1: Debe, db2: Debe, forceSync: () => Promise<any>) => Promise<void>
 ) {
-  function done(cleanup?: any) {
+  function done() {
     clearTimeout(timeout);
-    if (cleanup) {
-      cleanup();
+    if (broker) {
+      broker.close();
     }
-    if (destroy) {
-      destroy();
+    if (local1) {
+      local1.close();
+    }
+    if (local2) {
+      local2.close();
     }
     cb();
   }
   let timeout = setTimeout(done, 10000);
-  const destroy = createBroker(async broker => {
-    const db1 = new Debe(new MemoryAdapter(), schema);
-    const db2 = new Debe(new MemoryAdapter(), schema);
-    const sync1 = sync(db1, ['debe-sync2']);
-    const sync2 = sync(db2, []);
-    await Promise.all([db1.initialize(), db2.initialize()]);
-    const local1 = broker.local('debe-sync1', sync1.connect);
-    const local2 = broker.local('debe-sync2', sync2.connect);
-    await init(db1, db2, sync1.forceSync);
-    done(() => {
-      local1();
-      local2();
-    });
-  });
+  const broker = new Broker();
+  const db1 = new Debe(new MemoryAdapter(), schema);
+  const db2 = new Debe(new MemoryAdapter(), schema);
+  const sync1 = sync(db1, ['debe-sync2']);
+  const sync2 = sync(db2, []);
+  await Promise.all([db1.initialize(), db2.initialize()]);
+  const local1 = new Service('debe-sync1', new LocalAdapter(broker));
+  sync1.connect(local1);
+  const local2 = new Service('debe-sync2', new LocalAdapter(broker));
+  sync2.connect(local2);
+  await init(db1, db2, sync1.forceSync);
+  done();
 }
 
 test('sync:many:initial:oneway:simple', cb => {
@@ -108,7 +109,6 @@ test('sync:many:dynamic:twoway', cb => {
 }, 10000);
 
 test('sync:socket:simple', async cb => {
-  prepare;
   const port = 5554;
   // HOST
   const dbMaster = new Debe(new MemoryAdapter(), schema);

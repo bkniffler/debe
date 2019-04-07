@@ -1,6 +1,6 @@
 import { Debe, IPlugin, types } from 'debe';
-import { createSocket } from 'rpc1-socket';
-import { waitFor } from 'rpc1';
+import { SocketAdapter as RPCSocketAdapter } from 'rpc1-socket';
+import { waitFor, Service } from 'rpc1';
 
 interface IDebeRpc {
   run: (type: string, payload: [string, any]) => Promise<any>;
@@ -13,9 +13,8 @@ interface IDebeRpc {
 export class SocketAdapter {
   proxy: IDebeRpc;
   constructor(url: string) {
-    createSocket(url, service => {
-      this.proxy = service.use<IDebeRpc>('debe');
-    });
+    const service = new Service(new RPCSocketAdapter(url));
+    this.proxy = service.use<IDebeRpc>('debe');
   }
   async destroy() {}
   connect(debe: Debe) {

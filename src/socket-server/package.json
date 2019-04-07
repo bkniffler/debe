@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "debe": "*",
-    "rpc1": "^1.0.1",
-    "rpc1-socket-server": "^1.0.1"
+    "rpc1": "^2.0.1",
+    "rpc1-socket-server": "^2.0.1"
   }
 }

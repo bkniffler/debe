@@ -9,8 +9,8 @@ import {
   ICollection,
   softDeletePlugin
 } from 'debe';
-import { IService, IBroker } from 'rpc1';
-import { createSocket } from 'rpc1-socket';
+import { Service, Broker, LocalAdapter } from 'rpc1';
+import { SocketAdapter as RPCSocketAdapter } from 'rpc1-socket';
 import { ISync, ISyncItem } from './types';
 
 const syncstateTable = 'syncstate';
@@ -21,7 +21,7 @@ function getLastItemRev(items: IGetItem[] = [], revField: string) {
     : undefined;
 }
 
-async function createServerChannels(client: Debe, service: IService) {
+async function createServerChannels(client: Debe, service: Service) {
   service.addMethod('initialFetchChanges', (
     table: string,
     // state: any = {},
@@ -67,7 +67,7 @@ async function createServerChannels(client: Debe, service: IService) {
 async function initiateSync(
   client: Debe,
   clientID: string,
-  service: IService,
+  service: Service,
   name: string,
   collection: ICollection,
   where: any,
@@ -193,7 +193,7 @@ export function sync(client: Debe, others: string[] = [], where?: string[]) {
   softDeletePlugin()(client);
 
   return {
-    connect: (service: IService) => {
+    connect: (service: Service) => {
       createServerChannels(client, service);
       // LOgic
       let cancels: false | any[] = [];
@@ -228,11 +228,14 @@ export function sync(client: Debe, others: string[] = [], where?: string[]) {
 
 export function createSyncClient(db: Debe, url: string) {
   const syncer = sync(db, ['debe']);
-  return createSocket(url, syncer.connect);
+  const service = new Service(new RPCSocketAdapter(url));
+  setTimeout(() => syncer.connect(service), 100);
+  return () => service.close();
 }
 
-export function createLocalSyncClient(db: Debe, broker: IBroker) {
+export function createLocalSyncClient(db: Debe, broker: Broker) {
   const syncer = sync(db, ['debe']);
-  const local = broker.local('debe-sync1', syncer.connect);
-  return local;
+  const service = new Service(new LocalAdapter(broker));
+  setTimeout(() => syncer.connect(service), 100);
+  return () => service.close();
 }
