@@ -92,19 +92,6 @@ async function initiateSync(
         .then(i => (syncState = i))
     );
   };
-  const remoteChanges = await server.initialFetchChanges(
-    collection.name,
-    syncState.remote,
-    where
-  );
-  const localChanges = await client.all(collection.name, {
-    where: syncState.local ? [`${rev} > ?`, syncState.local] : undefined
-  });
-  log.info(
-    `Remote sync state ${name}:${collection.name}: ${
-      remoteChanges.length
-    } remote items to get, ${localChanges.length} local items to send`
-  );
   const destroyServerListener = server.listenToChanges(
     collection.name,
     clientID,
@@ -142,6 +129,19 @@ async function initiateSync(
         lastFetch
       );
     }
+  );
+  const remoteChanges = await server.initialFetchChanges(
+    collection.name,
+    syncState.remote,
+    where
+  );
+  const localChanges = await client.all(collection.name, {
+    where: syncState.local ? [`${rev} > ?`, syncState.local] : undefined
+  });
+  log.info(
+    `Remote sync state ${name}:${collection.name}: ${
+      remoteChanges.length
+    } remote items to get, ${localChanges.length} local items to send`
   );
 
   const isInitialDone = await Promise.all([
