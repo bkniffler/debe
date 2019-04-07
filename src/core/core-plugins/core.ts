@@ -67,11 +67,11 @@ export const corePlugin = (options: any = {}): IPlugin => client => {
         payload,
         async (value, next) => {
           if (value.collections) {
-            const collections = (await Promise.all(
+            const collections = ((await Promise.all(
               value.collections.map((collection: ICollectionInput) =>
                 flow.run(types.COLLECTION, collection)
               )
-            )) as ICollection[];
+            )) as any) as ICollection[];
             value.collections = await flow.run(
               types.COLLECTIONS,
               objectify<ICollection>(collections)
