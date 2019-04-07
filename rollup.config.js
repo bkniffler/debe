@@ -83,9 +83,11 @@ const projects = Object.keys(paths).forEach(key => {
               'waitFor',
               'createLog',
               'requestReply',
-              'createBroker'
+              'Service',
+              'Broker',
+              'LocalAdapter'
             ],
-            'node_modules/rpc1-socket/index.umd.js': ['createSocket']
+            'node_modules/rpc1-socket/index.umd.js': ['SocketAdapter']
           }
         })
       ]

@@ -51,15 +51,16 @@ async function prepare(
 
 test('sync:many:initial:oneway:simple', cb => {
   prepare(cb, async (db1, db2, forceSync) => {
-    for (let x = 0; x < 100; x++) {
+    const count = 10000;
+    for (let x = 0; x < count; x++) {
       db1.insert('lorem', { goa: 'a' + x });
       // db2.insert('lorem', { goa: 'b' + x });
     }
     await forceSync();
     const final1 = await db1.all<ILorem>('lorem', {});
     const final2 = await db2.all<ILorem>('lorem', {});
-    expect(final1.length).toBe(100);
-    expect(final2.length).toBe(100);
+    expect(final1.length).toBe(count);
+    expect(final2.length).toBe(count);
   });
 }, 10000);
 
@@ -108,7 +109,7 @@ test('sync:many:dynamic:twoway', cb => {
   });
 }, 10000);
 
-test('sync:socket:simple', async cb => {
+test('sync:socket:simple3', async cb => {
   const port = 5554;
   // HOST
   const dbMaster = new Debe(new MemoryAdapter(), schema);
@@ -134,7 +135,7 @@ test('sync:socket:simple', async cb => {
   );
   await dbClient2.initialize();
 
-  await new Promise(yay => setTimeout(yay, 1000));
+  await new Promise(yay => setTimeout(yay, 2000));
   async function isEqualState() {
     const allOnClient = await dbClient.all<ILorem>('lorem', {
       orderBy: ['rev ASC', 'id ASC']
@@ -146,24 +147,72 @@ test('sync:socket:simple', async cb => {
       orderBy: ['rev ASC', 'id ASC']
     });
 
-    expect(allOnMaster.length).toBe(allOnMaster.length);
+    expect(allOnClient.length).toBe(allOnMaster.length);
     expect(allOnClient2.length).toBe(allOnClient.length);
     // expect(isEqual(allOnClient2, allOnMaster)).toBeTruthy();
   }
 
   await isEqualState();
 
-  await dbClient.insert('lorem', { goa: 'a1000' });
+  /*await dbClient.insert('lorem', { goa: 'a1000' });
   await dbClient2.insert('lorem', { goa: 'a1001' });
   await dbMaster.insert('lorem', { goa: 'a1002' });
   await dbMaster.insert('lorem', { goa: 'a1003' });
   await dbMaster.insert('lorem', { goa: 'a1004' });
-  await new Promise(yay => setTimeout(yay, 1000));
-  await isEqualState();
+  await new Promise(yay => setTimeout(yay, 2000));
+  await isEqualState();*/
 
   destroyServer();
   destroyClient();
   destroyClient2();
+  cb();
+}, 20000);
+
+test('sync:socket:simple2', async cb => {
+  const port = 5554;
+  // HOST
+  const dbMaster = new Debe(new MemoryAdapter(), schema);
+  const destroyServer = createSyncServer(dbMaster, { port });
+  const destroyClient0 = createSyncClient(dbMaster, `http://localhost:${port}`);
+  await dbMaster.initialize();
+
+  // CLIENT
+  const dbClient = new Debe(new MemoryAdapter(), schema);
+  const destroyClient1 = createSyncClient(dbClient, `http://localhost:${port}`);
+  await dbClient.initialize();
+
+  const items = [];
+  for (let x = 0; x < 10; x++) {
+    items.push({ goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
+  }
+  await dbClient.insert('lorem', items);
+
+  await new Promise(yay => setTimeout(yay, 2000));
+  async function isEqualState() {
+    const allOnClient = await dbClient.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+    const allOnMaster = await dbMaster.all<ILorem>('lorem', {
+      orderBy: ['rev ASC', 'id ASC']
+    });
+
+    expect(allOnClient.length).toBe(allOnMaster.length);
+    // expect(isEqual(allOnClient2, allOnMaster)).toBeTruthy();
+  }
+
+  await isEqualState();
+
+  /*await dbClient.insert('lorem', { goa: 'a1000' });
+  await dbClient2.insert('lorem', { goa: 'a1001' });
+  await dbMaster.insert('lorem', { goa: 'a1002' });
+  await dbMaster.insert('lorem', { goa: 'a1003' });
+  await dbMaster.insert('lorem', { goa: 'a1004' });
+  await new Promise(yay => setTimeout(yay, 2000));
+  await isEqualState();*/
+
+  destroyServer();
+  destroyClient0();
+  destroyClient1();
   cb();
 }, 20000);
 
@@ -200,7 +249,7 @@ test('sync:socket:crazy', async cb => {
   await instances[2].db.insert('lorem', items);
 
   // Let it sync
-  await new Promise(yay => setTimeout(yay, 5000));
+  await new Promise(yay => setTimeout(yay, 6000));
   async function isEqualState() {
     const all = await Promise.all(
       instances.map(i =>
@@ -228,7 +277,7 @@ test('sync:socket:crazy', async cb => {
       })
     )
   );
-  await new Promise(yay => setTimeout(yay, 3000));
+  await new Promise(yay => setTimeout(yay, 5000));
   await isEqualState();
 
   instances.forEach(instance => instance.destroy());

@@ -1,18 +1,24 @@
 import { IItem, types, fieldTypes } from '../types';
 import { ensureCollection } from './core';
 import { IPlugin } from '../client';
+import { toISO } from '../utils';
 
 export const CHANGE_LISTENER_PLUGIN = 'changeListenerPlugin';
 const defaultRevisionField = 'rev';
+const defaultTimeField = 'time';
 export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
-  const { revField = defaultRevisionField } = options;
+  const {
+    revField = defaultRevisionField,
+    timeField = defaultTimeField
+  } = options;
   const queryEmitter = new Emitter();
 
   function addRev(item: any): [any, any] {
     if (!item) {
       return item;
     }
-    item[revField] = new Date().getTime();
+    item[revField] = toISO(new Date());
+    item[timeField] = toISO(new Date());
     return item;
   }
 
@@ -24,8 +30,11 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
     if (type === types.COLLECTION) {
       const collection = ensureCollection(payload);
       collection.specialFields.rev = revField;
-      collection.fields[revField] = fieldTypes.NUMBER;
-      collection.index[revField] = fieldTypes.NUMBER;
+      collection.fields[revField] = fieldTypes.STRING;
+      collection.index[revField] = fieldTypes.STRING;
+      collection.specialFields.time = timeField;
+      collection.fields[timeField] = fieldTypes.STRING;
+      collection.index[timeField] = fieldTypes.STRING;
       return flow(payload);
     }
     const callback = flow.get('callback');
@@ -59,7 +68,6 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
       return queryEmitter.on(collection, listener);
     } else if (type === types.INSERT) {
       const [collection, items, options = {}] = payload;
-      const { syncFrom } = options;
       return flow(
         [
           collection,
@@ -67,9 +75,11 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
           options
         ],
         (res, back) => {
-          queryEmitter.emit(collection, Array.isArray(res) ? res : [res], {
-            syncFrom
-          });
+          queryEmitter.emit(
+            collection,
+            Array.isArray(res) ? res : [res],
+            options
+          );
           back(res);
         }
       );

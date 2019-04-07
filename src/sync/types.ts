@@ -9,11 +9,18 @@ export interface ISyncItem extends IGetItem {
   local?: string;
 }
 export interface ISync {
-  initialFetchChanges: (
+  countInitialChanges: (
     collection: string,
     //state?: any,
     since?: string,
     where?: string[]
+  ) => Promise<number>;
+  initialFetchChanges: (
+    collection: string,
+    //state?: any,
+    since?: string,
+    where?: string[],
+    page?: number
   ) => Promise<IItem[]>;
   sendChanges: (
     collection: string,

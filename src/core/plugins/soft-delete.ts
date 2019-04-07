@@ -15,11 +15,11 @@ export const softDeletePlugin = (options: any = {}): IPlugin => (
         (payload as ICollection).index[removedField] = fieldTypes.STRING;
         return flow(payload);
       }
-      if (type === 'all' || type === 'count') {
+      if (type === types.ALL || type === types.COUNT) {
         const [collection, arg = {}] = payload;
         arg.where = addToQuery(arg.where, 'AND', `${removedField} IS NULL`);
         flow([collection, arg]);
-      } else if (type === 'remove') {
+      } else if (type === types.REMOVE) {
         const [collection, arg = {}] = payload;
         flow.reset(types.INSERT, [
           collection,
