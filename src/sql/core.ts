@@ -98,7 +98,9 @@ export abstract class SQLCore {
     return `SELECT COUNT(*) AS count FROM (${statement}) AS src`;
   }
   createSelect(collection: ICollection, fields: string[] = []): string {
-    fields = fields.length ? fields : Object.keys(collection.fields);
+    fields = fields.length
+      ? [...new Set([...fields, 'id', 'rev'])]
+      : Object.keys(collection.fields);
     return `SELECT ${fields.join(', ')}`;
   }
   createOffset(offset?: number): string {
@@ -138,11 +140,12 @@ export abstract class SQLCore {
         where = [],
         orderBy = [],
         limit = undefined,
-        offset = undefined
+        offset = undefined,
+        select
       } = queryArgs;
       const [whereStatement, ...args] = this.createWhere(collection, where);
       const sql = `
-          ${this.createSelect(collection)}
+          ${this.createSelect(collection, select)}
           FROM "${collection.name}" 
           ${whereStatement}
           ${this.createOrderBy(collection, orderBy)}

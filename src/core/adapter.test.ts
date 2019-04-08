@@ -38,6 +38,29 @@ export function createAdapterTest(
     await ini();
   });
 
+  test(`${name}:select`, async () => {
+    const collections = [
+      { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
+    ];
+    const ini = await init(collections, 0);
+    const table = collections[0].name;
+    const client = new Debe(createAdapter(0), collections);
+    await client.initialize();
+    const insertResult = await client.insert<any>(table, {
+      id: 'asd0',
+      name: 'Hallo'
+    });
+    const queryResult = await client.all<any>(table, { select: 'id' });
+    expect(insertResult.id).toBe('asd0');
+    expect(insertResult.name).toBe('Hallo');
+    expect(Array.isArray(queryResult)).toBe(true);
+    expect(queryResult.length).toBe(1);
+    expect(queryResult[0].id).toBe(insertResult.id);
+    expect(queryResult[0].name).toBe(undefined);
+    await client.destroy();
+    await ini();
+  });
+
   test(`${name}:many`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }

@@ -1,6 +1,6 @@
 import { ICollections, IQuery, DebeAdapter } from 'debe';
 import Dexie from 'dexie';
-import { sortArray, createMemoryFilter } from 'debe-memory';
+import { sortArray, createMemoryFilter, pluck } from 'debe-memory';
 
 /*const filter = new FilterReducer<Table<any, IndexableType>>({
   '!=': (col, field, value) => col.where(field).notEqual(value) as any,
@@ -55,6 +55,9 @@ export class DexieAdapter extends DebeAdapter {
   }
   async all(collection: string, query: IQuery) {
     let result = await this.baseQuery(collection, query).toArray();
+    if (query.select) {
+      result = result.map(x => pluck(x, query.select));
+    }
     if (query.orderBy) {
       result = sortArray(result, query.orderBy);
     }

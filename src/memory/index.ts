@@ -11,6 +11,20 @@ interface IStore {
   [s: string]: Map<string, IGetItem>;
 }
 
+export function pluck(sourceObject: IGetItem, keys: string[] = []): IGetItem {
+  if (!sourceObject) {
+    return sourceObject;
+  }
+  const newObject = {
+    id: sourceObject.id,
+    rev: sourceObject.rev
+  };
+  for (var key of keys) {
+    newObject[key] = sourceObject[key];
+  }
+  return newObject;
+}
+
 export class MemoryAdapter extends DebeAdapter {
   private store: IStore = {};
   filter = createMemoryFilter().filter;
@@ -37,6 +51,9 @@ export class MemoryAdapter extends DebeAdapter {
     }
     if (query.limit) {
       items = items.slice(0, query.limit);
+    }
+    if (query.select) {
+      items = items.map(x => pluck(x, query.select));
     }
     return Promise.resolve([...items]);
   }
