@@ -66,6 +66,15 @@ export const corePlugin = (options: any = {}): IPlugin => client => {
       collection.fields[idField] = fieldTypes.STRING;
       return flow(payload);
     } else if (type === types.INITIALIZE) {
+      if (!Array.isArray(payload.collections)) {
+        payload.collections = Object.keys(payload.collections).reduce<any>(
+          (result, key) => {
+            result.push(payload.collections[key]);
+            return result;
+          },
+          []
+        );
+      }
       return flow(
         payload,
         async (value, next) => {
