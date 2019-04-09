@@ -98,6 +98,8 @@ test('sync:10000x3', async cb => {
   expect(await awaitIsEqual(20, server.db, ...clients.map(x => x.db))).toBe(
     true
   );
+  server.close();
+  clients.forEach(client => client.close());
   cb();
 }, 120000);
 
@@ -114,6 +116,8 @@ test('sync:1000x10', async cb => {
   expect(await awaitIsEqual(20, server.db, ...clients.map(x => x.db))).toBe(
     true
   );
+  server.close();
+  clients.forEach(client => client.close());
   cb();
 }, 120000);
 
@@ -153,6 +157,10 @@ test('sync:multimaster', async cb => {
       ...clients1.map(x => x.db)
     )
   ).toBe(true);
+  server0.close();
+  clients0.forEach(client => client.close());
+  server1.close();
+  clients1.forEach(client => client.close());
   cb();
 }, 120000);
 
