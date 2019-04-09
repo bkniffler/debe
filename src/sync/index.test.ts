@@ -53,7 +53,7 @@ async function isEqual(...args: Debe[]) {
     const items = await db.all('lorem', { orderBy: ['name ASC'] });
     const arr = [...new Set([...items.map(x => x.name)])];
     if (previous !== undefined && previous.join(',') !== arr.join(',')) {
-      console.log(previous.join(','), 'vs', arr.join(','));
+      // console.log(previous.join(','), 'vs', arr.join(','));
       return false;
     }
     previous = arr;
