@@ -20,6 +20,7 @@ export interface IInitialFetchChanges {
   where?: [string, ...any[]];
   page?: number;
 }
+export type IAddress = [string] | [] | [string, number];
 export interface ISendChanges {
   type: string;
   items: IInsertItem[];

@@ -2,7 +2,7 @@ import { Debe, generate } from 'debe';
 import * as http from 'http';
 import { attach } from 'asyngular-server';
 import { createServerChannels, createSocketChannels } from './server';
-import { SyncClient } from 'debe-sync';
+import { SyncClient, IAddress } from 'debe-sync';
 
 export class SyncServer {
   id = generate();
@@ -10,10 +10,17 @@ export class SyncServer {
   httpServer = http.createServer();
   agServer = attach(this.httpServer);
   db: Debe;
-  constructor(db: Debe, port: number = 8000, syncTo: [string, number][] = []) {
+  constructor(db: Debe, port: number = 8000, syncTo?: IAddress[] | IAddress) {
     this.db = db;
     this.port = port;
-    syncTo.forEach(([hostname, port]) => new SyncClient(db, hostname, port));
+    if (syncTo && syncTo.length) {
+      if (!Array.isArray(syncTo[0])) {
+        syncTo = [syncTo] as any;
+      }
+      (syncTo as IAddress[]).forEach(
+        (pair: IAddress) => new SyncClient(db, pair)
+      );
+    }
   }
   async initialize() {
     await this.db.initialize();

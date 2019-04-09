@@ -1,6 +1,7 @@
 import { Debe, types, softDeletePlugin, createLog } from 'debe';
 import { syncstateTable } from './constants';
 import { initiateSync } from './sync';
+import { IAddress } from './types';
 import { waitFor } from './utils';
 import { ISocket, create } from 'asyngular-client';
 
@@ -93,7 +94,7 @@ export class Sync {
 
 export class SyncClient extends Sync {
   socket: ISocket;
-  constructor(db: Debe, hostname: string, port: number = 8000) {
+  constructor(db: Debe, [hostname = 'localhost', port = 8000]: IAddress = []) {
     super(db);
     this.socket = create({
       hostname,

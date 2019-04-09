@@ -1,7 +1,7 @@
 import { Debe } from 'debe';
 import * as http from 'http';
 import { allowedMethods } from 'debe-socket';
-import { attach, ISocket } from 'asyngular-server';
+import { attach, ISocketBase } from 'asyngular-server';
 
 export class SocketServer {
   httpServer = http.createServer();
@@ -23,7 +23,7 @@ export class SocketServer {
       );
     }
   }
-  async handleMethods(socket: ISocket, method: string) {
+  async handleMethods(socket: ISocketBase, method: string) {
     for await (let req of socket.procedure(method)) {
       this.db[method](req.data[0], req.data[1])
         .then((result: any) => {
@@ -32,13 +32,13 @@ export class SocketServer {
         .catch((err: any) => req.error(err));
     }
   }
-  async handleSubscriptions(socket: ISocket, method: string) {
+  async handleSubscriptions(socket: ISocketBase, method: string) {
     for await (let req of socket.procedure<[string, any]>(
       `subscribe:${method}`
     )) {
       const [id, data] = req.data;
       const handleSub = (error: any, data: any) => {
-        socket.transmit(id, data).catch((err: any) => console.log(err));
+        socket.transmit(id, data);
       };
       this.db[method](data[0], data[1], handleSub);
       req.end(id);
