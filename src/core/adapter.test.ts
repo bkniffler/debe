@@ -7,15 +7,19 @@ test('adapter:test', async () => {
   expect(1).toBe(1);
 });
 
+interface IServer {
+  db?: Debe;
+  close: () => void;
+}
 export function createAdapterTest(
   name: string,
   createAdapter: (i: number) => DebeAdapter | any,
   init: (
     collections: ICollectionInput[],
     i: number
-  ) => Promise<() => void> = () => Promise.resolve(() => {})
+  ) => Promise<IServer | undefined> = () => Promise.resolve(undefined)
 ) {
-  test(`${name}:basic`, async () => {
+  test(`adapter:${name}:basic`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
     ];
@@ -35,10 +39,12 @@ export function createAdapterTest(
     expect(queryResult[0].id).toBe(insertResult.id);
     expect(queryResult[0].name).toBe(insertResult.name);
     await client.destroy();
-    await ini();
+    if (ini) {
+      ini.close();
+    }
   });
 
-  test(`${name}:select`, async () => {
+  test(`adapter:${name}:select`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
     ];
@@ -58,10 +64,12 @@ export function createAdapterTest(
     expect(queryResult[0].id).toBe(insertResult.id);
     expect(queryResult[0].name).toBe(undefined);
     await client.destroy();
-    await ini();
+    if (ini) {
+      ini.close();
+    }
   });
 
-  test(`${name}:many`, async () => {
+  test(`adapter:${name}:many`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
     ];
@@ -104,10 +112,12 @@ export function createAdapterTest(
     expect(single).toBeTruthy();
     expect(single.id).toBe('a00');
     await client.destroy();
-    await ini();
+    if (ini) {
+      ini.close();
+    }
   }, 10000);
 
-  test(`${name}:insert`, async () => {
+  test(`adapter:${name}:insert`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
     ];
@@ -145,10 +155,12 @@ export function createAdapterTest(
     expect(newItem.newField).toBe('abc2');
     expect((await client.get(table, 'a0')).newField).toBe('abc2');
     await client.destroy();
-    await ini();
+    if (ini) {
+      ini.close();
+    }
   }, 10000);
 
-  test(`${name}:change`, async () => {
+  test(`adapter:${name}:change`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
     ];
@@ -172,18 +184,20 @@ export function createAdapterTest(
     expect(calls).toBe(2);
     expect(countCalls).toBe(2);
     await client.destroy();
-    await ini();
+    if (ini) {
+      ini.close();
+    }
   });
 
-  test(`${name}:softdelete`, async () => {
+  test(`adapter:${name}:softdelete`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
     ];
     const ini = await init(collections, 3);
     const table = collections[0].name;
     const client = new Debe(createAdapter(3), collections);
-    if (ini['db']) {
-      softDeletePlugin()(ini['db']);
+    if (ini && ini.db) {
+      softDeletePlugin()(ini.db);
     } else {
       softDeletePlugin()(client);
     }
@@ -199,6 +213,8 @@ export function createAdapterTest(
     expect(item0).toBeTruthy();
     expect(item0.id).toBe('asd0');
     await client.destroy();
-    await ini();
+    if (ini) {
+      ini.close();
+    }
   });
 }

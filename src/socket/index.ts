@@ -1,24 +1,32 @@
 import { Debe, IPlugin, types } from 'debe';
-import { SocketAdapter as RPCSocketAdapter } from 'rpc1-socket';
-import { waitFor, Service } from 'rpc1';
+import { generate } from 'debe';
+import { create, ISocket } from 'asyngular-client';
 
-interface IDebeRpc {
-  run: (type: string, payload: [string, any]) => Promise<any>;
-  subscribe: (
-    type: string,
-    payload: [string, any],
-    callback: any
-  ) => () => void;
-}
+export const allowedMethods = [
+  types.INSERT,
+  types.REMOVE,
+  types.GET,
+  types.ALL,
+  types.COUNT
+];
 export class SocketAdapter {
-  proxy: IDebeRpc;
-  constructor(url: string) {
-    const service = new Service(new RPCSocketAdapter(url));
-    this.proxy = service.use<IDebeRpc>('debe');
+  socket: ISocket;
+  constructor(hostname: string, port: number = 8000) {
+    this.socket = create({
+      hostname,
+      port
+    });
   }
   async destroy() {}
   connect(debe: Debe) {
+    this.listen();
     socketPlugin(this)(debe);
+  }
+  async listen() {
+    for await (let event of this.socket.listener('connect')) {
+      event;
+      // console.log('Socket is connected');
+    }
   }
 }
 
@@ -26,32 +34,43 @@ export const socketPlugin = (adapter: SocketAdapter): IPlugin => client => {
   client.addPlugin('socket', function adapterPlugin(type, payload, flow) {
     if (type === types.DESTROY) {
       adapter.destroy().then(() => flow(payload));
-    } else if (type === types.INITIALIZE) {
-      waitFor(() => !!adapter.proxy).then(x => {
-        if (!adapter.proxy) {
-          throw new Error('Could not connect to proxy');
-        }
-        flow(payload);
-      });
-    } else if (
-      [types.INSERT, types.REMOVE, types.GET, types.ALL, types.COUNT].includes(
-        type
-      )
-    ) {
+    } else if (allowedMethods.includes(type)) {
       const callback = flow.get('callback');
+      const { socket } = adapter;
       if (callback) {
-        try {
-          return adapter.proxy.subscribe(type, payload, callback);
-        } catch (err) {
-          console.log(err);
-        }
+        /*let channel = adapter.socket.subscribe('foo');
+        setTimeout(() => channel.unsubscribe(), 3000);
+        for await (let data of channel) {
+          console.log(data, channel);
+        }*/
+        let channelId = generate();
+        const listen = async () => {
+          for await (let data of socket.receiver(channelId)) {
+            try {
+              callback(data);
+            } catch (err) {
+              console.log(err);
+            }
+          }
+        };
+        listen();
+        socket
+          .invoke(`subscribe:${type}`, [channelId, payload])
+          .catch((err: any) => {
+            close();
+            flow.return(undefined);
+          });
+        const close = () => {
+          setTimeout(() => socket.closeReceiver(channelId));
+        };
+        return close;
       } else {
-        adapter.proxy
-          .run(type, payload)
-          .then(result => {
+        socket
+          .invoke(type, payload)
+          .then((result: any) => {
             flow.return(result);
           })
-          .catch(err => {
+          .catch((err: any) => {
             console.log(err);
             flow.return(undefined);
           });

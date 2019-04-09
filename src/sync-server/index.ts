@@ -1,16 +1,32 @@
 import { Debe } from 'debe';
-import { Broker, LocalAdapter, Service } from 'rpc1';
-import { pluginSocketBroker } from 'rpc1-socket-server';
-import { sync } from 'debe-sync';
+import * as http from 'http';
+import { attach } from 'asyngular-server';
+import { createServerChannels, createSocketChannels } from './server';
 
-export function createSyncServer(db: Debe, { port = 5555 } = {}) {
-  const broker = new Broker();
-  broker.plugin(pluginSocketBroker({ port }));
-  const syncer = sync(db);
-  const local = new Service('debe', new LocalAdapter(broker));
-  syncer.connect(local);
-  return () => {
-    broker.close();
-    local.close();
-  };
+export class SyncServer {
+  port: number;
+  httpServer = http.createServer();
+  agServer = attach(this.httpServer);
+  db: Debe;
+  constructor(db: Debe, port: number = 8000) {
+    this.db = db;
+    this.port = port;
+  }
+  async initialize() {
+    await this.db.initialize();
+    this.listen2();
+    this.listen();
+    setTimeout(() => this.httpServer.listen(this.port));
+  }
+  async listen2() {
+    createServerChannels(this.db, this.agServer);
+  }
+  async listen() {
+    for await (let { socket } of this.agServer.listener('connection')) {
+      createSocketChannels(this.db, socket, this.agServer);
+    }
+  }
+  close() {
+    this.httpServer.close();
+  }
 }

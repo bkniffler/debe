@@ -1,61 +1,114 @@
 import { Debe } from 'debe';
 import { MemoryAdapter } from 'debe-memory';
-import { Broker, Service, LocalAdapter } from 'rpc1';
-import { sync, createSyncClient } from './index';
-//import { isEqual } from 'debe';
-import { createSyncServer } from 'debe-sync-server';
+import { SyncClient } from './index';
+import { SyncServer } from 'debe-sync-server';
 
 const schema = [
   {
     name: 'lorem',
-    index: ['goa']
+    index: ['name']
   }
 ];
 
-interface ILorem {
-  goa?: string;
-  goa2?: string;
-  hallo?: string;
+function getPort(i: number) {
+  return 9999 + i;
 }
-async function prepare(
-  cb: any,
-  init: (db1: Debe, db2: Debe, forceSync: () => Promise<any>) => Promise<void>
-) {
-  function done() {
-    clearTimeout(timeout);
-    if (broker) {
-      broker.close();
-    }
-    if (local1) {
-      local1.close();
-    }
-    if (local2) {
-      local2.close();
-    }
-    cb();
+let alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
+async function generateItemsInto(db: Debe, count: number = 1000, prefix = '') {
+  const items = [];
+  for (var x = 0; x < count; x++) {
+    items.push({
+      //id: uuid4(),
+      // id: prefix + `${x}`.padStart(`${count}`.length + 1, '0'),
+      name: prefix + `${x}`.padStart(`${count}`.length + 1, '0')
+    });
   }
-  let timeout = setTimeout(done, 10000);
-  const broker = new Broker();
-  const db1 = new Debe(new MemoryAdapter(), schema);
-  const db2 = new Debe(new MemoryAdapter(), schema);
-  const sync1 = sync(db1, ['debe-sync2']);
-  const sync2 = sync(db2, []);
-  await Promise.all([db1.initialize(), db2.initialize()]);
-  const local1 = new Service('debe-sync1', new LocalAdapter(broker));
-  sync1.connect(local1);
-  const local2 = new Service('debe-sync2', new LocalAdapter(broker));
-  sync2.connect(local2);
-  await init(db1, db2, sync1.forceSync);
-  done();
+  await db.insert('lorem', items);
+}
+async function spawnServer(port: number) {
+  const db = new Debe(new MemoryAdapter(), schema);
+  const server = new SyncServer(db, port);
+  await server.initialize();
+  return server;
+}
+async function spawnClient(port: number) {
+  const db = new Debe(new MemoryAdapter(), schema);
+  const sync = new SyncClient(db, 'localhost', port);
+  await db.initialize();
+  return sync;
+}
+async function generateClients(port: number, numberOfClients: number) {
+  const clients: SyncClient[] = [];
+  for (var i = 0; i < numberOfClients; i++) {
+    clients.push(await spawnClient(port));
+  }
+  return clients;
+}
+async function isEqual(...args: Debe[]) {
+  let previous: string[] | undefined = undefined;
+  for (var db of args) {
+    const items = await db.all('lorem', { orderBy: ['name DESC'] });
+    const arr = [...new Set([...items.map(x => x.name)])];
+    if (previous !== undefined && previous.join(',') !== arr.join(',')) {
+      return false;
+    }
+    previous = arr;
+  }
+  return true;
 }
 
-test('sync:many:initial:oneway:simple', cb => {
-  prepare(cb, async (db1, db2, forceSync) => {
-    const count = 10000;
-    for (let x = 0; x < count; x++) {
-      db1.insert('lorem', { goa: 'a' + x });
-      // db2.insert('lorem', { goa: 'b' + x });
+async function awaitIsEqual(maxTries = 10, ...dbs: Debe[]) {
+  await new Promise(yay => setTimeout(yay, 5000));
+  for (var i = 0; i < maxTries; i++) {
+    if (await isEqual(...dbs)) {
+      return true;
     }
+    await new Promise(yay => setTimeout(yay, 5000));
+  }
+  return false;
+}
+
+test('sync:3x10000', async cb => {
+  const port = getPort(1);
+  const count = 10000;
+  const server = await spawnServer(port);
+  const clients = await generateClients(port, 3);
+  await generateItemsInto(server.db, count, `${alphabet[0]}.`);
+  await new Promise(yay => setTimeout(yay, 3000));
+  await Promise.all(
+    clients.map((x, i) => generateItemsInto(x.db, count, `${alphabet[i + 1]}.`))
+  );
+  expect(await awaitIsEqual(20, server.db, ...clients.map(x => x.db))).toBe(
+    true
+  );
+  cb();
+}, 120000);
+
+test('sync:10:1000', async cb => {
+  const port = getPort(2);
+  const count = 1000;
+  const server = await spawnServer(port);
+  const clients = await generateClients(port, 10);
+  await generateItemsInto(server.db, count, `${alphabet[0]}.`);
+  await new Promise(yay => setTimeout(yay, 3000));
+  await Promise.all(
+    clients.map((x, i) => generateItemsInto(x.db, count, `${alphabet[i + 1]}.`))
+  );
+  expect(await awaitIsEqual(20, server.db, ...clients.map(x => x.db))).toBe(
+    true
+  );
+  cb();
+}, 120000);
+
+/*
+test('sync:many:initial:oneway:reverse', cb => {
+  prepare(cb, 2, async (db0, db1, db2, forceSync) => {
+    const count = 10000;
+    const items = [];
+    for (let x = 0; x < count; x++) {
+      items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
+    }
+    await db2.insert('lorem', items);
     await forceSync();
     const final1 = await db1.all<ILorem>('lorem', {});
     const final2 = await db2.all<ILorem>('lorem', {});
@@ -64,19 +117,6 @@ test('sync:many:initial:oneway:simple', cb => {
   });
 }, 10000);
 
-test('sync:many:initial:oneway:reverse', cb => {
-  prepare(cb, async (db1, db2, forceSync) => {
-    for (let x = 0; x < 100; x++) {
-      //db1.insert('lorem', { goa: 'a' + x });
-      db2.insert('lorem', { goa: 'b' + x });
-    }
-    await forceSync();
-    const final1 = await db1.all<ILorem>('lorem', {});
-    const final2 = await db2.all<ILorem>('lorem', {});
-    expect(final1.length).toBe(100);
-    expect(final2.length).toBe(100);
-  });
-}, 10000);
 
 test('sync:many:initial:twoway', cb => {
   prepare(cb, async (db1, db2, forceSync) => {
@@ -113,12 +153,15 @@ test('sync:socket:simple3', async cb => {
   const port = 5554;
   // HOST
   const dbMaster = new Debe(new MemoryAdapter(), schema);
-  const destroyServer = createSyncServer(dbMaster, { port });
+  const destroyServer = new SyncServer(dbMaster, port);
   await dbMaster.initialize();
 
   // CLIENT
   const dbClient = new Debe(new MemoryAdapter(), schema);
-  const destroyClient = createSyncClient(dbClient, `http://localhost:${port}`);
+  const destroyClient = new SyncClient(
+    dbClient,
+    new SocketAdapter(`http://localhost:${port}`)
+  );
   await dbClient.initialize();
 
   const items = [];
@@ -129,9 +172,9 @@ test('sync:socket:simple3', async cb => {
 
   // CLIENT
   const dbClient2 = new Debe(new MemoryAdapter(), schema);
-  const destroyClient2 = createSyncClient(
+  const destroyClient2 = new SyncClient(
     dbClient2,
-    `http://localhost:${port}`
+    new SocketAdapter(`http://localhost:${port}`)
   );
   await dbClient2.initialize();
 
@@ -154,17 +197,17 @@ test('sync:socket:simple3', async cb => {
 
   await isEqualState();
 
-  /*await dbClient.insert('lorem', { goa: 'a1000' });
+  await dbClient.insert('lorem', { goa: 'a1000' });
   await dbClient2.insert('lorem', { goa: 'a1001' });
   await dbMaster.insert('lorem', { goa: 'a1002' });
   await dbMaster.insert('lorem', { goa: 'a1003' });
   await dbMaster.insert('lorem', { goa: 'a1004' });
   await new Promise(yay => setTimeout(yay, 2000));
-  await isEqualState();*/
+  await isEqualState();
 
-  destroyServer();
-  destroyClient();
-  destroyClient2();
+  destroyServer.close();
+  destroyClient.close();
+  destroyClient2.close();
   cb();
 }, 20000);
 
@@ -172,13 +215,19 @@ test('sync:socket:simple2', async cb => {
   const port = 5554;
   // HOST
   const dbMaster = new Debe(new MemoryAdapter(), schema);
-  const destroyServer = createSyncServer(dbMaster, { port });
-  const destroyClient0 = createSyncClient(dbMaster, `http://localhost:${port}`);
+  const destroyServer = new SyncServer(dbMaster, port);
+  const destroyClient0 = new SyncClient(
+    dbMaster,
+    new SocketAdapter(`http://localhost:${port}`)
+  );
   await dbMaster.initialize();
 
   // CLIENT
   const dbClient = new Debe(new MemoryAdapter(), schema);
-  const destroyClient1 = createSyncClient(dbClient, `http://localhost:${port}`);
+  const destroyClient1 = new SyncClient(
+    dbClient,
+    new SocketAdapter(`http://localhost:${port}`)
+  );
   await dbClient.initialize();
 
   const items = [];
@@ -202,35 +251,40 @@ test('sync:socket:simple2', async cb => {
 
   await isEqualState();
 
-  /*await dbClient.insert('lorem', { goa: 'a1000' });
+  await dbClient.insert('lorem', { goa: 'a1000' });
   await dbClient2.insert('lorem', { goa: 'a1001' });
   await dbMaster.insert('lorem', { goa: 'a1002' });
   await dbMaster.insert('lorem', { goa: 'a1003' });
   await dbMaster.insert('lorem', { goa: 'a1004' });
   await new Promise(yay => setTimeout(yay, 2000));
-  await isEqualState();*/
+  await isEqualState();
 
-  destroyServer();
-  destroyClient0();
-  destroyClient1();
+  destroyServer.close();
+  destroyClient0.close();
+  destroyClient1.close();
   cb();
 }, 20000);
 
 test('sync:socket:crazy', async cb => {
   async function spawnMaster(port: number, syncTo?: number) {
     const db = new Debe(new MemoryAdapter(), schema);
-    const destroy = [
-      createSyncServer(db, { port }),
-      syncTo ? createSyncClient(db, `http://localhost:${syncTo}`) : undefined
+    const services = [
+      new SyncServer(db, port),
+      syncTo ? await spawnClient(syncTo, db) : undefined
     ];
     await db.initialize();
-    return { db, destroy: () => destroy.forEach(x => x && x()) };
+    return { db, close: () => services.forEach(x => x && x.close()) };
   }
-  async function spawnClient(syncTo: number) {
-    const db = new Debe(new MemoryAdapter(), schema);
-    const destroy = createSyncClient(db, `http://localhost:${syncTo}`);
+  async function spawnClient(
+    syncTo: number,
+    db = new Debe(new MemoryAdapter(), schema)
+  ) {
+    const client = new SyncClient(
+      db,
+      new SocketAdapter(`http://localhost:${syncTo}`)
+    );
     await db.initialize();
-    return { db, destroy };
+    return client;
   }
   const instances = await Promise.all([
     spawnMaster(5555),
@@ -280,10 +334,12 @@ test('sync:socket:crazy', async cb => {
   await new Promise(yay => setTimeout(yay, 5000));
   await isEqualState();
 
-  instances.forEach(instance => instance.destroy());
+  instances.forEach(instance => instance.close());
   cb();
 }, 60000);
+*/
 
+////////////////////////
 /*
 
 test('sync:delayed', cb => {

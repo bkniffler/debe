@@ -36,8 +36,7 @@
     "build:rollup": "rollup -c",
     "pub": "yarn test && yarn build && yarn pub:npm",
     "pub:npm": "foreach --no-C -g \"lib/*\" -x \"npm publish #{path} --registry=https://registry.npmjs.org/\"",
-    "test": "jest --verbose=false",
-    "vtest": "jest --verbose=true",
+    "test": "jest --verbose=true",
     "test2": "PG_CONNECTIONSTRING=postgresql://postgres@localhost:5432/test yarn test",
     "coverage": "codecov"
   },
@@ -82,7 +81,8 @@
       }
     },
     "modulePathIgnorePatterns": [
-      "lib"
+      "lib",
+      ".old"
     ],
     "collectCoverage": false,
     "collectCoverageFrom": [

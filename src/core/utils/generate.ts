@@ -1,11 +1,13 @@
-let _generate = fastGuid;
+import * as id from 'nanoid';
+
+let _generate = id;
 export function setIdGenerator(generator: () => string) {
   _generate = generator as any;
 }
 export function generate() {
   return _generate();
 }
-
+/*
 var lut: string[] = [];
 for (var i = 0; i < 256; i++) {
   lut[i] = (i < 16 ? '0' : '') + i.toString(16);
@@ -38,3 +40,4 @@ function fastGuid() {
     lut[(d3 >> 24) & 0xff]
   );
 }
+*/

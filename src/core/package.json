@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "flowzilla": "^1.0.4",
+    "nanoid": "^2.0.1",
     "tslib": "^1.9.3"
   }
 }

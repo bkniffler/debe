@@ -36,7 +36,6 @@ export abstract class SQLCore {
     return 'TEXT';
   }
   createTableIndex(collection: ICollection, field: string, type?: string) {
-    type;
     return `CREATE INDEX IF NOT EXISTS "${collection.name}_${field}" ON "${
       collection.name
     }" (${field})`;

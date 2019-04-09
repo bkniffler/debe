@@ -3,7 +3,6 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
-    "rpc1": "^2.0.1",
-    "rpc1-socket": "^2.0.1"
+    "asyngular-client": "^5.4.1"
   }
 }
