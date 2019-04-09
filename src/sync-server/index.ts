@@ -1,9 +1,10 @@
-import { Debe } from 'debe';
+import { Debe, generate } from 'debe';
 import * as http from 'http';
 import { attach } from 'asyngular-server';
 import { createServerChannels, createSocketChannels } from './server';
 
 export class SyncServer {
+  id = generate();
   port: number;
   httpServer = http.createServer();
   agServer = attach(this.httpServer);
@@ -19,7 +20,7 @@ export class SyncServer {
     setTimeout(() => this.httpServer.listen(this.port));
   }
   async listen2() {
-    createServerChannels(this.db, this.agServer);
+    createServerChannels(this.id, this.db, this.agServer);
   }
   async listen() {
     for await (let { socket } of this.agServer.listener('connection')) {

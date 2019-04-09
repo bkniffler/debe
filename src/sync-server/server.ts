@@ -9,7 +9,11 @@ import {
 } from 'debe-sync';
 import { IAGServer } from 'asyngular-server';
 
-export function createServerChannels(client: Debe, server: IAGServer) {
+export function createServerChannels(
+  serverId: string,
+  client: Debe,
+  server: IAGServer
+) {
   for (let key in client.collections) {
     const collection = client.collections[key];
     (async () => {
@@ -18,7 +22,7 @@ export function createServerChannels(client: Debe, server: IAGServer) {
       );
       let queue = Promise.resolve();
       client.listen(collection.name, (items: any, options: any = {}) => {
-        if (!options.synced) {
+        if (options.synced !== 'master') {
           queue = queue.then(() =>
             batchTransfer(
               () => Promise.resolve(items.length),
@@ -29,20 +33,21 @@ export function createServerChannels(client: Debe, server: IAGServer) {
                     (page + 1) * batchSize
                   )
                 ),
-              items =>
-                server.exchange.invokePublish(collection.name, [
-                  'master',
+              items => {
+                return server.exchange.invokePublish(collection.name, [
+                  serverId,
                   items
-                ])
+                ]);
+              }
             ).catch(err => console.error(err))
           );
         }
       });
       for await (let data of channel) {
         const [id, payload] = data;
-        if (id !== 'master') {
+        if (id !== serverId) {
           await client
-            .insert(collection.name, payload, { synced: true } as any)
+            .insert(collection.name, payload, { synced: 'master' } as any)
             .catch(x => console.error('Error while client.insert', x) as any);
         }
       }

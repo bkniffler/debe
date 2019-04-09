@@ -12,11 +12,9 @@ const log = createLog('sync');
 
 export class Sync {
   db: Debe;
-  others: string[];
   where?: string[];
-  constructor(db: Debe, others: string[] = [], where?: string[]) {
+  constructor(db: Debe, where?: string[]) {
     this.db = db;
-    this.others = others;
     this.where = where;
     db.addPlugin(
       'sync',
@@ -71,22 +69,19 @@ export class Sync {
     }
     // LOgic
     let cancels: Function[] = [];
-    this.others.map(name => {
-      Object.keys(this.db.collections)
-        .filter(x => x !== syncstateTable)
-        .forEach(table => {
-          cancels.push(
-            initiateSync(
-              this.db,
-              socket,
-              name,
-              this.db.collections[table],
-              this.where,
-              log
-            )
-          );
-        });
-    });
+    Object.keys(this.db.collections)
+      .filter(x => x !== syncstateTable)
+      .forEach(table => {
+        cancels.push(
+          initiateSync(
+            this.db,
+            socket,
+            this.db.collections[table],
+            this.where,
+            log
+          )
+        );
+      });
     this['_close'] = () => {
       if (!cancels) {
         return;
@@ -99,7 +94,7 @@ export class Sync {
 export class SyncClient extends Sync {
   socket: ISocket;
   constructor(db: Debe, hostname: string, port: number = 8000) {
-    super(db, ['debe']);
+    super(db);
     this.socket = create({
       hostname,
       port

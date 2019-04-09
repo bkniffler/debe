@@ -11,7 +11,6 @@ import { batchTransfer } from './utils';
 export function initiateSync(
   client: Debe,
   socket: ISocket,
-  name: string,
   collection: ICollection,
   where: any,
   log: ILog
@@ -44,7 +43,7 @@ export function initiateSync(
       : () =>
           client
             .insert(collection.name, remoteChanges, {
-              synced: true
+              synced: 'client'
             } as any)
             .catch(x => console.error('Error while client.insert', x) as any);
   }
@@ -77,7 +76,7 @@ export function initiateSync(
       if (id !== socket.id) {
         await isComplete;
         await client
-          .insert(collection.name, payload, { synced: true } as any)
+          .insert(collection.name, payload, { synced: 'client' } as any)
           .catch(x => console.error('Error while client.insert', x) as any);
       }
     }
@@ -87,7 +86,7 @@ export function initiateSync(
   async function listenToLocalInsert() {
     let queue = Promise.resolve();
     client.listen(collection.name, (items: any, options: any = {}) => {
-      if (!options.synced) {
+      if (options.synced !== 'client') {
         queue = queue.then(() =>
           batchTransfer(
             () => isComplete.then(() => items.length),

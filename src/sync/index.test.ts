@@ -25,9 +25,12 @@ async function generateItemsInto(db: Debe, count: number = 1000, prefix = '') {
   }
   await db.insert('lorem', items);
 }
-async function spawnServer(port: number) {
+async function spawnServer(port: number, syncTo?: number) {
   const db = new Debe(new MemoryAdapter(), schema);
   const server = new SyncServer(db, port);
+  if (syncTo) {
+    new SyncClient(db, 'localhost', syncTo);
+  }
   await server.initialize();
   return server;
 }
@@ -47,9 +50,10 @@ async function generateClients(port: number, numberOfClients: number) {
 async function isEqual(...args: Debe[]) {
   let previous: string[] | undefined = undefined;
   for (var db of args) {
-    const items = await db.all('lorem', { orderBy: ['name DESC'] });
+    const items = await db.all('lorem', { orderBy: ['name ASC'] });
     const arr = [...new Set([...items.map(x => x.name)])];
     if (previous !== undefined && previous.join(',') !== arr.join(',')) {
+      console.log(previous.join(','), 'vs', arr.join(','));
       return false;
     }
     previous = arr;
@@ -68,7 +72,23 @@ async function awaitIsEqual(maxTries = 10, ...dbs: Debe[]) {
   return false;
 }
 
-test('sync:3x10000', async cb => {
+test('sync:10x3', async cb => {
+  const port = getPort(1);
+  const count = 10;
+  const server = await spawnServer(port);
+  const clients = await generateClients(port, 1);
+  await Promise.all(
+    [server, ...clients].map((x, i) =>
+      generateItemsInto(x.db, count, `${alphabet[i]}.`)
+    )
+  );
+  expect(await awaitIsEqual(3, server.db, ...clients.map(x => x.db))).toBe(
+    true
+  );
+  cb();
+}, 120000);
+
+test('sync:10000x3', async cb => {
   const port = getPort(1);
   const count = 10000;
   const server = await spawnServer(port);
@@ -97,6 +117,45 @@ test('sync:10:1000', async cb => {
   expect(await awaitIsEqual(20, server.db, ...clients.map(x => x.db))).toBe(
     true
   );
+  cb();
+}, 120000);
+
+test('sync:multimaster', async cb => {
+  const port0 = getPort(3);
+  const port1 = getPort(4);
+  const count = 100;
+  const server0 = await spawnServer(port0);
+  const server1 = await spawnServer(port1, port0);
+  const clients0 = await generateClients(port0, 3);
+  const clients1 = await generateClients(port1, 3);
+  await Promise.all(
+    [server0, server1, ...clients0, ...clients1].map((x, i) =>
+      generateItemsInto(x.db, count, `${alphabet[i]}.`)
+    )
+  );
+  expect(
+    await awaitIsEqual(
+      3,
+      server0.db,
+      server1.db,
+      ...clients0.map(x => x.db),
+      ...clients1.map(x => x.db)
+    )
+  ).toBe(true);
+  await Promise.all(
+    [server0, server1, ...clients0, ...clients1].map((x, i) =>
+      generateItemsInto(x.db, count, `${alphabet[i]}.`)
+    )
+  );
+  expect(
+    await awaitIsEqual(
+      3,
+      server0.db,
+      server1.db,
+      ...clients0.map(x => x.db),
+      ...clients1.map(x => x.db)
+    )
+  ).toBe(true);
   cb();
 }, 120000);
 
