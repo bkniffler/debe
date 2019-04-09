@@ -197,11 +197,11 @@ All contributions welcome :)
   - Write real docs :(
 - Replication
   - Progress
-  - Chunking
-  - Batching
+  - [x] Chunking
+  - [x] Batching
   - Conflict Resolution (automerge?)
-- Subscription
-  - Batching
+- [x] Subscription
+  - [x] Batching
 - Adapters
   - MongoDB
   - AWS DynamoDB
@@ -226,7 +226,8 @@ All contributions welcome :)
 
 ## Dependencies
 
-- [rpc1](https://github.com/bkniffler/rpc1)
+- [nanoid](https://github.com/ai/nanoid)
+- [asyngular](https://asyngular.io)
 - [flowzilla](https://github.com/bkniffler/flowzilla)
 
 ## Similar libraries
