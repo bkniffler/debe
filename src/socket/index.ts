@@ -17,7 +17,9 @@ export class SocketAdapter {
       port
     });
   }
-  async destroy() {}
+  async destroy() {
+    this.socket.disconnect();
+  }
   connect(debe: Debe) {
     this.listen();
     socketPlugin(this)(debe);

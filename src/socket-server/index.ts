@@ -13,6 +13,7 @@ export class SocketServer {
     this.connect();
   }
   close() {
+    this.agServer.close();
     this.httpServer.close();
   }
   async connect() {
