@@ -70,7 +70,7 @@ async function awaitIsEqual(maxTries = 10, ...dbs: Debe[]) {
 }
 
 test('sync:10x3', async cb => {
-  const port = getPort(1);
+  const port = getPort(0);
   const count = 10;
   const server = await spawnServer(port);
   const clients = await generateClients(port, 1);
@@ -101,7 +101,7 @@ test('sync:10000x3', async cb => {
   cb();
 }, 120000);
 
-test('sync:10:1000', async cb => {
+test('sync:1000x10', async cb => {
   const port = getPort(2);
   const count = 1000;
   const server = await spawnServer(port);
