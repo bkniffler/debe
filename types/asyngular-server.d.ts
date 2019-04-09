@@ -18,5 +18,10 @@ declare module 'asyngular-server' {
   export interface IAGServer {
     exchange: IExchange;
     listener: (type: string) => Promise<IAGServerSocket>[];
+    closeListener: (event: string) => void;
+    killListener: (event: string) => void;
+    close: () => void;
+    closeAllListeners: () => void;
+    killAllListeners: () => void;
   }
 }

@@ -7,6 +7,7 @@ import { SyncClient, IAddress } from 'debe-sync';
 export class SyncServer {
   id = generate();
   port: number;
+  sockets: SyncClient[] = [];
   httpServer = http.createServer();
   agServer = attach(this.httpServer);
   db: Debe;
@@ -17,7 +18,7 @@ export class SyncServer {
       if (!Array.isArray(syncTo[0])) {
         syncTo = [syncTo] as any;
       }
-      (syncTo as IAddress[]).forEach(
+      this.sockets = (syncTo as IAddress[]).map(
         (pair: IAddress) => new SyncClient(db, pair)
       );
     }
@@ -37,6 +38,8 @@ export class SyncServer {
     }
   }
   close() {
+    this.sockets.forEach(socket => socket.close());
+    this.agServer.close();
     this.httpServer.close();
   }
 }
