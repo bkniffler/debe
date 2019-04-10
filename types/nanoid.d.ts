@@ -1,4 +1,4 @@
 declare module 'nanoid' {
-  const generate: () => string;
+  const generate: (size?: number) => string;
   export = generate;
 }

@@ -1,11 +1,11 @@
 import * as id from 'nanoid';
 
 let _generate = id;
-export function setIdGenerator(generator: () => string) {
+export function setIdGenerator(generator: (size?: number) => string) {
   _generate = generator as any;
 }
-export function generate() {
-  return _generate();
+export function generate(size?: number) {
+  return _generate(size);
 }
 /*
 var lut: string[] = [];
