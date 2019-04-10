@@ -1,34 +1,34 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
+import buildIns from 'rollup-plugin-node-builtins';
 import autoExternal from 'rollup-plugin-auto-external';
+import alias from 'rollup-plugin-alias';
 import json from 'rollup-plugin-json';
-import pkg from './package.json';
 import { join } from 'path';
 
 const fs = require('fs');
+const integrate = ['debe-flow', 'debe-sql'];
 
 // destination.txt will be created or overwritten by default.
 const jobs = [];
 const paths = require('./tsconfig.json').compilerOptions.paths;
+delete paths['*'];
 const mainPackageJSON = require(join(__dirname, 'package.json'));
-const names = Object.keys(paths).reduce(
-  (state, key) => ({
-    ...state,
-    [key]: key.split('-')[0] // key.replace(/-([a-z])/g, g => g[1].toUpperCase())
-  }),
-  {}
-);
-const projects = Object.keys(paths).forEach(key => {
+Object.keys(paths).forEach(key => {
   const src = join(__dirname, paths[key][0]);
   const lib = join(__dirname, paths[key][0].replace('/src', '/lib'));
   const packageJSON = require(join(src, 'package.json'));
   if (!packageJSON.dependencies) {
     packageJSON.dependencies = {};
   }
-  fs.writeFileSync(
-    join(lib, 'README.md'),
-    `Find out more on ${mainPackageJSON.repository.url.replace('.git', '')}`
-  );
+  if (fs.existsSync(join(src, 'README.md'))) {
+    fs.copyFileSync(join(src, 'README.md'), join(lib, 'README.md'));
+  } else {
+    fs.writeFileSync(
+      join(lib, 'README.md'),
+      `Find out more on ${mainPackageJSON.repository.url.replace('.git', '')}`
+    );
+  }
   fs.writeFileSync(
     join(lib, 'package.json'),
     JSON.stringify(
@@ -62,48 +62,80 @@ const projects = Object.keys(paths).forEach(key => {
       2
     )
   );
-  if (packageJSON.browser !== false) {
-    jobs.push({
-      input: join(lib, 'index.js'),
-      output: {
-        name: names[key],
-        file: join(lib, 'index.umd.js'),
-        format: 'umd',
-        extend: true
-      },
-      external: Object.keys(paths),
-      globals: names,
-      plugins: [
-        json(),
-        resolve({ browser: true }),
-        commonjs({
-          namedExports: {
-            'node_modules/flowzilla/lib/index.umd.js': ['Flowzilla'],
-            'node_modules/rpc1/index.umd.js': [
-              'waitFor',
-              'createLog',
-              'requestReply',
-              'Service',
-              'Broker',
-              'LocalAdapter'
-            ],
-            'node_modules/rpc1-socket/index.umd.js': ['SocketAdapter']
-          }
-        })
-      ]
-    });
-  }
   jobs.push({
+    context: '{}',
     input: join(lib, 'index.js'),
     output: [{ file: join(lib, 'index.cjs.js'), format: 'cjs' }],
     plugins: [
       json(),
-      resolve({ module: true, jail: lib }),
+      resolve({ jail: lib }),
       autoExternal({
         packagePath: join(lib, 'package.json')
       })
     ]
   });
+  if (packageJSON.browser !== false) {
+    jobs.push({
+      context: '{}',
+      input: join(lib, 'index.js'),
+      output: {
+        name: 'debe',
+        file: join(lib, 'index.umd.js'),
+        format: 'umd',
+        extend: true,
+        globals: Object.keys(paths).reduce((state, k) => {
+          state[k] = 'debe';
+          return state;
+        }, {})
+      },
+      external: Object.keys(paths).filter(x => integrate.indexOf(x) === -1),
+      plugins: [
+        buildIns(),
+        alias(
+          integrate.reduce(
+            (state, key) => ({
+              ...state,
+              [key]: join(
+                __dirname,
+                paths[key][0].replace('/src', '/lib'),
+                'index.js'
+              )
+            }),
+            {}
+          )
+        ),
+        json(),
+        resolve({ browser: true }),
+        commonjs({
+          include: [/node_modules/],
+          namedExports: {
+            'node_modules/automerge/dist/automerge.js': [
+              'init',
+              'change',
+              'emptyChange',
+              'undo',
+              'redo',
+              'load',
+              'save',
+              'merge',
+              'diff',
+              'getChanges',
+              'applyChanges',
+              'getMissingDeps',
+              'equals',
+              'getHistory',
+              'uuid',
+              'Frontend',
+              'Backend',
+              'DocSet',
+              'WatchableDoc',
+              'Connection'
+            ]
+          }
+        })
+      ]
+    });
+  }
   return key;
 });
 export default jobs;
