@@ -79,18 +79,58 @@ work().catch(err => console.log(err));
 https://codesandbox.io/s/y27xmr9rvj
 
 ```js
-const { Debe } = require('debe');
-const { MemoryAdapter } = require('debe-memory');
-const { createSyncClient } = require('debe-sync');
-const { createSyncServer } = require('debe-sync-server');
+const { Debe } = require("debe");
+const { MemoryAdapter } = require("debe-memory");
+const { SyncClient } = require("debe-sync");
+const { SyncServer } = require("debe-sync-server");
+
+const schema = [{ name: "lorem", index: ["name"] }];
+
+async function work() {
+  const port = 5555;
+  console.log("Start");
+  // Master
+  const server = await spawnServer(port);
+  const client = await spawnClient(port);
+  // Init
+  console.log("Initialized");
+  // Step1
+  await generateItems(server.db, 10000);
+  await generateItems(client.db, 1000);
+  // Step2
+  await wait(1000);
+  console.log(`db0 ${await server.db.count("lorem")} items`);
+  console.log(`db1 ${await client.db.count("lorem")} items`);
+  console.log(
+    `Was synced? ${(await client.db.count("lorem")) ===
+      (await server.db.count("lorem"))}`
+  );
+  await server.close();
+  await client.close();
+}
+
+async function spawnServer(port) {
+  const db = new Debe(new MemoryAdapter(), schema);
+  const server = new SyncServer(db, port);
+  await server.initialize();
+  return server;
+}
+
+async function spawnClient(port) {
+  const db = new Debe(new MemoryAdapter(), schema);
+  const sync = new SyncClient(db, ["localhost", port]);
+  await db.initialize();
+  return sync;
+}
 
 async function generateItems(db, numberOfItems) {
   const start = new Date().getTime();
   const items = [];
   for (let x = 0; x < numberOfItems; x++) {
-    items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
+    items.push({ name: "a" + (x < 10 ? `0${x}` : x) });
   }
-  await db.insert('lorem', items);
+
+  await db.insert("lorem", items);
   console.log(
     `Generated ${numberOfItems} in ${new Date().getTime() - start}ms`
   );
@@ -98,30 +138,6 @@ async function generateItems(db, numberOfItems) {
 
 async function wait(ms) {
   await new Promise(yay => setTimeout(yay, ms));
-}
-
-const schema = [{ name: 'lorem', index: ['name'] }];
-
-async function work() {
-  console.log('Start');
-  // Master
-  const db0 = new Debe(new MemoryAdapter(), schema);
-  createSyncServer(db0, { port: 5555 });
-  // Client
-  const db1 = new Debe(new MemoryAdapter(), schema);
-  createSyncClient(db1, 'http://localhost:5555', ['lorem']);
-  // Init
-  await db0.initialize();
-  await db1.initialize();
-  console.log('Initialized');
-  // Step1
-  await generateItems(db0, 10000);
-  await wait(250);
-  console.log(`Synced ${await db1.count('lorem')} items via socket`);
-  // Step2
-  await generateItems(db1, 1000);
-  await wait(250);
-  console.log(`Synced ${await db0.count('lorem')} items via socket`);
 }
 
 work().catch(err => console.log(err));
