@@ -49,6 +49,7 @@ export interface IQuery {
 export interface IInsertInput {
   refetchResult?: boolean;
   update?: boolean;
+  [s: string]: any;
 }
 
 export type IObserverCallback<T = IItem> = (
