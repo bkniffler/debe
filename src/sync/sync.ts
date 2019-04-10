@@ -115,7 +115,7 @@ export function initiateSync(
     await publishLocal();
     // Publish local changes
     await persist();
-    log.info(`Sync to ${name}:${collection.name} is completed`);
+    log.info(`Sync of :${collection.name} is completed`);
   })();
   listenToSubscription(channel);
   listenToLocalInsert();
