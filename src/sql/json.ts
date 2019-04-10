@@ -41,4 +41,15 @@ export abstract class SQLJsonCore extends SQLCore {
     }
     return clause;
   }
+  createSelect(collection: ICollection, fields: string[] = []) {
+    if (fields) {
+      fields = fields.map(key => {
+        if (collection.fields[key]) {
+          return key;
+        }
+        return `${this.selectJSONField(collection, key)} as "${key}"`;
+      });
+    }
+    return super.createSelect(collection, fields);
+  }
 }

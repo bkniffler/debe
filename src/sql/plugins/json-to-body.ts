@@ -33,13 +33,13 @@ export const jsonBodyPlugin = (options: any = {}): IPlugin => client => {
         if (!result) {
           return result;
         }
-        const [obj] = filterItem(collection, result);
+        const [obj, rest] = filterItem(collection, result);
         const body =
           obj[bodyField] && typeof obj[bodyField] === 'string'
             ? JSON.parse(obj[bodyField])
             : obj[bodyField];
         delete obj[bodyField];
-        return { ...body, ...obj };
+        return { ...rest, ...body, ...obj };
       };
 
       const transform2 = (collection: ICollection, result: any): any => {
@@ -55,56 +55,17 @@ export const jsonBodyPlugin = (options: any = {}): IPlugin => client => {
       };
 
       if (type === types.INSERT) {
-        const [m, value] = payload;
-        const collection = collections[m];
-        /*if (Array.isArray(value) && merge) {
-          const ids: string[] = [];
-          const indices = {};
-          value.forEach((x, i) => {
-            if (x.id) {
-              indices[x.id] = i;
-              ids.push(x.id);
-            }
-          });
-          if (ids.length) {
-            flow
-              .run(types.ALL, [m, { where: { id: ids } }])
-              .then((items: any[]) => {
-                items.forEach(item => {
-                  if (
-                    item &&
-                    item.id &&
-                    indices[item.id] &&
-                    value[indices[item.id]]
-                  ) {
-                    value[indices[item.id]] = {
-                      ...item,
-                      ...value[indices[item.id]]
-                    };
-                  }
-                });
-                flow([m, transform2(collection, value)]);
-              });
-          } else {
-            flow([m, transform2(collection, value)]);
-          }
-        } else if (value.id && merge) {
-          flow
-            .run(types.GET, [m, { where: { id: value.id } }])
-            .then((item: any) =>
-              flow([m, transform2(collection, { ...item, ...value })])
-            );
-        } else {*/
+        const [collection, value] = payload;
         flow(
-          [m, transform2(collection, value)],
-          (x, flow) => flow(transform(collection, x))
+          [collection, transform2(collections[collection], value)],
+          (x, flow) => flow(transform(collections[collection], x))
         );
         //}
       } else if (type === types.GET || type === types.ALL) {
-        const [m] = payload;
+        const [collection] = payload;
         flow(
           payload,
-          (x, flow) => flow(transform(collections[m], x))
+          (x, flow) => flow(transform(collections[collection], x))
         );
       } else {
         flow(payload);

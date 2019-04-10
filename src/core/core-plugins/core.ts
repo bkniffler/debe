@@ -127,7 +127,7 @@ export const corePlugin = (options: any = {}): IPlugin => client => {
         newItems = ensureArray(value).map(transformForStorage);
       }
       flow(
-        [collection, newItems],
+        [collection, newItems, options],
         async (result: any, flo: any) => {
           if (refetchResult) {
             result = await flow.run(types.ALL, [
