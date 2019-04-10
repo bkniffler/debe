@@ -46,7 +46,10 @@ export function createAdapterTest(
 
   test(`adapter:${name}:select`, async () => {
     const collections = [
-      { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
+      {
+        name: 'lorem' + generate().substr(0, 4),
+        index: ['firstName', 'lastName']
+      }
     ];
     const ini = await init(collections, 0);
     const table = collections[0].name;
@@ -54,15 +57,27 @@ export function createAdapterTest(
     await client.initialize();
     const insertResult = await client.insert<any>(table, {
       id: 'asd0',
-      name: 'Hallo'
+      firstName: 'Beni',
+      lastName: 'Kniffi'
     });
-    const queryResult = await client.all<any>(table, { select: 'id' });
+    let queryResult = await client.all<any>(table, { select: 'id' });
     expect(insertResult.id).toBe('asd0');
-    expect(insertResult.name).toBe('Hallo');
+    expect(insertResult.firstName).toBe('Beni');
     expect(Array.isArray(queryResult)).toBe(true);
     expect(queryResult.length).toBe(1);
     expect(queryResult[0].id).toBe(insertResult.id);
-    expect(queryResult[0].name).toBe(undefined);
+    expect(queryResult[0].firstName).toBe(undefined);
+    expect(queryResult[0].lastName).toBe(undefined);
+
+    queryResult = await client.all<any>(table, { select: ['id', 'firstName'] });
+    expect(insertResult.id).toBe('asd0');
+    expect(insertResult.firstName).toBe('Beni');
+    expect(Array.isArray(queryResult)).toBe(true);
+    expect(queryResult.length).toBe(1);
+    expect(queryResult[0].id).toBe(insertResult.id);
+    expect(queryResult[0].firstName).toBe('Beni');
+    expect(queryResult[0].lastName).toBe(undefined);
+
     await client.destroy();
     if (ini) {
       ini.close();
