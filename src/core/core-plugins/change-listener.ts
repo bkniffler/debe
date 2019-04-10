@@ -5,12 +5,8 @@ import { toISO } from '../utils';
 
 export const CHANGE_LISTENER_PLUGIN = 'changeListenerPlugin';
 const defaultRevisionField = 'rev';
-const defaultTimeField = 'time';
 export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
-  const {
-    revField = defaultRevisionField,
-    timeField = defaultTimeField
-  } = options;
+  const { revField = defaultRevisionField } = options;
   const queryEmitter = new Emitter();
 
   function addRev(item: any): [any, any] {
@@ -18,7 +14,6 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
       return item;
     }
     item[revField] = toISO(new Date());
-    item[timeField] = toISO(new Date());
     return item;
   }
 
@@ -32,9 +27,6 @@ export const changeListenerPlugin = (options: any = {}): IPlugin => client => {
       collection.specialFields.rev = revField;
       collection.fields[revField] = fieldTypes.STRING;
       collection.index[revField] = fieldTypes.STRING;
-      collection.specialFields.time = timeField;
-      collection.fields[timeField] = fieldTypes.STRING;
-      collection.index[timeField] = fieldTypes.STRING;
       return flow(payload);
     }
     const callback = flow.get('callback');
