@@ -2,7 +2,9 @@
   "name": "debe-sync-server",
   "main": "index.ts",
   "version": "1.0.0",
+  "browser": false,
   "dependencies": {
+    "debe": "*",
     "debe-sync": "*",
     "asyngular-server": "^5.4.0"
   }

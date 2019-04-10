@@ -2,8 +2,10 @@
   "name": "debe-socket-server",
   "main": "index.ts",
   "version": "1.0.0",
+  "browser": false,
   "dependencies": {
     "asyngular-server": "^5.4.0",
-    "debe": "*"
+    "debe": "*",
+    "debe-socket": "*"
   }
 }

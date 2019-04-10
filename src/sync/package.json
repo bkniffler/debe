@@ -3,6 +3,7 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
+    "debe": "*",
     "asyngular-client": "^5.4.1"
   }
 }
