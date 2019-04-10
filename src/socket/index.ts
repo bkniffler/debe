@@ -18,11 +18,12 @@ export class SocketAdapter {
     });
   }
   async close() {
-    await Promise.race([
+    const promise = Promise.race([
       this.socket.listener('disconnect')['once'](),
       this.socket.listener('connectAbort')['once']()
     ]);
     this.socket.disconnect();
+    return promise;
   }
   connect(debe: Debe) {
     this.listen();
