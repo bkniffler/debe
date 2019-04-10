@@ -1,8 +1,4 @@
-test('sync', () => {
-  expect(2).toBe(2);
-});
-
-/*import { createAdapterTest } from 'debe/adapter.test';
+import { createAdapterTest } from 'debe/adapter.test';
 import { MemoryAdapter } from 'debe-memory';
 import { SocketServer } from 'debe-socket-server';
 import { Debe } from 'debe';
@@ -18,4 +14,3 @@ createAdapterTest(
     return new SocketServer(db, port + i);
   }
 );
-*/

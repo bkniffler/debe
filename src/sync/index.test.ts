@@ -1,8 +1,4 @@
-test('sync', () => {
-  expect(2).toBe(2);
-});
-
-/*import { Debe } from 'debe';
+import { Debe } from 'debe';
 import { MemoryAdapter } from 'debe-memory';
 import { SyncServer } from 'debe-sync-server';
 import { SyncClient } from './index';
@@ -167,4 +163,3 @@ test('sync:multimaster', async cb => {
   clients1.forEach(client => client.close());
   cb();
 }, 120000);
-*/
