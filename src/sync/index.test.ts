@@ -1,9 +1,4 @@
-test('sync', async cb => {
-  expect(true).toBe(true);
-  cb();
-});
-
-/*import { Debe } from 'debe';
+import { Debe } from 'debe';
 import { MemoryAdapter } from 'debe-memory';
 import { SyncServer } from 'debe-sync-server';
 import { SyncClient } from './index';
@@ -87,6 +82,8 @@ test('sync:10x3', async cb => {
   expect(await awaitIsEqual(3, server.db, ...clients.map(x => x.db))).toBe(
     true
   );
+  await server.close();
+  await Promise.all(clients.map(client => client.close()));
   cb();
 }, 120000);
 
@@ -103,8 +100,8 @@ test('sync:10000x3', async cb => {
   expect(await awaitIsEqual(20, server.db, ...clients.map(x => x.db))).toBe(
     true
   );
-  server.close();
-  clients.forEach(client => client.close());
+  await server.close();
+  await Promise.all(clients.map(client => client.close()));
   cb();
 }, 120000);
 
@@ -121,8 +118,8 @@ test('sync:1000x10', async cb => {
   expect(await awaitIsEqual(20, server.db, ...clients.map(x => x.db))).toBe(
     true
   );
-  server.close();
-  clients.forEach(client => client.close());
+  await server.close();
+  await Promise.all(clients.map(client => client.close()));
   cb();
 }, 120000);
 
@@ -162,10 +159,9 @@ test('sync:multimaster', async cb => {
       ...clients1.map(x => x.db)
     )
   ).toBe(true);
-  server0.close();
-  clients0.forEach(client => client.close());
-  server1.close();
-  clients1.forEach(client => client.close());
+  await server0.close();
+  await server1.close();
+  await Promise.all(clients0.map(client => client.close()));
+  await Promise.all(clients1.map(client => client.close()));
   cb();
 }, 120000);
-*/
