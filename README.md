@@ -236,15 +236,10 @@ All contributions welcome :)
 
 # Credits
 
-## Assets
-
-- Vector Graphic: [www.freepik.com](https://www.freepik.com/free-photos-vectors/background)
-
 ## Dependencies
 
 - [nanoid](https://github.com/ai/nanoid)
 - [asyngular](https://asyngular.io)
-- [flowzilla](https://github.com/bkniffler/flowzilla)
 
 ## Similar libraries
 
@@ -252,3 +247,8 @@ All contributions welcome :)
 - RxDB
 - Realm
 - NanoSQL
+- Google Firebase
+
+## Assets
+
+- Vector Graphic: [www.freepik.com](https://www.freepik.com/free-photos-vectors/background)
