@@ -20,7 +20,7 @@ declare module 'asyngular-server' {
     listener: (type: string) => Promise<IAGServerSocket>[];
     closeListener: (event: string) => void;
     killListener: (event: string) => void;
-    close: () => void;
+    close: () => Promise<void>;
     closeAllListeners: () => void;
     killAllListeners: () => void;
   }
