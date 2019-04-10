@@ -1,4 +1,4 @@
-import { ITracker, ISkill, IPosition, Flowzilla } from 'flowzilla';
+import { ITracker, ISkill, IPosition, Flow } from 'debe-flow';
 import { createLog } from './utils';
 import { DebeAdapter } from './adapter';
 import {
@@ -24,7 +24,7 @@ function throwIfNotInitialized(db: Debe) {
 }
 
 export class Debe<TBase = IItem> {
-  private flow = new Flowzilla();
+  private flow = new Flow();
   isInitialized = false;
   collections: ICollections;
   createLog(name: string) {
