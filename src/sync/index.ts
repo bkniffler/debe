@@ -114,6 +114,7 @@ export class SyncClient extends Sync {
       this.socket.listener('connectAbort')['once']()
     ]);
     this.socket.disconnect();
-    return promise;
+    await promise;
+    await this.db.close();
   }
 }

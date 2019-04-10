@@ -41,5 +41,6 @@ export class SyncServer {
     await Promise.all(this.sockets.map(socket => socket.close()));
     await this.agServer.close();
     this.httpServer.close();
+    await this.db.close();
   }
 }
