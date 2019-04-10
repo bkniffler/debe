@@ -9,7 +9,7 @@ test('adapter:test', async () => {
 
 interface IServer {
   db?: Debe;
-  close: () => void;
+  close: () => Promise<void>;
 }
 export function createAdapterTest(
   name: string,
@@ -38,9 +38,12 @@ export function createAdapterTest(
     expect(queryResult.length).toBe(1);
     expect(queryResult[0].id).toBe(insertResult.id);
     expect(queryResult[0].name).toBe(insertResult.name);
-    await client.destroy();
+    await client.close();
     if (ini) {
-      ini.close();
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
     }
   });
 
@@ -78,9 +81,12 @@ export function createAdapterTest(
     expect(queryResult[0].firstName).toBe('Beni');
     expect(queryResult[0].lastName).toBe(undefined);
 
-    await client.destroy();
+    await client.close();
     if (ini) {
-      ini.close();
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
     }
   });
 
@@ -126,9 +132,12 @@ export function createAdapterTest(
     } as any);
     expect(single).toBeTruthy();
     expect(single.id).toBe('a00');
-    await client.destroy();
+    await client.close();
     if (ini) {
-      ini.close();
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
     }
   }, 10000);
 
@@ -169,9 +178,12 @@ export function createAdapterTest(
     expect(await isMatch()).toBe(true);
     expect(newItem.newField).toBe('abc2');
     expect((await client.get(table, 'a0')).newField).toBe('abc2');
-    await client.destroy();
+    await client.close();
     if (ini) {
-      ini.close();
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
     }
   }, 10000);
 
@@ -198,9 +210,12 @@ export function createAdapterTest(
     await client.insert(table, { id: '2', name: 'Hallo' });
     expect(calls).toBe(2);
     expect(countCalls).toBe(2);
-    await client.destroy();
+    await client.close();
     if (ini) {
-      ini.close();
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
     }
   });
 
@@ -227,9 +242,12 @@ export function createAdapterTest(
     expect(all1.length).toBe(1);
     expect(item0).toBeTruthy();
     expect(item0.id).toBe('asd0');
-    await client.destroy();
+    await client.close();
     if (ini) {
-      ini.close();
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
     }
   });
 }

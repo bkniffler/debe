@@ -12,8 +12,8 @@ export class SocketServer {
     this.db = db;
     this.connect();
   }
-  close() {
-    this.agServer.close();
+  async close() {
+    await this.agServer.close();
     this.httpServer.close();
   }
   async connect() {

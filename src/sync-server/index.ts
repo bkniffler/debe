@@ -37,9 +37,9 @@ export class SyncServer {
       createSocketChannels(this.db, socket, this.agServer);
     }
   }
-  close() {
-    this.sockets.forEach(socket => socket.close());
-    this.agServer.close();
+  async close() {
+    await Promise.all(this.sockets.map(socket => socket.close()));
+    await this.agServer.close();
     this.httpServer.close();
   }
 }

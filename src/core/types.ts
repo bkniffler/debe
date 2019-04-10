@@ -4,7 +4,7 @@ export const types = {
   GET: 'get',
   ALL: 'all',
   COUNT: 'count',
-  DESTROY: 'destroy',
+  CLOSE: 'close',
   REMOVE: 'remove',
   INITIALIZE: 'initialize',
   COLLECTION: 'collection',

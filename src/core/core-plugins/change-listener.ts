@@ -209,7 +209,7 @@ export class Emitter {
     });
     return unlisten;
   }
-  destroy() {
+  close() {
     this.listeners = {};
   }
   emit(name: string, ...args: any[]) {

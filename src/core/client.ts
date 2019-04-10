@@ -59,8 +59,8 @@ export class Debe<TBase = IItem> {
   ): void {
     return this.flow.addSkill(name, plugin, position, anchor);
   }
-  public destroy() {
-    return this.flow.run(types.DESTROY);
+  public close(): Promise<void> {
+    return this.flow.run(types.CLOSE);
   }
   public async initialize() {
     try {

@@ -17,7 +17,11 @@ export class SocketAdapter {
       port
     });
   }
-  async destroy() {
+  async close() {
+    await Promise.race([
+      this.socket.listener('disconnect')['once'](),
+      this.socket.listener('connectAbort')['once']()
+    ]);
     this.socket.disconnect();
   }
   connect(debe: Debe) {
@@ -34,8 +38,8 @@ export class SocketAdapter {
 
 export const socketPlugin = (adapter: SocketAdapter): IPlugin => client => {
   client.addPlugin('socket', function adapterPlugin(type, payload, flow) {
-    if (type === types.DESTROY) {
-      adapter.destroy().then(() => flow(payload));
+    if (type === types.CLOSE) {
+      adapter.close().then(() => flow(payload));
     } else if (allowedMethods.includes(type)) {
       const callback = flow.get('callback');
       const { socket } = adapter;

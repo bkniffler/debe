@@ -18,7 +18,7 @@ export abstract class SQLCore {
   initialize(debe: Debe, options?: any): Promise<void> {
     return Promise.resolve();
   }
-  destroy(): Promise<void> {
+  close(): Promise<void> {
     return Promise.resolve();
   }
   getColumnType(type: IFieldTypes, secondType?: IFieldTypes): string {

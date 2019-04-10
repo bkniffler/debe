@@ -88,6 +88,7 @@ async function t(adapter: any) {
     expect(item.lastName).toBe(compare && compare.lastName);
     expect(item.age).toBe(compare && compare.age);
   }
+  await db.close();
 }
 
 test('automerge:simple:memory', async cb => {

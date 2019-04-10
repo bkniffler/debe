@@ -23,7 +23,7 @@ export class DexieAdapter extends DebeAdapter {
   }
   db: Dexie;
   version: number;
-  destroy() {
+  close() {
     this.db.close();
     return Promise.resolve();
   }

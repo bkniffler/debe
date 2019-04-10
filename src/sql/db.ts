@@ -19,8 +19,8 @@ export class SQLAdapter extends DebeAdapter {
     super.connect(debe, options);
     this.db.initialize(debe, options);
   }
-  destroy() {
-    return this.db.destroy();
+  close() {
+    return this.db.close();
   }
   insert(collection: string, items: any[]) {
     return this.db.insert(this.collections[collection], items);

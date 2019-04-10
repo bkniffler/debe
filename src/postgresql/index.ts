@@ -17,7 +17,7 @@ export class PostgreSQL extends SQLJsonCore {
       connectionString
     });
   }
-  destroy() {
+  close() {
     return this.pool.end();
   }
   selectJSONField(collection: ICollection, field: string) {

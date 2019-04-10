@@ -8,7 +8,7 @@ export abstract class DebeAdapter {
     corePlugin(options)(debe);
     adapterPlugin(this)(debe);
   }
-  destroy(): Promise<void> {
+  close(): Promise<void> {
     return Promise.resolve();
   }
   abstract initialize(collections: ICollections): Promise<void> | void;
@@ -28,8 +28,8 @@ export const adapterPlugin = (adapter: DebeAdapter): IPlugin => client => {
     if (type === types.COLLECTIONS) {
       await adapter.initialize(payload);
       flow(payload);
-    } else if (type === types.DESTROY) {
-      await adapter.destroy();
+    } else if (type === types.CLOSE) {
+      await adapter.close();
       flow(payload);
     } else if (type === types.INSERT) {
       const [collection, arg] = payload;

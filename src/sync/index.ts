@@ -108,7 +108,11 @@ export class SyncClient extends Sync {
       this.connect(this.socket);
     }
   }
-  close() {
+  async close() {
+    await Promise.race([
+      this.socket.listener('disconnect')['once'](),
+      this.socket.listener('connectAbort')['once']()
+    ]);
     this.socket.disconnect();
   }
 }
