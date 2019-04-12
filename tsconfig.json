@@ -35,7 +35,8 @@
       "debe-socket-server": ["./src/socket-server"],
       "debe-sync": ["./src/sync"],
       "debe-sync-server": ["./src/sync-server"],
-      "debe-dexie": ["./src/dexie"]
+      "debe-dexie": ["./src/dexie"],
+      "debe-react": ["./src/react"]
     }
   },
   "include": ["src"],

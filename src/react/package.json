@@ -1,0 +1,16 @@
+{
+  "name": "debe-react",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "debe": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^16.8.13",
+    "@types/react-dom": "^16.8.4",
+    "react": "^16.9.0-alpha.0",
+    "react-dom": "^16.9.0-alpha.0",
+    "jest-dom": "^3.1.3",
+    "react-testing-library": "^6.1.2"
+  }
+}
