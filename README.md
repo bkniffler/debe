@@ -42,8 +42,10 @@
   - [Basic](#basic)
   - [Replication](#replication)
   - [Querying](#querying)
+  - [Use](#use)
 - [Bindings](#bindings)
   - [Vanilla](#vanilla)
+  - [TypeScript](#typescript)
   - [React/React native hooks](#react)
 - [Adapter](#adapters)
   - [Memory](#memory)
@@ -203,14 +205,66 @@ db1.all<ILorem>('lorem', {
 });
 ```
 
+## Use
+
+You can create a collection-scoped instance of your db.
+
+```tsx
+// Non-Scoped
+await db.insert('lorem', { name: 'Lorem' });
+// Scoped
+const lorem = db.use('lorem');
+await lorem.insert({ name: 'Lorem' });
+```
+
 # Bindings
 
 ## Vanilla
 
+```js
+import { Debe } from 'debe';
+import { MemoryAdapter } from 'debe-memory';
+
+const collections = [{ name: 'lorem', index: ['name'] }];
+const db = new Debe(new MemoryAdapter(), collections);
+
+(async function() {
+  await db.initialize();
+  await db.insert('lorem', { name: 'Lorem' });
+  db.all('lorem', {
+    where: ['name = ?', 'Lorem'],
+    orderBy: ['name']
+  });
+})();
+```
+
+## TypeScript
+
+```tsx
+import { Debe } from 'debe';
+import { MemoryAdapter } from 'debe-memory';
+
+interface ILorem {
+  name: string;
+}
+
+const collections = [{ name: 'lorem', index: ['name'] }];
+const db = new Debe(new MemoryAdapter(), collections);
+
+(async function() {
+  await db.initialize();
+  const lorem = db.use<ILorem>('lorem');
+  await lorem.insert({ name: 'Lorem' });
+  lorem.all({
+    where: ['name = ?', 'Lorem'],
+    orderBy: ['name']
+  });
+})();
+```
+
 ## React
 
 ```jsx
-// Or in a react component
 import { Debe } from 'debe';
 import { MemoryAdapter } from 'debe-memory';
 import { DebeProvider, useAll } from 'debe-react';
