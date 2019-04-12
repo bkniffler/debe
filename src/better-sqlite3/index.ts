@@ -6,6 +6,7 @@ const sql = _sql;
 
 export class Sqlite3Adapter extends SQLJsonCore {
   db: any;
+  chunks = 50 * 10000;
   constructor(dbPath: string) {
     super();
     this.db = sql(dbPath);

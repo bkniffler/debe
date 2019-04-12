@@ -10,6 +10,7 @@ import {
 } from 'debe';
 
 export abstract class SQLJsonCore extends SQLCore {
+  chunks = 10000;
   bodyField = 'body';
   async initialize() {
     for (var key in this.collections) {
@@ -105,6 +106,7 @@ export abstract class SQLJsonCore extends SQLCore {
         return Object.keys(collection.fields).map(key => item[key]);
       });
     }
+
     await this.exec(statement, items, 'insert');
     return value as any;
   }

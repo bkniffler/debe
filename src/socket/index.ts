@@ -6,8 +6,6 @@ import {
   IInsert,
   IGetItem,
   chunkWork,
-  PARALLEL_CHUNKS,
-  CHUNKS,
   IInsertItem,
   generate
 } from 'debe';
@@ -69,7 +67,7 @@ export class SocketAdapter extends DebeAdapter {
   ) {
     return chunkWork<T & IInsertItem, T & IGetItem>(
       items,
-      [PARALLEL_CHUNKS, CHUNKS],
+      [250000, 10000],
       items => this.socket.invoke('insert', [collection, items, options])
     );
   }
