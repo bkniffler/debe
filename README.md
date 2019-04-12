@@ -249,9 +249,17 @@ render(
 
 Universal inmemory adapter for no persistence
 
+**Targets**
+
+- All targets
+
 ## Socket
 
 Universal Socket client that connects to a socket-server debe instance remotely
+
+**Targets**
+
+- All targets
 
 ## SQL
 
@@ -259,13 +267,29 @@ Universal Socket client that connects to a socket-server debe instance remotely
 
 NodeJS, react-native, electron adapter that uses SQLite
 
+**Targets**
+
+- NodeJS
+- Electron Renderer
+- React-Native
+
 ### PostgreSQL
 
 NodeJS, electron adapter for PostgreSQL
 
+**Targets**
+
+- NodeJS
+- Electron Renderer
+
 ## Dexie
 
 Browser-only adapter for the supercool dexie database / indexeddb
+
+**Targets**
+
+- Browser
+- Electron renderer
 
 # Roadmap
 
