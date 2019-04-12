@@ -121,7 +121,7 @@ export function createAdapterTest(
     }
   });
 
-  if (name !== 'dexie') {
+  if (name !== 'dexie' && name !== 'nanosql') {
     test(
       `adapter:${name}:million`,
       async () => {
@@ -236,10 +236,10 @@ export function createAdapterTest(
     await client.initialize();
     let calls = 0;
     let countCalls = 0;
-    const unlisten = client.all(table, x => {
+    const unlisten = client.all(table, () => {
       calls = calls + 1;
     });
-    const unlisten2 = client.count(table, x => {
+    const unlisten2 = client.count(table, () => {
       countCalls = countCalls + 1;
     });
     await client.insert(table, { id: '0', name: 'Hallo' });

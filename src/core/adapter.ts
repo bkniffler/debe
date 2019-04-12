@@ -10,18 +10,7 @@ import {
   IMiddlewareInner,
   fieldTypes
 } from './types';
-import { IObject, generate, chunkParallel } from './utils';
-
-// export const SEQUENCIAL_CHUNKS = 500000;
-/*
-function throwIfNotInitialized(db: Debe) {
-  if (!db.isInitialized) {
-    throw new Error(
-      'Not yet initialized, did you call and wait for db.initialize()?'
-    );
-  }
-}
-*/
+import { IObject, generate, chunkParallel, chunkSequencial } from './utils';
 
 interface IAdapterOptions {
   idField: string;
@@ -31,6 +20,7 @@ interface IAdapterOptionsInput {
 }
 export abstract class DebeAdapter<TBase = IItem> {
   chunks = 1000000;
+  chunkMode = 'parallel';
   options: IAdapterOptions;
   collections: IObject<ICollection> = {};
   middlewares: IMiddlewareInner[] = [];
@@ -140,7 +130,9 @@ export abstract class DebeAdapter<TBase = IItem> {
     options: IInsert
   ): Promise<(T & IGetItem)[]> {
     if (this.chunks && value.length > this.chunks) {
-      return chunkParallel<T & IInsertItem, T & IGetItem>(
+      return (this.chunkMode === 'sequencial'
+        ? chunkSequencial
+        : chunkParallel)<T & IInsertItem, T & IGetItem>(
         value,
         this.chunks,
         items => this.$insert(collection, items, { ...options })
