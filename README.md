@@ -35,9 +35,41 @@
   <br />
 </div>
 
-## Get started
+# Content
 
-### Basic
+- [Why](#why)
+- [Guides](#guides)
+  - [Basic](#basic)
+  - [Replication](#replication)
+  - [Querying](#querying)
+- [Bindings](#bindings)
+  - [Vanilla](#vanilla)
+  - [React/React native hooks](#react)
+- [Adapter](#adapters)
+  - [Memory](#memory)
+  - [Socket](#socket)
+  - [Better-SQLite3](#better-sqlite3)
+  - [PostgreSQL](#postgresql)
+  - [Dexie](#dexie)
+- [Roadmap](#roadmap)
+- [Credits](#credits)
+  - [Dependencies](#dependencies)
+  - [Similar](#similar)
+  - [Assets](#assets)
+
+## Why
+
+PouchDB/RxDB are great and very mature solutions for replicating databases, but being forced to build your services on top of CouchDB can be unfitting for some users. Debe is a fast and modern solution if you want to replicate and fetch your data in every way imaginable, so master-to-clients, master-to-masters-to-clients or master-to-client-to-master-to-client. There are multiple adapters available and implementing new ones is super simple due to the simple API surface. For a starting point, you can always take a look at memory-adapter. Also, there is a headless socket client adapter that connects to any remote debe instance to perform queries. This works great for electronJS where you might want to pipe all requests to another thread that performs the data access or for non-offline web applications that should not persist nor replicate locally.
+
+PouchDB also stores data in a way that makes it really hard to query the underlying database directly. Debes SQL adapters store the data body as JSON type and make use of neat JSON indexing SQLite and PostgreSQL provide, so you get great performance without sacrificing flexibility of your schema or direct queryability. Also there is no need for external index tables.
+
+Also, doing complex authorization with CouchDB is difficult, thats why the one-database-per-user approach is the most popular choice for separating data between the users. With debe and the whole data flow in Javascript/NodeJS some cool possibilities to control data access and filter & transform incoming/outgoing data according to what user tries to access it opens up.
+
+Please note, Debe is currently not supporting relations, and probably never really will. If you're interested in relational data and graphs, you might be better off with graphQL, apollo and AppSync. Debe is focused on offline-first, performance, simplicity and being super slim.
+
+# Guides
+
+## Basic
 
 https://codesandbox.io/s/5wn340ovn
 
@@ -74,7 +106,7 @@ async function generateItems(db, numberOfItems) {
 work().catch(err => console.log(err));
 ```
 
-### Replication
+## Replication
 
 https://codesandbox.io/s/y27xmr9rvj
 
@@ -143,31 +175,7 @@ async function wait(ms) {
 work().catch(err => console.log(err));
 ```
 
-## Adapters
-
-- Memory: Universal inmemory adapter for no persistence
-- Socket: Universal Socket client that connects to a socket-server debe instance remotely
-- SQL
-  - SQLite: NodeJS, react-native, electron adapter that uses SQLite
-  - PostgreSQL: NodeJS, electron adapter for PostgreSQL
-- Dexie: Browser-only adapter for the supercool dexie database / indexeddb
-
-## Bindings
-
-- Vanilla Javascript/NodeJS
-- React/React Native via hooks
-
-## Why
-
-PouchDB/RxDB are great and very mature solutions for replicating databases, but being forced to build your services on top of CouchDB can be unfitting for some users. Debe is a fast and modern solution if you want to replicate and fetch your data in every way imaginable, so master-to-clients, master-to-masters-to-clients or master-to-client-to-master-to-client. There are multiple adapters available and implementing new ones is super simple due to the simple API surface. For a starting point, you can always take a look at memory-adapter. Also, there is a headless socket client adapter that connects to any remote debe instance to perform queries. This works great for electronJS where you might want to pipe all requests to another thread that performs the data access or for non-offline web applications that should not persist nor replicate locally.
-
-PouchDB also stores data in a way that makes it really hard to query the underlying database directly. Debes SQL adapters store the data body as JSON type and make use of neat JSON indexing SQLite and PostgreSQL provide, so you get great performance without sacrificing flexibility of your schema or direct queryability. Also there is no need for external index tables.
-
-Also, doing complex authorization with CouchDB is difficult, thats why the one-database-per-user approach is the most popular choice for separating data between the users. With debe and the whole data flow in Javascript/NodeJS some cool possibilities to control data access and filter & transform incoming/outgoing data according to what user tries to access it opens up.
-
-Please note, Debe is currently not supporting relations, and probably never really will. If you're interested in relational data and graphs, you might be better off with graphQL, apollo and AppSync. Debe is focused on offline-first, performance, simplicity and being super slim.
-
-# Querying
+## Querying
 
 Querying is simple and similar to SQL. You can subscribe to query changes by providing a callback
 
@@ -195,7 +203,11 @@ db1.all<ILorem>('lorem', {
 });
 ```
 
-# React
+# Bindings
+
+## Vanilla
+
+## React
 
 ```jsx
 // Or in a react component
@@ -231,7 +243,31 @@ render(
 );
 ```
 
-# Roadmap/ToDo
+# Adapters
+
+## Memory
+
+Universal inmemory adapter for no persistence
+
+## Socket
+
+Universal Socket client that connects to a socket-server debe instance remotely
+
+## SQL
+
+### SQLite
+
+NodeJS, react-native, electron adapter that uses SQLite
+
+### PostgreSQL
+
+NodeJS, electron adapter for PostgreSQL
+
+## Dexie
+
+Browser-only adapter for the supercool dexie database / indexeddb
+
+# Roadmap
 
 All contributions welcome :)
 
@@ -267,7 +303,7 @@ All contributions welcome :)
 - [nanoid](https://github.com/ai/nanoid)
 - [asyngular](https://asyngular.io)
 
-## Similar libraries
+## Similar
 
 - PouchDB
 - RxDB
