@@ -350,29 +350,36 @@ Browser-only adapter for the supercool dexie database / indexeddb
 All contributions welcome :)
 
 - Middleware
-  - Chunk insert
+  - [x] Chunk insert
+  - [] Chunk all/fetch
 - Docs
-  - Write real docs :(
+  - [] Write real docs :(
 - Replication
-  - Progress
+  - [] Progress
   - [x] Chunking
   - [x] Batching
-  - Conflict Resolution (automerge?)
+  - [] Conflict Resolution (automerge?)
 - [x] Subscription
   - [x] Batching
 - Adapters
-  - MongoDB
-  - AWS DynamoDB
-  - MS CosmosDB
-  - CouchDB/Cloudant
-  - RocksDB
-  - Redis
+  - [x] Memory
+  - [x] Socket
+  - [x] PostgreSQL
+  - [x] SQLite
+  - [x] Dexie
+  - [] Raw IndexedDB
+  - [] MongoDB
+  - [] AWS DynamoDB
+  - [] MS CosmosDB
+  - [] CouchDB/Cloudant
+  - [] RocksDB
+  - [] Redis
 - Bindings
   - [x] React
-  - Vue
+  - [] Vue
 - Testing
-  - Improve testing
-  - Performance testing & benchmarking against others
+  - [] Improve testing
+  - [] Performance testing & benchmarking against others
 
 # Credits
 

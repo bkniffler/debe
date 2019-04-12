@@ -4,9 +4,13 @@ import {
   IListenerOptions,
   IObserverCallback,
   IInsert,
-  IGetItem
+  IGetItem,
+  chunkWork,
+  PARALLEL_CHUNKS,
+  CHUNKS,
+  IInsertItem,
+  generate
 } from 'debe';
-import { generate } from 'debe';
 import { create, ISocket } from 'asyngular-client';
 
 export const allowedMethods = [
@@ -63,18 +67,15 @@ export class SocketAdapter extends DebeAdapter {
     items: (T & IGetItem)[],
     options: IInsert
   ) {
-    let results: (T & IGetItem)[] = [];
-    await chunk(items, 10000).reduce(
-      (state, items) =>
-        state.then(() =>
-          this.socket
-            .invoke('insert', [collection, items, options])
-            .then(result => (results = results.concat(result)))
-        ),
-      Promise.resolve()
+    return chunkWork<T & IInsertItem, T & IGetItem>(
+      items,
+      [PARALLEL_CHUNKS, CHUNKS],
+      items => this.socket.invoke('insert', [collection, items, options])
     );
-    return results;
   }
+  /*$insert(...args: any[]) {
+    return this.socket.invoke('insert', args);
+  }*/
   $remove(...args: any[]) {
     return this.socket.invoke('remove', args);
   }
@@ -113,16 +114,4 @@ export class SocketAdapter extends DebeAdapter {
     throw new Error('Not implemented');
     return null as any;
   }
-}
-
-export function chunk(list: any[], chunkSize = 10000) {
-  return new Array(Math.ceil(list.length / chunkSize))
-    .fill(0)
-    .map((_: any, i: number) =>
-      list.slice(i * chunkSize, i * chunkSize + chunkSize)
-    );
-}
-
-export function merge(list: any[][]) {
-  return list.reduce((state, arr) => [...state, ...arr], []);
 }

@@ -150,8 +150,7 @@ test('react:interact', async cb => {
       initialize={async db => {
         await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
       }}
-      collections={collections}
-      getAdapter={() => new MemoryAdapter()}
+      value={() => new Debe(new MemoryAdapter(), collections)}
       render={() => <Component />}
       loading={() => <span>Loading...</span>}
     />

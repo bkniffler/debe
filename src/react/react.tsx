@@ -1,13 +1,5 @@
 import * as React from 'react';
-import {
-  Debe,
-  IDebeUse,
-  IItem,
-  DebeAdapter,
-  ICollectionInput,
-  IQueryInput,
-  IGetItem
-} from 'debe';
+import { Debe, IDebeUse, IItem, IQueryInput, IGetItem } from 'debe';
 
 const context = React.createContext<Debe>(undefined as any);
 const Provider = context.Provider;

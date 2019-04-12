@@ -10,8 +10,10 @@ import {
   IMiddlewareInner,
   fieldTypes
 } from './types';
-import { IObject, generate } from './utils';
+import { IObject, generate, chunkWork } from './utils';
 
+export const PARALLEL_CHUNKS = 250000;
+export const CHUNKS = 10000;
 /*
 function throwIfNotInitialized(db: Debe) {
   if (!db.isInitialized) {
@@ -137,10 +139,19 @@ export abstract class DebeAdapter<TBase = IItem> {
     value: (T & IInsertItem)[],
     options: IInsert
   ): Promise<(T & IGetItem)[]> {
+    if (value.length > CHUNKS) {
+      return chunkWork<T & IInsertItem, T & IGetItem>(
+        value,
+        [PARALLEL_CHUNKS, CHUNKS],
+        items => this.$insert(collection, items, { ...options })
+      );
+    }
+
     if (!options.new) {
       options.new = [];
       options.existing = [];
     }
+
     const c = this.collection(collection);
     let input = value.map(x => this.$transformItemIn(c, x, options));
     for (var middleware of this.middlewares) {
