@@ -65,8 +65,7 @@ test('react:many', async cb => {
         }
         await db.insert('lorem', items);
       }}
-      collections={collections}
-      getAdapter={() => new MemoryAdapter()}
+      value={() => new Debe(new MemoryAdapter(), collections)}
       render={() => <Component />}
       loading={() => <span>Loading...</span>}
     />
@@ -107,8 +106,7 @@ test('react:listen', async cb => {
           1000
         );
       }}
-      collections={collections}
-      getAdapter={() => new MemoryAdapter()}
+      value={() => new Debe(new MemoryAdapter(), collections)}
       render={() => <Component />}
       loading={() => <span>Loading...</span>}
     />
