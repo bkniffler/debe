@@ -1,6 +1,6 @@
 {
   "name": "debe-workspace",
-  "version": "1.1.1",
+  "version": "1.2.0-beta.1",
   "private": true,
   "license": "MIT",
   "keywords": [
@@ -34,8 +34,9 @@
     "build": "run-s build:*",
     "build:ts": "tsc --project tsconfig.prod.json",
     "build:rollup": "rollup -c",
-    "pub": "yarn test && yarn build && yarn pub:npm",
+    "pub": "yarn test && yarn build && yarn pub:npmb",
     "pub:npm": "foreach --no-C -g \"lib/*\" -x \"npm publish #{path} --registry=https://registry.npmjs.org/\"",
+    "pub:npmb": "foreach --no-C -g \"lib/*\" -x \"npm publish #{path} --tag beta --registry=https://registry.npmjs.org/\"",
     "test": "jest --verbose=true",
     "test2": "PG_CONNECTIONSTRING=postgresql://postgres@localhost:5432/test yarn test",
     "coverage": "codecov"

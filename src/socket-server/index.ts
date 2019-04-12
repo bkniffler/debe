@@ -1,4 +1,4 @@
-import { Debe } from 'debe';
+import { Debe, IListenerOptions } from 'debe';
 import * as http from 'http';
 import { allowedMethods } from 'debe-socket';
 import { attach, ISocketBase } from 'asyngular-server';
@@ -19,9 +19,7 @@ export class SocketServer {
   async connect() {
     for await (let { socket } of this.agServer.listener('connection')) {
       allowedMethods.forEach(method => this.handleMethods(socket, method));
-      allowedMethods.forEach(method =>
-        this.handleSubscriptions(socket, method)
-      );
+      this.handleSubscriptions(socket);
     }
   }
   async handleMethods(socket: ISocketBase, method: string) {
@@ -33,16 +31,16 @@ export class SocketServer {
         .catch((err: any) => req.error(err));
     }
   }
-  async handleSubscriptions(socket: ISocketBase, method: string) {
-    for await (let req of socket.procedure<[string, any]>(
-      `subscribe:${method}`
-    )) {
-      const [id, data] = req.data;
-      const handleSub = (error: any, data: any) => {
-        socket.transmit(id, data);
-      };
-      this.db[method](data[0], data[1], handleSub);
-      req.end(id);
+  async handleSubscriptions(socket: ISocketBase) {
+    for await (let d of socket.receiver<[string, any]>('subscribe')) {
+      const [id, options] = d as [string, IListenerOptions];
+      this.spawnListener(id, options, socket);
     }
+  }
+  spawnListener(id: string, options: IListenerOptions, socket: ISocketBase) {
+    const handleSub = (data: any) => {
+      socket.transmit(id, data);
+    };
+    this.db.adapter.$listener(options, handleSub);
   }
 }

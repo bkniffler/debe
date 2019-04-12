@@ -7,7 +7,7 @@ import json from 'rollup-plugin-json';
 import { join } from 'path';
 
 const fs = require('fs');
-const integrate = ['debe-flow', 'debe-sql'];
+const integrate = ['debe-sql'];
 
 // destination.txt will be created or overwritten by default.
 const jobs = [];

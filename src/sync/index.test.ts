@@ -82,8 +82,10 @@ test('sync:10x3', async cb => {
   expect(await awaitIsEqual(3, server.db, ...clients.map(x => x.db))).toBe(
     true
   );
+  await new Promise(yay => setTimeout(yay, 3000));
   await server.close();
   await Promise.all(clients.map(client => client.close()));
+  await new Promise(yay => setTimeout(yay, 3000));
   cb();
 }, 120000);
 

@@ -5,22 +5,25 @@ import {
   IQuery,
   ensureArray,
   IFieldTypes,
-  Debe
+  DebeAdapter,
+  IInsert
 } from 'debe';
 
-export abstract class SQLCore {
+export abstract class SQLCore extends DebeAdapter {
   abstract exec<T>(
     sql: string,
     args: any[],
     type?: 'all' | 'get' | 'count' | 'insert' | 'remove'
   ): Promise<T>;
 
-  initialize(debe: Debe, options?: any): Promise<void> {
-    return Promise.resolve();
+  async initialize() {
+    await Promise.all(
+      Object.keys(this.collections).map(key =>
+        this.createTable(this.collections[key])
+      )
+    );
   }
-  close(): Promise<void> {
-    return Promise.resolve();
-  }
+  close() {}
   getColumnType(type: IFieldTypes, secondType?: IFieldTypes): string {
     if (type === 'boolean') {
       return 'BOOLEAN';
@@ -80,16 +83,18 @@ export abstract class SQLCore {
           )}${collection.specialFields.id === key ? ' PRIMARY KEY' : ''}`
         ]).catch(() => {})
       )
-    );
+    ).catch(() => {});
     // Indexes
     await this.exec('', [
-      ...Object.keys(collection.index).map(key =>
-        this.createTableIndex(
-          collection,
-          key,
-          this.getColumnType(collection.index[key], collection.fields[key])
+      ...Object.keys(collection.index)
+        .filter(x => x !== collection.specialFields.id)
+        .map(key =>
+          this.createTableIndex(
+            collection,
+            key,
+            this.getColumnType(collection.index[key], collection.fields[key])
+          )
         )
-      )
     ]);
   }
   // Query construction
@@ -206,7 +211,8 @@ export abstract class SQLCore {
   }
   async insert<T>(
     collection: ICollection,
-    value: (T & IInsertItem)[]
+    value: (T & IInsertItem)[],
+    options: IInsert
   ): Promise<(T & IGetItem)[]> {
     const statement = this.createInsertStatement(collection);
     const items = value.map(item => {
@@ -222,5 +228,14 @@ export abstract class SQLCore {
     collection;
     value;
     return null as any;
+  }
+  count(collection: ICollection, query: IQuery) {
+    return this.query<number>(collection, query, 'count');
+  }
+  get(collection: ICollection, id: string) {
+    return this.query(collection, id, 'get');
+  }
+  all(collection: ICollection, query: IQuery) {
+    return this.query<any>(collection, query, 'all');
   }
 }

@@ -14,8 +14,8 @@ export function createServerChannels(
   client: Debe,
   server: IAGServer
 ) {
-  for (let key in client.collections) {
-    const collection = client.collections[key];
+  for (let key in client.adapter.collections) {
+    const collection = client.adapter.collections[key];
     (async () => {
       const channel = server.exchange.subscribe<[string, IGetItem[]]>(
         collection.name
@@ -65,7 +65,7 @@ export async function createSocketChannels(
       'countInitialChanges'
     )) {
       let { type, since, where } = req.data;
-      const collection = client.collections[type];
+      const collection = client.adapter.collections[type];
       if (since) {
         where = addToQuery(
           where,
@@ -87,7 +87,7 @@ export async function createSocketChannels(
       (IItem & IGetItem)[]
     >('initialFetchChanges')) {
       let { type, since, where, page = 0 } = req.data;
-      const collection = client.collections[type];
+      const collection = client.adapter.collections[type];
       if (since) {
         where = addToQuery(
           where,
@@ -110,7 +110,7 @@ export async function createSocketChannels(
   (async () => {
     for await (let req of socket.procedure<ISendChanges>('sendChanges')) {
       let { type, items } = req.data;
-      const collection = client.collections[type];
+      const collection = client.adapter.collections[type];
       await server.exchange.invokePublish(collection.name, [
         req.socket.id,
         items

@@ -25,18 +25,17 @@
     "downlevelIteration": true,
     "paths": {
       "*": ["types/*"],
-      "debe-flow": ["./src/flow"],
       "debe": ["./src/core"],
       "debe-memory": ["./src/memory"],
+      "debe-sql": ["./src/sql"],
       "debe-better-sqlite3": ["./src/better-sqlite3"],
       "debe-postgresql": ["./src/postgresql"],
-      "debe-dexie": ["./src/dexie"],
-      "debe-sql": ["./src/sql"],
+      "debe-merge": ["./src/merge"],
       "debe-socket": ["./src/socket"],
       "debe-socket-server": ["./src/socket-server"],
       "debe-sync": ["./src/sync"],
       "debe-sync-server": ["./src/sync-server"],
-      "debe-merge": ["./src/merge"]
+      "debe-dexie": ["./src/dexie"]
     }
   },
   "include": ["src"],

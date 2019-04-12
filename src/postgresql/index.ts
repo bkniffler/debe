@@ -1,15 +1,9 @@
-import { SQLAdapter, SQLJsonCore } from 'debe-sql';
+import { SQLJsonCore } from 'debe-sql';
 //@ts-ignore
 import { Pool } from 'pg';
 import { ICollection } from 'debe';
 
-export class PostgreSQLAdapter extends SQLAdapter {
-  constructor(connectionString: string) {
-    super(new PostgreSQL(connectionString));
-  }
-}
-
-export class PostgreSQL extends SQLJsonCore {
+export class PostgreSQLAdapter extends SQLJsonCore {
   pool: Pool;
   constructor(connectionString: string) {
     super();

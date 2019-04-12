@@ -79,31 +79,31 @@ work().catch(err => console.log(err));
 https://codesandbox.io/s/y27xmr9rvj
 
 ```js
-const { Debe } = require("debe");
-const { MemoryAdapter } = require("debe-memory");
-const { SyncClient } = require("debe-sync");
-const { SyncServer } = require("debe-sync-server");
+const { Debe } = require('debe');
+const { MemoryAdapter } = require('debe-memory');
+const { SyncClient } = require('debe-sync');
+const { SyncServer } = require('debe-sync-server');
 
-const schema = [{ name: "lorem", index: ["name"] }];
+const schema = [{ name: 'lorem', index: ['name'] }];
 
 async function work() {
   const port = 5555;
-  console.log("Start");
+  console.log('Start');
   // Master
   const server = await spawnServer(port);
   const client = await spawnClient(port);
   // Init
-  console.log("Initialized");
+  console.log('Initialized');
   // Step1
   await generateItems(server.db, 10000);
   await generateItems(client.db, 1000);
   // Step2
   await wait(1000);
-  console.log(`db0 ${await server.db.count("lorem")} items`);
-  console.log(`db1 ${await client.db.count("lorem")} items`);
+  console.log(`db0 ${await server.db.count('lorem')} items`);
+  console.log(`db1 ${await client.db.count('lorem')} items`);
   console.log(
-    `Was synced? ${(await client.db.count("lorem")) ===
-      (await server.db.count("lorem"))}`
+    `Was synced? ${(await client.db.count('lorem')) ===
+      (await server.db.count('lorem'))}`
   );
   await server.close();
   await client.close();
@@ -118,7 +118,7 @@ async function spawnServer(port) {
 
 async function spawnClient(port) {
   const db = new Debe(new MemoryAdapter(), schema);
-  const sync = new SyncClient(db, ["localhost", port]);
+  const sync = new SyncClient(db, ['localhost', port]);
   await db.initialize();
   return sync;
 }
@@ -127,10 +127,10 @@ async function generateItems(db, numberOfItems) {
   const start = new Date().getTime();
   const items = [];
   for (let x = 0; x < numberOfItems; x++) {
-    items.push({ name: "a" + (x < 10 ? `0${x}` : x) });
+    items.push({ name: 'a' + (x < 10 ? `0${x}` : x) });
   }
 
-  await db.insert("lorem", items);
+  await db.insert('lorem', items);
   console.log(
     `Generated ${numberOfItems} in ${new Date().getTime() - start}ms`
   );
@@ -209,6 +209,12 @@ function MyComponent(props) {
 
 All contributions welcome :)
 
+- Revisit middleware/flow
+  - Listener (callback, insert for emit, add rev to collection)
+  - Core (add id to collection, cleanup collections/insert/get/all, gather more collections, transform insert, reroute get, reroute insert)
+  - SoftDelete (reroute insert to remove)
+  - JSON to Body (transform insert, transform get/all)
+  - Adapter
 - Docs
   - Write real docs :(
 - Replication

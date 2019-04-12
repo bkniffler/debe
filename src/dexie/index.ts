@@ -1,4 +1,4 @@
-import { ICollections, IQuery, DebeAdapter } from 'debe';
+import { IQuery, DebeAdapter, ICollection, IInsert } from 'debe';
 import Dexie from 'dexie';
 import { sortArray, createMemoryFilter, pluck } from 'debe-memory';
 
@@ -27,10 +27,10 @@ export class DexieAdapter extends DebeAdapter {
     this.db.close();
     return Promise.resolve();
   }
-  initialize(collections: ICollections) {
+  initialize() {
     const schema: any = {};
-    for (var key in collections) {
-      const collection = collections[key];
+    for (var key in this.collections) {
+      const collection = this.collections[key];
       schema[collection.name] = [
         collection.specialFields.id,
         ...Object.keys(collection.index)
@@ -38,23 +38,35 @@ export class DexieAdapter extends DebeAdapter {
     }
     this.db.version(this.version).stores(schema);
   }
-  insert(collection: string, items: any[]) {
-    return this.db
-      .table(collection)
-      .bulkPut(items)
-      .then(() => items);
+  async insert(collection: ICollection, items: any[], options: IInsert) {
+    const map = {};
+    if (options.existing.length && options.update) {
+      (await this.all(collection, {
+        where: [`id IN (?)`, options.existing]
+      })).forEach(item => {
+        map[item.id] = item;
+      });
+      items = items.map(item => {
+        if (map[item.id]) {
+          return Object.assign({}, map[item.id], item);
+        }
+        return item;
+      });
+    }
+    await this.db.table(collection.name).bulkPut(items);
+    return items;
   }
-  remove(collection: string, ids: string[]) {
+  remove(collection: ICollection, ids: string[]) {
     return this.db
-      .table(collection)
+      .table(collection.name)
       .bulkDelete(ids)
       .then(() => ids);
   }
-  get(collection: string, id: string) {
-    return this.db.table(collection).get(id);
+  get(collection: ICollection, id: string) {
+    return this.db.table(collection.name).get(id);
   }
-  async all(collection: string, query: IQuery) {
-    let result = await this.baseQuery(collection, query).toArray();
+  async all(collection: ICollection, query: IQuery) {
+    let result = await this.baseQuery(collection.name, query).toArray();
     if (query.select) {
       result = result.map(x => pluck(x, query.select));
     }
@@ -63,8 +75,8 @@ export class DexieAdapter extends DebeAdapter {
     }
     return result;
   }
-  count(collection: string, query: IQuery) {
-    return this.baseQuery(collection, query).count();
+  count(collection: ICollection, query: IQuery) {
+    return this.baseQuery(collection.name, query).count();
   }
   private baseQuery(collection: string, { where, offset, limit }: IQuery) {
     let cursor = this.db.table(collection);

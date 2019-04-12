@@ -1,6 +1,6 @@
-import { Debe, generate, softDeletePlugin } from 'debe';
+import { Debe, generate } from 'debe';
 import { PostgreSQLAdapter } from 'debe-postgresql';
-import { mergePlugin } from './index';
+import { merge } from './index';
 import { Sqlite3Adapter } from 'debe-better-sqlite3';
 import { join } from 'path';
 import { removeSync, ensureDirSync } from 'fs-extra';
@@ -21,18 +21,18 @@ interface ILorem {
 }
 
 async function t(adapter: any) {
-  const merge = {};
+  const merged = {};
   const db = new Debe(adapter, schema, {
-    plugins: [
-      softDeletePlugin(),
-      mergePlugin({
+    softDelete: true,
+    middlewares: [
+      merge({
         getMessage: () => 'Yay',
         submitDelta: delta => {
           for (var item of delta) {
-            if (!merge[item.id]) {
-              merge[item.id] = [];
+            if (!merged[item.id]) {
+              merged[item.id] = [];
             }
-            merge[item.id] = [...item.changes, ...merge[item.id]];
+            merged[item.id] = [...item.changes, ...merged[item.id]];
           }
         }
       })
@@ -77,9 +77,9 @@ async function t(adapter: any) {
   expect(final[0].lastName).toBe('Kniffler');
   expect(final[0]['merge']).toBeTruthy();
 
-  expect(Object.keys(merge).length).toBe(2);
-  for (var key in merge) {
-    const doc = Automerge.applyChanges(Automerge.init(), merge[key]);
+  expect(Object.keys(merged).length).toBe(2);
+  for (var key in merged) {
+    const doc = Automerge.applyChanges(Automerge.init(), merged[key]);
     const history = Automerge.getHistory(doc);
     const item = history[history.length - 1].snapshot;
     const compare = final.find(x => x.id === key);

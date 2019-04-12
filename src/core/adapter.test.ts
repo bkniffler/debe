@@ -1,4 +1,4 @@
-import { Debe, softDeletePlugin } from 'debe';
+import { Debe } from 'debe';
 import { generate } from './utils';
 import { ICollectionInput } from './types';
 import { DebeAdapter } from './adapter';
@@ -16,7 +16,8 @@ export function createAdapterTest(
   createAdapter: (i: number) => DebeAdapter | any,
   init: (
     collections: ICollectionInput[],
-    i: number
+    i: number,
+    options?: any
   ) => Promise<IServer | undefined> = () => Promise.resolve(undefined)
 ) {
   test(`adapter:${name}:basic`, async () => {
@@ -26,6 +27,36 @@ export function createAdapterTest(
     const ini = await init(collections, 0);
     const table = collections[0].name;
     const client = new Debe(createAdapter(0), collections);
+    await client.initialize();
+    const insertResult = await client.insert<any>(table, {
+      id: 'asd0',
+      name: 'Hallo'
+    });
+    const queryResult = await client.all<any>(table);
+    expect(insertResult.id).toBe('asd0');
+    expect(insertResult.name).toBe('Hallo');
+    expect(Array.isArray(queryResult)).toBe(true);
+    expect(queryResult.length).toBe(1);
+    expect(queryResult[0].id).toBe(insertResult.id);
+    expect(queryResult[0].name).toBe(insertResult.name);
+    await client.close();
+    if (ini) {
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
+    }
+  });
+
+  test(`adapter:${name}:nochange`, async () => {
+    const collections = [
+      { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
+    ];
+    const ini = await init(collections, 0);
+    const table = collections[0].name;
+    const client = new Debe(createAdapter(0), collections, {
+      changeListener: false
+    });
     await client.initialize();
     const insertResult = await client.insert<any>(table, {
       id: 'asd0',
@@ -197,14 +228,15 @@ export function createAdapterTest(
     await client.initialize();
     let calls = 0;
     let countCalls = 0;
-    const unlisten = client.all(table, {}, () => (calls = calls + 1));
-    const unlisten2 = client.count(
-      table,
-      {},
-      () => (countCalls = countCalls + 1)
-    );
+    const unlisten = client.all(table, x => {
+      calls = calls + 1;
+    });
+    const unlisten2 = client.count(table, x => {
+      countCalls = countCalls + 1;
+    });
     await client.insert(table, { id: '0', name: 'Hallo' });
     await client.insert(table, { id: '1', name: 'Hallo' });
+    await new Promise(yay => setTimeout(yay, 100));
     unlisten();
     unlisten2();
     await client.insert(table, { id: '2', name: 'Hallo' });
@@ -223,14 +255,13 @@ export function createAdapterTest(
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
     ];
-    const ini = await init(collections, 3);
+    const ini = await init(collections, 3, {
+      softDelete: true
+    });
     const table = collections[0].name;
-    const client = new Debe(createAdapter(3), collections);
-    if (ini && ini.db) {
-      softDeletePlugin()(ini.db);
-    } else {
-      softDeletePlugin()(client);
-    }
+    const client = new Debe(createAdapter(3), collections, {
+      softDelete: true
+    });
     await client.initialize();
     await client.insert(table, { id: 'asd0', name: 'Hallo' });
     await client.insert(table, { id: 'asd1', name: 'Hallo' });

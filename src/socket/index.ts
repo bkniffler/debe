@@ -1,4 +1,4 @@
-import { Debe, IPlugin, types } from 'debe';
+import { types, DebeAdapter, IListenerOptions, IObserverCallback } from 'debe';
 import { generate } from 'debe';
 import { create, ISocket } from 'asyngular-client';
 
@@ -9,14 +9,24 @@ export const allowedMethods = [
   types.ALL,
   types.COUNT
 ];
-export class SocketAdapter {
+export class SocketAdapter extends DebeAdapter {
   socket: ISocket;
   constructor(hostname: string, port: number = 8000) {
+    super();
     this.socket = create({
       hostname,
       port
     });
   }
+
+  async $initialize() {
+    this.middlewares = [];
+    this.initialize();
+  }
+  initialize() {
+    this.listen();
+  }
+
   async close() {
     const promise = Promise.race([
       this.socket.listener('disconnect')['once'](),
@@ -25,66 +35,61 @@ export class SocketAdapter {
     this.socket.disconnect();
     return promise;
   }
-  connect(debe: Debe) {
-    this.listen();
-    socketPlugin(this)(debe);
-  }
+
   async listen() {
     for await (let event of this.socket.listener('connect')) {
       event;
-      // console.log('Socket is connected');
     }
   }
-}
 
-export const socketPlugin = (adapter: SocketAdapter): IPlugin => client => {
-  client.addPlugin('socket', function adapterPlugin(type, payload, flow) {
-    if (type === types.CLOSE) {
-      adapter.close().then(() => flow(payload));
-    } else if (allowedMethods.includes(type)) {
-      const callback = flow.get('callback');
-      const { socket } = adapter;
-      if (callback) {
-        /*let channel = adapter.socket.subscribe('foo');
-        setTimeout(() => channel.unsubscribe(), 3000);
-        for await (let data of channel) {
-          console.log(data, channel);
-        }*/
-        let channelId = generate();
-        const listen = async () => {
-          for await (let data of socket.receiver(channelId)) {
-            try {
-              callback(data);
-            } catch (err) {
-              console.log(err);
-            }
-          }
-        };
-        listen();
-        socket
-          .invoke(`subscribe:${type}`, [channelId, payload])
-          .catch((err: any) => {
-            close();
-            flow.return(undefined);
-          });
-        const close = () => {
-          setTimeout(() => socket.closeReceiver(channelId));
-        };
-        return close;
-      } else {
-        socket
-          .invoke(type, payload)
-          .then((result: any) => {
-            flow.return(result);
-          })
-          .catch((err: any) => {
-            console.log(err);
-            flow.return(undefined);
-          });
+  $all(...args: any[]) {
+    return this.socket.invoke('all', args);
+  }
+  $count(...args: any[]) {
+    return this.socket.invoke('count', args);
+  }
+  $get(...args: any[]) {
+    return this.socket.invoke('get', args);
+  }
+  $insert(...args: any[]) {
+    return this.socket.invoke('insert', args);
+  }
+  $remove(...args: any[]) {
+    return this.socket.invoke('remove', args);
+  }
+  $listener<T>(options: IListenerOptions, callback: IObserverCallback<T>) {
+    let channelId = generate();
+    const listen = async () => {
+      for await (let data of this.socket.receiver(channelId)) {
+        callback(data);
       }
-    } else {
-      flow(payload);
-    }
-    return;
-  });
-};
+    };
+    listen();
+    this.socket.transmit('subscribe', [channelId, options]);
+    const close = () => {
+      setTimeout(() => this.socket.closeReceiver(channelId));
+    };
+    return close;
+  }
+
+  //
+  get() {
+    throw new Error('Not implemented');
+  }
+  remove() {
+    throw new Error('Not implemented');
+    return null as any;
+  }
+  all() {
+    throw new Error('Not implemented');
+    return null as any;
+  }
+  count() {
+    throw new Error('Not implemented');
+    return null as any;
+  }
+  insert() {
+    throw new Error('Not implemented');
+    return null as any;
+  }
+}

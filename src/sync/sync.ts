@@ -83,9 +83,9 @@ export function initiateSync(
   }
 
   // Listen to channel changes, but wait until initial publish/fetch complete
-  async function listenToLocalInsert() {
+  function listenToLocalInsert() {
     let queue = Promise.resolve();
-    client.listen(collection.name, (items: any, options: any = {}) => {
+    return client.listen(collection.name, (items: any, options: any = {}) => {
       if (options.synced !== 'client') {
         queue = queue.then(() =>
           batchTransfer(
@@ -118,9 +118,9 @@ export function initiateSync(
     log.info(`Sync of :${collection.name} is completed`);
   })();
   listenToSubscription(channel);
-  listenToLocalInsert();
+  unlisteners.push(listenToLocalInsert());
 
-  return () => {
-    unlisteners.forEach(x => x());
+  return async () => {
+    await Promise.all(unlisteners.map(x => x()));
   };
 }

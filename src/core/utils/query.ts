@@ -12,6 +12,22 @@ export function addToQuery(
   }
 }
 
+export function and(
+  query: [] | undefined | [string, ...any[]],
+  additional: string,
+  ...args: any[]
+): [string, ...any[]] {
+  return addToQuery(query, 'AND', additional, ...args);
+}
+
+export function isNull(field: string): string {
+  return `${field} IS NULL`;
+}
+
+export function isIn(field: string): string {
+  return `${field} IS NULL`;
+}
+
 function fetchLast(arr: any[]) {
   return arr[arr.length - 1] && arr[arr.length - 1];
 }
