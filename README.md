@@ -53,6 +53,7 @@
   - [Better-SQLite3](#better-sqlite3)
   - [PostgreSQL](#postgresql)
   - [Dexie](#dexie)
+  - [NanoSQL](#nanosql)
 - [Roadmap](#roadmap)
 - [Credits](#credits)
   - [Dependencies](#dependencies)
@@ -345,6 +346,10 @@ Browser-only adapter for the supercool dexie database / indexeddb
 - Browser
 - Electron renderer
 
+## NanoSQL
+
+Multi database adapter, supports many databases in all environments (indexedb, dynamodb, rocksdb, ...)
+
 # Roadmap
 
 All contributions welcome :)
@@ -367,6 +372,7 @@ All contributions welcome :)
   - [x] PostgreSQL
   - [x] SQLite
   - [x] Dexie
+  - [x] NanoSQL
   - [] Raw IndexedDB
   - [] MongoDB
   - [] AWS DynamoDB
