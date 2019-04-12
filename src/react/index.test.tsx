@@ -4,6 +4,7 @@ import { useAll, DebeProvider, useCollection } from './index';
 import { render, waitForElement, fireEvent } from 'react-testing-library';
 import { MemoryAdapter } from 'debe-memory';
 import 'jest-dom/extend-expect';
+import { Debe } from 'debe';
 
 interface ILorem {
   name: string;
@@ -22,8 +23,7 @@ test('react:basic', async cb => {
       initialize={async db => {
         await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
       }}
-      collections={collections}
-      getAdapter={() => new MemoryAdapter()}
+      value={() => new Debe(new MemoryAdapter(), collections)}
       render={() => <Component />}
       loading={() => <span>Loading...</span>}
     />

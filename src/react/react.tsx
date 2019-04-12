@@ -133,21 +133,22 @@ export function useCollection<T = IItem>(service: string): IDebeUse<T> {
 export function DebeProvider({
   render,
   children,
-  getAdapter,
+  value,
   loading,
-  collections = [],
   initialize = () => Promise.resolve()
 }: {
   initialize?: (db: Debe) => Promise<void>;
-  collections?: ICollectionInput[];
-  getAdapter: () => DebeAdapter;
+  value: Debe | (() => Debe);
   render?: () => React.ReactNode;
   authError?: () => React.ReactNode;
   loading?: () => React.ReactNode;
   children?: React.ReactNode;
 }) {
   const [isInitialized, setState] = React.useState(false);
-  const debe = React.useMemo(() => new Debe(getAdapter(), collections), []);
+  const debe = React.useMemo(
+    () => (typeof value === 'function' ? value() : value),
+    []
+  );
   React.useEffect(() => {
     debe
       .initialize()

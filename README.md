@@ -193,28 +193,50 @@ db1.all<ILorem>('lorem', {
   where: ['name < ? AND lastChanged > ?', 'a50', +new Date()],
   orderBy: ['name', 'rev DESC']
 });
-
-// Or in a react component
-function MyComponent(props) {
-  // useAll is reactive by default and will fire each time the results change
-  const [items, loading] = useAll('lorem', {
-    where: ['name < ? AND lastChanged > ?', props.filterName, props.lastChanged]
-  });
-}
 ```
 
-# Replication
+# React
+
+```jsx
+// Or in a react component
+import { Debe } from 'debe';
+import { MemoryAdapter } from 'debe-memory';
+import { DebeProvider, useAll } from 'debe-react';
+
+function MyComponent(props) {
+  const [result] = useAll('lorem', {
+    where: ['name = ?', 'Lorem']
+  });
+  return (
+    <ul>
+      {result.map(item => (
+        <li key={item.id}>
+          <span>{item.name}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const collections = [{ name: 'lorem', index: ['name'] }];
+render(
+  <DebeProvider
+    initialize={async db => {
+      await db.insert('lorem', [{ name: 'Lorem' }]);
+    }}
+    value={() => new Debe(new MemoryAdapter(), collections)}
+    render={() => <Component />}
+    loading={() => <span>Loading...</span>}
+  />
+);
+```
 
 # Roadmap/ToDo
 
 All contributions welcome :)
 
-- Revisit middleware/flow
-  - Listener (callback, insert for emit, add rev to collection)
-  - Core (add id to collection, cleanup collections/insert/get/all, gather more collections, transform insert, reroute get, reroute insert)
-  - SoftDelete (reroute insert to remove)
-  - JSON to Body (transform insert, transform get/all)
-  - Adapter
+- Middleware
+  - Chunk insert
 - Docs
   - Write real docs :(
 - Replication
@@ -232,13 +254,11 @@ All contributions welcome :)
   - RocksDB
   - Redis
 - Bindings
-  - React
+  - [x] React
   - Vue
 - Testing
   - Improve testing
   - Performance testing & benchmarking against others
-- Insights
-  - Better tracking of what happens inside
 
 # Credits
 
