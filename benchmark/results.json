@@ -1,0 +1,14 @@
+{
+  "1.2.0-beta.1": {
+    "memory": 229010,
+    "better-sqlite3": 950,
+    "memory-100x": 175,
+    "better-sqlite3-100x": 19
+  },
+  "1.2.0-beta.2": {
+    "memory": 238382,
+    "better-sqlite3": 1023,
+    "memory-100x": 172,
+    "better-sqlite3-100x": 21
+  }
+}

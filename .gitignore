@@ -6,3 +6,4 @@ lib
 yarn-error.log
 .old
 .temp
+benchmark/chart.html
