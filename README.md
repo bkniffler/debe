@@ -270,7 +270,7 @@ NodeJS, react-native, electron adapter that uses SQLite
 **Targets**
 
 - NodeJS
-- Electron Renderer
+- Electron main
 - React-Native
 
 ### PostgreSQL
@@ -280,7 +280,7 @@ NodeJS, electron adapter for PostgreSQL
 **Targets**
 
 - NodeJS
-- Electron Renderer
+- Electron main
 
 ## Dexie
 
