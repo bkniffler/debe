@@ -121,64 +121,64 @@ export function createAdapterTest(
     }
   });
 
-  if (name !== 'dexie' && name !== 'nanosql') {
-    test(
-      `adapter:${name}:million`,
-      async () => {
-        const count = 1000000;
-        const pad = (num: any) => `${num}`.padStart(`${count}0`.length, '0');
-        const collections = [
-          { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
-        ];
-        const ini = await init(collections, 1);
-        const table = collections[0].name;
-        const client = new Debe(createAdapter(1), collections);
-        await client.initialize();
-        const items = [];
-        for (let x = 0; x < count; x++) {
-          items.push({ name: pad(x) });
+  const isQualified =
+    name !== 'dexie' && name !== 'nanosql' && name !== 'postgresql';
+  test(
+    isQualified ? `adapter:${name}:million` : `adapter:${name}:thousand`,
+    async () => {
+      const count = isQualified ? 1000000 : 10000;
+      const pad = (num: any) => `${num}`.padStart(`${count}0`.length, '0');
+      const collections = [
+        { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
+      ];
+      const ini = await init(collections, 1);
+      const table = collections[0].name;
+      const client = new Debe(createAdapter(1), collections);
+      await client.initialize();
+      const items = [];
+      for (let x = 0; x < count; x++) {
+        items.push({ name: pad(x) });
+      }
+      await client.insert(table, items);
+      let result = await client.all(table, {
+        where: ['name < ?', pad(50)]
+      } as any);
+      expect(result.length).toBe(50);
+      result = await client.all(table, {
+        where: ['name >= ?', pad(50)]
+      } as any);
+      expect(result.length).toBe(count - 50);
+      result = await client.all(table, {
+        orderBy: ['name ASC'],
+        limit: 5
+      } as any);
+      expect(result.length).toBe(5);
+      expect(result[0].name).toBe(pad(0));
+      expect(result[4].name).toBe(pad(4));
+      result = await client.all(table, {
+        orderBy: ['name ASC'],
+        limit: 6,
+        offset: 5
+      } as any);
+      expect(result.length).toBe(6);
+      expect(result[0].name).toBe(pad(5));
+      expect(result[4].name).toBe(pad(9));
+      const single = await client.get(table, {
+        where: ['name <= ?', pad(50)],
+        orderBy: ['name ASC']
+      } as any);
+      expect(single).toBeTruthy();
+      expect(single.name).toBe(pad(0));
+      await client.close();
+      if (ini) {
+        if (ini.db) {
+          await ini.db.close();
         }
-        await client.insert(table, items);
-        let result = await client.all(table, {
-          where: ['name < ?', pad(50)]
-        } as any);
-        expect(result.length).toBe(50);
-        result = await client.all(table, {
-          where: ['name >= ?', pad(50)]
-        } as any);
-        expect(result.length).toBe(count - 50);
-        result = await client.all(table, {
-          orderBy: ['name ASC'],
-          limit: 5
-        } as any);
-        expect(result.length).toBe(5);
-        expect(result[0].name).toBe(pad(0));
-        expect(result[4].name).toBe(pad(4));
-        result = await client.all(table, {
-          orderBy: ['name ASC'],
-          limit: 6,
-          offset: 5
-        } as any);
-        expect(result.length).toBe(6);
-        expect(result[0].name).toBe(pad(5));
-        expect(result[4].name).toBe(pad(9));
-        const single = await client.get(table, {
-          where: ['name <= ?', pad(50)],
-          orderBy: ['name ASC']
-        } as any);
-        expect(single).toBeTruthy();
-        expect(single.name).toBe(pad(0));
-        await client.close();
-        if (ini) {
-          if (ini.db) {
-            await ini.db.close();
-          }
-          await ini.close();
-        }
-      },
-      1000 * 60 * 4
-    );
-  }
+        await ini.close();
+      }
+    },
+    1000 * 60 * 4
+  );
 
   test(`adapter:${name}:insert`, async () => {
     const collections = [
