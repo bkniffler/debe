@@ -30,7 +30,7 @@
       "debe-sql": ["./src/sql"],
       "debe-better-sqlite3": ["./src/better-sqlite3"],
       "debe-postgresql": ["./src/postgresql"],
-      "debe-merge": ["./src/merge"],
+      "debe-delta": ["./src/delta"],
       "debe-socket": ["./src/socket"],
       "debe-socket-server": ["./src/socket-server"],
       "debe-sync": ["./src/sync"],

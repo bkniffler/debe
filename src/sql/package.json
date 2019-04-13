@@ -1,6 +1,7 @@
 {
   "name": "debe-sql",
   "main": "index.ts",
+  "browser": false,
   "version": "1.0.0",
   "dependencies": {
     "debe": "*"

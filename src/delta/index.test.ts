@@ -1,6 +1,6 @@
 import { Debe, generate } from 'debe';
 import { PostgreSQLAdapter } from 'debe-postgresql';
-import { merge } from './index';
+import { delta } from './index';
 import { Sqlite3Adapter } from 'debe-better-sqlite3';
 import { join } from 'path';
 import { removeSync, ensureDirSync } from 'fs-extra';
@@ -25,7 +25,7 @@ async function t(adapter: any) {
   const db = new Debe(adapter, schema, {
     softDelete: true,
     middlewares: [
-      merge({
+      delta({
         getMessage: () => 'Yay',
         submitDelta: delta => {
           for (var item of delta) {
@@ -91,23 +91,23 @@ async function t(adapter: any) {
   await db.close();
 }
 
-test('automerge:simple:memory', async cb => {
+test('delta:simple:memory', async cb => {
   await t(new MemoryAdapter());
   cb();
 });
 
 if (process.env.PG_CONNECTIONSTRING) {
-  test('automerge:simple:postgresql', async cb => {
+  test('delta:simple:postgresql', async cb => {
     await t(new PostgreSQLAdapter(process.env.PG_CONNECTIONSTRING + ''));
     cb();
   });
 }
 
-const dbDir = join(process.cwd(), '.temp/merge');
+const dbDir = join(process.cwd(), '.temp/better-sqlite3-delta');
 removeSync(dbDir);
 ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');
-test('automerge:simple:better-sqlite3', async cb => {
+test('delta:simple:better-sqlite3', async cb => {
   await t(new Sqlite3Adapter(getDBDir()));
   cb();
 });

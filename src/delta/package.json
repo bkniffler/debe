@@ -1,5 +1,5 @@
 {
-  "name": "debe-merge",
+  "name": "debe-delta",
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {

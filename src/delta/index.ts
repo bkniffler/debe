@@ -14,7 +14,7 @@ export interface IMergePluginOptions {
   automergeField?: string;
   actorField?: string;
 }
-export const merge: IMiddleware<IMergePluginOptions> = (options = {}) => db => {
+export const delta: IMiddleware<IMergePluginOptions> = (options = {}) => db => {
   const {
     automergeField = 'merge',
     actorField = 'actor',
