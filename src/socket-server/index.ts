@@ -52,6 +52,6 @@ export class SocketServer {
     const handleSub = (data: any) => {
       socket.transmit(id, data);
     };
-    this.db.adapter.listen(action, handleSub, options);
+    this.db.dispatcher.listen(action, handleSub, options);
   }
 }

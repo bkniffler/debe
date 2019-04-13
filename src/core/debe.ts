@@ -48,7 +48,7 @@ interface IOptions {
 }
 
 export class Debe<TBase = IItem> {
-  adapter: DebeDispatcher<TBase>;
+  dispatcher: DebeDispatcher<TBase>;
   initializing: Promise<void>;
   constructor(
     adapterOrAdapter: DebeDispatcher | DebeAdapter,
@@ -60,22 +60,22 @@ export class Debe<TBase = IItem> {
         collections,
         ensureCollection
       );
-      this.adapter = new DebeAdapterDispatcher(
+      this.dispatcher = new DebeAdapterDispatcher(
         this,
         adapterOrAdapter,
         collectionsObj,
         options
       );
     } else {
-      this.adapter = adapterOrAdapter;
+      this.dispatcher = adapterOrAdapter;
     }
   }
   async close() {
-    await this.adapter.close();
+    await this.dispatcher.close();
   }
   async initialize() {
     if (!this.initializing) {
-      this.initializing = this.adapter.initialize();
+      this.initializing = this.dispatcher.initialize();
     }
     await this.initializing;
   }
@@ -96,7 +96,7 @@ export class Debe<TBase = IItem> {
     collection: string,
     callback: IObserverCallback<(T & IGetItem)[]>
   ): IUnlisten {
-    return this.adapter.listen('insert', callback, { collection });
+    return this.dispatcher.listen('insert', callback, { collection });
   }
   insert<T = IInsertItem>(
     collection: string,
@@ -119,14 +119,14 @@ export class Debe<TBase = IItem> {
       ...optionsInput
     } as any;
     if (Array.isArray(value)) {
-      return this.adapter.run<T & IGetItem>(
+      return this.dispatcher.run<T & IGetItem>(
         'insert',
         collection,
         value,
         options
       );
     }
-    return this.adapter
+    return this.dispatcher
       .run<(T & IGetItem)[]>('insert', collection, [value], options)
       .then(([x]) => x);
   }
@@ -136,9 +136,9 @@ export class Debe<TBase = IItem> {
     value: string | string[]
   ): Promise<string | string[]> {
     if (Array.isArray(value)) {
-      return this.adapter.run('remove', collection, value);
+      return this.dispatcher.run('remove', collection, value);
     }
-    return this.adapter.run('remove', collection, [value]).then(x => x[0]);
+    return this.dispatcher.run('remove', collection, [value]).then(x => x[0]);
   }
   // all
   all<T = TBase>(collection: string): Promise<(T & IGetItem)[]>;
@@ -177,12 +177,12 @@ export class Debe<TBase = IItem> {
     }
     const query = cleanQuery(value);
     if (callback) {
-      return this.adapter.listen<T[]>('all', callback, {
+      return this.dispatcher.listen<T[]>('all', callback, {
         collection,
         query
       });
     }
-    return this.adapter.run<T[]>('all', collection, query);
+    return this.dispatcher.run<T[]>('all', collection, query);
   }
   // count
   count(collection: string): Promise<number>;
@@ -214,12 +214,12 @@ export class Debe<TBase = IItem> {
     }
     const query = cleanQuery(value);
     if (callback) {
-      return this.adapter.listen<number>('count', callback, {
+      return this.dispatcher.listen<number>('count', callback, {
         collection,
         query
       });
     }
-    return this.adapter.run<number>('count', collection, query);
+    return this.dispatcher.run<number>('count', collection, query);
   }
   // get
   get<T = TBase>(
@@ -250,12 +250,12 @@ export class Debe<TBase = IItem> {
     }
     if (value && typeof value === 'string') {
       if (callback) {
-        return this.adapter.listen<T>('get', callback, {
+        return this.dispatcher.listen<T>('get', callback, {
           collection,
           query: value
         });
       }
-      return this.adapter.run<T & IGetItem>('get', collection, value);
+      return this.dispatcher.run<T & IGetItem>('get', collection, value);
     }
     if (value && Array.isArray(value)) {
       value = { id: value };
@@ -265,12 +265,16 @@ export class Debe<TBase = IItem> {
     const query = cleanQuery(value);
     if (callback !== undefined) {
       const cb = callback;
-      return this.adapter.listen<T[]>('all', result => cb(result[0] as any), {
-        collection,
-        query
-      });
+      return this.dispatcher.listen<T[]>(
+        'all',
+        result => cb(result[0] as any),
+        {
+          collection,
+          query
+        }
+      );
     }
-    return this.adapter
+    return this.dispatcher
       .run<(T & IGetItem)[]>('all', collection, query)
       .then(x => x[0]);
   }
