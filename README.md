@@ -52,8 +52,6 @@
   - [Socket](#socket)
   - [Better-SQLite3](#better-sqlite3)
   - [PostgreSQL](#postgresql)
-  - [Dexie](#dexie)
-  - [NanoSQL](#nanosql)
 - [Development](#development)
   - [Roadmap](#roadmap)
   - [Continuous Benchmarking](#continuous-benchmarking)
@@ -338,19 +336,6 @@ NodeJS, electron adapter for PostgreSQL
 
 - NodeJS
 - Electron main
-
-## Dexie
-
-Browser-only adapter for the supercool dexie database / indexeddb
-
-**Targets**
-
-- Browser
-- Electron renderer
-
-## NanoSQL
-
-Multi database adapter, supports many databases in all environments (indexedb, dynamodb, rocksdb, ...)
 
 # Development
 
