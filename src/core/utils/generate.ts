@@ -14,19 +14,21 @@ let me =
     : typeof self !== 'undefined'
     ? self
     : undefined;
-if (me) {
+if (me && !id) {
   const crypto = me.crypto || me['msCrypto'];
-  const url =
-    'Uint8ArdomValuesObj012345679BCDEFGHIJKLMNPQRSTWXYZ_cfghkpqvwxyz-';
-  _generate = function(size: number) {
-    size = size || 21;
-    var id = '';
-    var bytes = crypto.getRandomValues(new Uint8Array(size));
-    while (0 < size--) {
-      id += url[bytes[size] & 63];
-    }
-    return id;
-  };
+  if (crypto) {
+    const url =
+      'Uint8ArdomValuesObj012345679BCDEFGHIJKLMNPQRSTWXYZ_cfghkpqvwxyz-';
+    _generate = function(size: number) {
+      size = size || 21;
+      var id = '';
+      var bytes = crypto.getRandomValues(new Uint8Array(size));
+      while (0 < size--) {
+        id += url[bytes[size] & 63];
+      }
+      return id;
+    };
+  }
 }
 /*
 var lut: string[] = [];
