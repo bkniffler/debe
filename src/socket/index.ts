@@ -1,13 +1,15 @@
 import {
   types,
-  DebeAdapter,
   IListenerOptions,
   IObserverCallback,
-  IInsert,
   IGetItem,
   chunkWork,
   IInsertItem,
-  generate
+  generate,
+  actionTypes,
+  listenTypes,
+  DebeDispatcher,
+  Debe
 } from 'debe';
 import { create, ISocket } from 'asyngular-client';
 
@@ -18,7 +20,19 @@ export const allowedMethods = [
   types.ALL,
   types.COUNT
 ];
-export class SocketAdapter extends DebeAdapter {
+
+export class SocketDebe extends Debe {
+  constructor(
+    [hostname, port = 8000]: [string, number],
+    options: {
+      [s: string]: any;
+    } = {}
+  ) {
+    super(new SocketAdapter(hostname, port), [], options);
+  }
+}
+
+export class SocketAdapter extends DebeDispatcher {
   socket: ISocket;
   constructor(hostname: string, port: number = 8000) {
     super();
@@ -28,12 +42,8 @@ export class SocketAdapter extends DebeAdapter {
     });
   }
 
-  async $initialize() {
-    this.middlewares = [];
-    this.initialize();
-  }
-  initialize() {
-    this.listen();
+  async initialize() {
+    this.start();
   }
 
   async close() {
@@ -45,39 +55,27 @@ export class SocketAdapter extends DebeAdapter {
     return promise;
   }
 
-  async listen() {
+  async start() {
     for await (let event of this.socket.listener('connect')) {
       event;
     }
   }
 
-  $all(...args: any[]) {
-    return this.socket.invoke('all', args);
+  run<T>(action: actionTypes, collection: string, payload: any, options: any) {
+    if (action === 'insert') {
+      return chunkWork<T & IInsertItem, T & IGetItem>(
+        payload,
+        [250000, 10000],
+        items => this.socket.invoke('insert', [collection, items, options])
+      );
+    }
+    return this.socket.invoke(action, [collection, payload, options]);
   }
-  $count(...args: any[]) {
-    return this.socket.invoke('count', args);
-  }
-  $get(...args: any[]) {
-    return this.socket.invoke('get', args);
-  }
-  async $insert<T>(
-    collection: string,
-    items: (T & IGetItem)[],
-    options: IInsert
+  listen<T>(
+    action: listenTypes,
+    callback: IObserverCallback<T>,
+    options: IListenerOptions
   ) {
-    return chunkWork<T & IInsertItem, T & IGetItem>(
-      items,
-      [250000, 10000],
-      items => this.socket.invoke('insert', [collection, items, options])
-    );
-  }
-  /*$insert(...args: any[]) {
-    return this.socket.invoke('insert', args);
-  }*/
-  $remove(...args: any[]) {
-    return this.socket.invoke('remove', args);
-  }
-  $listener<T>(options: IListenerOptions, callback: IObserverCallback<T>) {
     let channelId = generate();
     const listen = async () => {
       for await (let data of this.socket.receiver(channelId)) {
@@ -85,31 +83,10 @@ export class SocketAdapter extends DebeAdapter {
       }
     };
     listen();
-    this.socket.transmit('subscribe', [channelId, options]);
+    this.socket.transmit('subscribe', [channelId, action, options]);
     const close = () => {
       setTimeout(() => this.socket.closeReceiver(channelId));
     };
     return close;
-  }
-
-  //
-  get() {
-    throw new Error('Not implemented');
-  }
-  remove() {
-    throw new Error('Not implemented');
-    return null as any;
-  }
-  all() {
-    throw new Error('Not implemented');
-    return null as any;
-  }
-  count() {
-    throw new Error('Not implemented');
-    return null as any;
-  }
-  insert() {
-    throw new Error('Not implemented');
-    return null as any;
   }
 }

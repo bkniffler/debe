@@ -6,18 +6,19 @@ import {
   IGetItem,
   IQuery,
   fieldTypes,
-  IInsert
+  IInsert,
+  ICollections
 } from 'debe';
 
 export abstract class SQLJsonCore extends SQLCore {
   chunks = 10000;
   bodyField = 'body';
-  async initialize() {
-    for (var key in this.collections) {
-      this.collections[key].fields[this.bodyField] = fieldTypes.JSON;
-      this.collections[key].specialFields.body = this.bodyField;
+  async initialize(collections: ICollections, options: any) {
+    for (var key in collections) {
+      collections[key].fields[this.bodyField] = fieldTypes.JSON;
+      collections[key].specialFields.body = this.bodyField;
     }
-    await super.initialize();
+    await super.initialize(collections, options);
   }
   getCollectionBodyField(collection: ICollection) {
     return collection.specialFields.body;

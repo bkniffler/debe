@@ -1,4 +1,4 @@
-import { Debe, IListenerOptions } from 'debe';
+import { Debe, IListenerOptions, listenTypes } from 'debe';
 import * as http from 'http';
 import { allowedMethods } from 'debe-socket';
 import { attach, ISocketBase } from 'asyngular-server';
@@ -32,15 +32,26 @@ export class SocketServer {
     }
   }
   async handleSubscriptions(socket: ISocketBase) {
-    for await (let d of socket.receiver<[string, any]>('subscribe')) {
-      const [id, options] = d as [string, IListenerOptions];
-      this.spawnListener(id, options, socket);
+    for await (let d of socket.receiver<
+      [string, listenTypes, IListenerOptions]
+    >('subscribe')) {
+      const [id, action, options] = d as [
+        string,
+        listenTypes,
+        IListenerOptions
+      ];
+      this.spawnListener(id, action, options, socket);
     }
   }
-  spawnListener(id: string, options: IListenerOptions, socket: ISocketBase) {
+  spawnListener(
+    id: string,
+    action: listenTypes,
+    options: IListenerOptions,
+    socket: ISocketBase
+  ) {
     const handleSub = (data: any) => {
       socket.transmit(id, data);
     };
-    this.db.adapter.$listener(options, handleSub);
+    this.db.adapter.listen(action, handleSub, options);
   }
 }

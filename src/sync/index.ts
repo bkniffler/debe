@@ -1,4 +1,4 @@
-import { Debe, createLog, ensureCollection } from 'debe';
+import { Debe, createLog, ensureCollection, DebeAdapterAdapter } from 'debe';
 import { syncstateTable } from './constants';
 import { initiateSync } from './sync';
 import { IAddress } from './types';
@@ -16,7 +16,7 @@ export class Sync {
   constructor(db: Debe, where?: string[]) {
     this.db = db;
     this.where = where;
-    db.adapter.middlewares.push({
+    (db.adapter as DebeAdapterAdapter).middlewares.push({
       collections(collections) {
         collections[syncstateTable] = ensureCollection({
           name: syncstateTable
@@ -37,17 +37,12 @@ export class Sync {
     await this.db.initializing;
     // LOgic
     let cancels: Function[] = [];
-    Object.keys(this.db.adapter.collections)
+    const collections = (this.db.adapter as DebeAdapterAdapter).collections;
+    Object.keys(collections)
       .filter(x => x !== syncstateTable)
       .forEach(table => {
         cancels.push(
-          initiateSync(
-            this.db,
-            socket,
-            this.db.adapter.collections[table],
-            this.where,
-            log
-          )
+          initiateSync(this.db, socket, collections[table], this.where, log)
         );
       });
     this['_close'] = async () => {

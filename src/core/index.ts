@@ -1,4 +1,5 @@
 export * from './utils';
-export * from './client';
+export * from './debe';
+export * from './dispatcher';
 export * from './adapter';
 export * from './types';

@@ -1,19 +1,17 @@
-import { Debe } from 'debe';
-import { generate } from './utils';
-import { ICollectionInput } from './types';
-import { DebeAdapter } from './adapter';
+import { Debe, generate, ICollectionInput, DebeAdapter } from './index';
+import { DebeDispatcher } from './dispatcher';
 
 test('adapter:test', async () => {
   expect(1).toBe(1);
 });
 
 interface IServer {
-  db?: Debe;
+  db?: Debe<any>;
   close: () => Promise<void>;
 }
 export function createAdapterTest(
   name: string,
-  createAdapter: (i: number) => DebeAdapter | any,
+  createAdapter: (i: number) => DebeAdapter | DebeDispatcher | any,
   init: (
     collections: ICollectionInput[],
     i: number,

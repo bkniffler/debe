@@ -1,4 +1,4 @@
-import { addToQuery, Debe, IItem, IGetItem } from 'debe';
+import { addToQuery, Debe, IItem, IGetItem, DebeAdapterAdapter } from 'debe';
 import { ISocketBase } from 'asyngular-client';
 import {
   ICountInitialChanges,
@@ -14,8 +14,9 @@ export function createServerChannels(
   client: Debe,
   server: IAGServer
 ) {
-  for (let key in client.adapter.collections) {
-    const collection = client.adapter.collections[key];
+  const collections = (client.adapter as DebeAdapterAdapter).collections;
+  for (let key in collections) {
+    const collection = collections[key];
     (async () => {
       const channel = server.exchange.subscribe<[string, IGetItem[]]>(
         collection.name
@@ -60,12 +61,13 @@ export async function createSocketChannels(
   socket: ISocketBase,
   server: IAGServer
 ) {
+  const collections = (client.adapter as DebeAdapterAdapter).collections;
   (async () => {
     for await (let req of socket.procedure<ICountInitialChanges, number>(
       'countInitialChanges'
     )) {
       let { type, since, where } = req.data;
-      const collection = client.adapter.collections[type];
+      const collection = collections[type];
       if (since) {
         where = addToQuery(
           where,
@@ -87,7 +89,7 @@ export async function createSocketChannels(
       (IItem & IGetItem)[]
     >('initialFetchChanges')) {
       let { type, since, where, page = 0 } = req.data;
-      const collection = client.adapter.collections[type];
+      const collection = collections[type];
       if (since) {
         where = addToQuery(
           where,
@@ -110,7 +112,7 @@ export async function createSocketChannels(
   (async () => {
     for await (let req of socket.procedure<ISendChanges>('sendChanges')) {
       let { type, items } = req.data;
-      const collection = client.adapter.collections[type];
+      const collection = collections[type];
       await server.exchange.invokePublish(collection.name, [
         req.socket.id,
         items

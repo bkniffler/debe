@@ -20,7 +20,7 @@ export const changeListenerPlugin: IMiddleware<IChangeListenerOptions> = ({
   };
 
   return {
-    listener({ collection = '*', query, method = 'insert' }, callback) {
+    listener(method = 'insert', { collection = '*', query }, callback) {
       if (method === 'insert') {
         return emitter.on(collection, callback);
       }

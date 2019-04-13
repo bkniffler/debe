@@ -1,61 +1,31 @@
 import {
   ICollection,
   IItem,
-  IListenerOptions,
-  IObserverCallback,
-  IGetItem,
-  IInsertItem,
   IQuery,
   IInsert,
+  IAdapterOptionsInput,
+  IMiddleware2,
   IMiddlewareInner,
+  ICollections,
+  actionTypes,
+  IListenerOptions,
+  listenTypes,
+  IObserverCallback,
+  IInsertItem,
+  IGetItem,
   fieldTypes
 } from './types';
-import { IObject, generate, chunkParallel, chunkSequencial } from './utils';
+import { IObject, generate, chunkSequencial, chunkParallel } from './utils';
+import { DebeDispatcher } from './dispatcher';
+import { Debe } from './debe';
+import { changeListenerPlugin, softDeletePlugin } from './middleware';
 
-interface IAdapterOptions {
-  idField: string;
-}
-interface IAdapterOptionsInput {
-  idField?: string;
-}
 export abstract class DebeAdapter<TBase = IItem> {
-  chunks = 1000000;
-  chunkMode = 'parallel';
-  options: IAdapterOptions;
-  collections: IObject<ICollection> = {};
-  middlewares: IMiddlewareInner[] = [];
-  collection(name: string) {
-    return this.collections[name];
-  }
-  $close() {
-    this.close();
-  }
-  async $initialize(
-    collections: IObject<ICollection>,
-    options: IAdapterOptionsInput = {}
-  ) {
-    this.options = { idField: options.idField || 'id' };
-    for (var middleware of this.middlewares) {
-      if (middleware.collections) {
-        middleware.collections(collections);
-      }
-    }
-    for (var key in collections) {
-      collections[key].fields[this.options.idField] = fieldTypes.STRING;
-      collections[key].index[this.options.idField] = fieldTypes.STRING;
-      collections[key].specialFields.id = this.options.idField;
-      for (var middleware of this.middlewares) {
-        if (middleware.collection) {
-          middleware.collection(collections[key]);
-        }
-      }
-    }
-    this.collections = collections;
-    await this.initialize();
-  }
-
   // Abstract
-  abstract initialize(): Promise<void> | void;
+  abstract initialize(
+    collections: IObject<ICollection>,
+    options: IAdapterOptionsInput
+  ): Promise<void> | void;
   abstract close(): Promise<void> | void;
   abstract get(collection: ICollection, id: string): Promise<any> | any;
   abstract remove(
@@ -72,7 +42,89 @@ export abstract class DebeAdapter<TBase = IItem> {
     items: any[],
     options: IInsert
   ): Promise<any[]> | any[];
-  $transformItemIn<T = TBase>(
+}
+
+interface IAdapterDispatcherOptions {
+  middlewares?: IMiddleware2[];
+  changeListener?: boolean;
+  softDelete?: boolean;
+  [s: string]: any;
+}
+export class DebeAdapterDispatcher<TBase = IItem> extends DebeDispatcher {
+  chunks = 1000000;
+  chunkMode = 'parallel';
+  options: IAdapterDispatcherOptions;
+  collections: IObject<ICollection> = {};
+  middlewares: IMiddlewareInner[] = [];
+  frontend: Debe;
+  backend: DebeAdapter;
+  constructor(
+    frontend: Debe,
+    backend: DebeAdapter,
+    collections: ICollections,
+    options: IAdapterDispatcherOptions = {}
+  ) {
+    super();
+    this.collections = collections;
+    this.options = options;
+    const {
+      middlewares = [],
+      changeListener = true,
+      softDelete = false
+    } = options;
+    this.frontend = frontend;
+    this.backend = backend;
+    if (changeListener) {
+      this.middlewares.push(changeListenerPlugin(options as any)(frontend));
+    }
+    if (softDelete) {
+      this.middlewares.push(softDeletePlugin(options as any)(frontend));
+    }
+    for (var middleware of middlewares) {
+      this.middlewares.push(middleware(frontend));
+    }
+  }
+  run(action: actionTypes, collection: string, payload?: any, options?: any) {
+    if (this[action]) {
+      return this[action].apply(this, [collection, payload, options]);
+    }
+    throw new Error('Method does not exist: ' + action);
+  }
+  listen<T>(
+    action: listenTypes,
+    callback: (value: T) => void,
+    options: IListenerOptions
+  ) {
+    return this.listener(action, callback, options);
+  }
+  private collection(name: string) {
+    return this.collections[name];
+  }
+  async close() {
+    await this.backend.close();
+  }
+  async initialize() {
+    this.options = { idField: this.options.idField || 'id' };
+    for (var middleware of this.middlewares) {
+      if (middleware.collections) {
+        middleware.collections(this.collections);
+      }
+    }
+    for (var key in this.collections) {
+      this.collections[key].fields[this.options.idField] = fieldTypes.STRING;
+      this.collections[key].index[this.options.idField] = fieldTypes.STRING;
+      this.collections[key].specialFields.id = this.options.idField;
+      for (var middleware of this.middlewares) {
+        if (middleware.collection) {
+          middleware.collection(this.collections[key]);
+        }
+      }
+    }
+    this.collections = this.collections;
+    await this.backend.initialize(this.collections, this.options);
+  }
+
+  transformItemIn<T = TBase>(
     collection: ICollection,
     item: T,
     options: IInsert
@@ -97,7 +149,7 @@ export abstract class DebeAdapter<TBase = IItem> {
     }
     return item;
   }
-  $transformItemOut<T = TBase>(collection: ICollection, item: T) {
+  transformItemOut<T = TBase>(collection: ICollection, item: T) {
     for (var middleware of this.middlewares) {
       if (middleware.transformItemOut) {
         item = middleware.transformItemOut<T>(collection, item);
@@ -105,18 +157,19 @@ export abstract class DebeAdapter<TBase = IItem> {
     }
     return item;
   }
-  $listener<T = TBase>(
-    options: IListenerOptions,
-    callback: IObserverCallback<T>
+  listener<T = TBase>(
+    type: listenTypes,
+    callback: IObserverCallback<T>,
+    options: IListenerOptions
   ) {
     for (var middleware of this.middlewares) {
       if (middleware.listener) {
-        return middleware.listener<T>(options, callback);
+        return middleware.listener<T>(type, options, callback);
       }
     }
     throw new Error('No listener attached');
   }
-  private $query(collection: ICollection, value: IQuery) {
+  private query(collection: ICollection, value: IQuery) {
     for (var middleware of this.middlewares) {
       if (middleware.query) {
         value = middleware.query(collection, value);
@@ -124,7 +177,7 @@ export abstract class DebeAdapter<TBase = IItem> {
     }
     return value;
   }
-  async $insert<T = TBase>(
+  async insert<T = TBase>(
     collection: string,
     value: (T & IInsertItem)[],
     options: IInsert
@@ -135,7 +188,7 @@ export abstract class DebeAdapter<TBase = IItem> {
         : chunkParallel)<T & IInsertItem, T & IGetItem>(
         value,
         this.chunks,
-        items => this.$insert(collection, items, { ...options })
+        items => this.insert(collection, items, { ...options })
       );
     }
 
@@ -145,7 +198,7 @@ export abstract class DebeAdapter<TBase = IItem> {
     }
 
     const c = this.collection(collection);
-    let input = value.map(x => this.$transformItemIn(c, x, options));
+    let input = value.map(x => this.transformItemIn(c, x, options));
     for (var middleware of this.middlewares) {
       if (middleware.beforeInsert) {
         const result = middleware.beforeInsert(c, input, options);
@@ -155,8 +208,8 @@ export abstract class DebeAdapter<TBase = IItem> {
       }
     }
 
-    const result = await this.insert(c, input, options);
-    const transformed = result.map(x => this.$transformItemOut(c, x));
+    const result = await this.backend.insert(c, input, options);
+    const transformed = result.map(x => this.transformItemOut(c, x));
     for (var middleware of this.middlewares) {
       if (middleware.afterInsert) {
         middleware.afterInsert(c, input, options, transformed);
@@ -164,7 +217,7 @@ export abstract class DebeAdapter<TBase = IItem> {
     }
     return result;
   }
-  async $remove(collection: string, value: string[]): Promise<string[]> {
+  async remove(collection: string, value: string[]): Promise<string[]> {
     const c = this.collection(collection);
     for (var middleware of this.middlewares) {
       if (middleware.beforeRemove) {
@@ -174,7 +227,7 @@ export abstract class DebeAdapter<TBase = IItem> {
         }
       }
     }
-    const result = await this.remove(c, value);
+    const result = await this.backend.remove(c, value);
     for (var middleware of this.middlewares) {
       if (middleware.afterRemove) {
         middleware.afterRemove(c, value, result);
@@ -182,27 +235,27 @@ export abstract class DebeAdapter<TBase = IItem> {
     }
     return result;
   }
-  async $all<T = TBase>(
+  async all<T = TBase>(
     collection: string,
     value: IQuery
   ): Promise<(T & IGetItem)[]> {
     const c = this.collection(collection);
-    value = this.$query(c, value);
-    const result = await this.all(c, value);
-    return this.$transformItemOut(c, result);
+    value = this.query(c, value);
+    const result = await this.backend.all(c, value);
+    return this.transformItemOut(c, result);
   }
-  async $count(collection: string, value: IQuery): Promise<number> {
+  async count(collection: string, value: IQuery): Promise<number> {
     const c = this.collection(collection);
-    value = this.$query(c, value);
-    const result = await this.count(c, value);
+    value = this.query(c, value);
+    const result = await this.backend.count(c, value);
     return result;
   }
-  async $get<T = TBase>(
+  async get<T = TBase>(
     collection: string,
     value: string
   ): Promise<T & IGetItem> {
     const c = this.collection(collection);
-    const result = await this.get(c, value);
-    return this.$transformItemOut(c, result);
+    const result = await this.backend.get(c, value);
+    return this.transformItemOut(c, result);
   }
 }

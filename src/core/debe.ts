@@ -8,21 +8,14 @@ import {
   IQueryInput,
   IInsertInput,
   IQuery,
-  IListenerOptions,
   IUnlisten,
   ICollection,
   fieldTypes,
   IInsert,
-  IMiddleware2
+  IDebeUse
 } from './types';
-import { DebeAdapter } from './adapter';
-import { changeListenerPlugin, softDeletePlugin } from './middleware';
-
-const createListenerOptions = (
-  method: 'all' | 'count' | 'get' | 'insert',
-  collection: string,
-  query: any
-): IListenerOptions => ({ method, collection, query });
+import { DebeDispatcher } from './dispatcher';
+import { DebeAdapter, DebeAdapterDispatcher } from './adapter';
 
 export function ensureCollection(collection: ICollectionInput): ICollection {
   if (!collection.fields) {
@@ -50,48 +43,39 @@ export function ensureCollection(collection: ICollectionInput): ICollection {
   return collection as ICollection;
 }
 
+interface IOptions {
+  [s: string]: any;
+}
+
 export class Debe<TBase = IItem> {
-  adapter: DebeAdapter<TBase>;
+  adapter: DebeDispatcher<TBase>;
   initializing: Promise<void>;
-  private temp: any = {};
   constructor(
-    adapter: DebeAdapter | any,
+    adapterOrAdapter: DebeDispatcher | DebeAdapter,
     collections: ICollectionInput[],
-    options: {
-      middlewares?: IMiddleware2[];
-      changeListener?: boolean;
-      softDelete?: boolean;
-      [s: string]: any;
-    } = {}
+    options: IOptions = {}
   ) {
-    const {
-      middlewares = [],
-      softDelete = false,
-      changeListener = true,
-      ...rest
-    } = options;
-    this.adapter = adapter;
-    if (changeListener) {
-      this.adapter.middlewares.push(changeListenerPlugin(rest as any)(this));
+    if (adapterOrAdapter instanceof DebeAdapter) {
+      const collectionsObj = objectify<ICollectionInput, ICollection>(
+        collections,
+        ensureCollection
+      );
+      this.adapter = new DebeAdapterDispatcher(
+        this,
+        adapterOrAdapter,
+        collectionsObj,
+        options
+      );
+    } else {
+      this.adapter = adapterOrAdapter;
     }
-    if (softDelete) {
-      this.adapter.middlewares.push(softDeletePlugin(rest as any)(this));
-    }
-    for (var middleware of middlewares) {
-      this.adapter.middlewares.push(middleware(this));
-    }
-    this.temp = { collections, rest };
   }
-  close() {
-    return this.adapter.$close();
+  async close() {
+    await this.adapter.close();
   }
   async initialize() {
     if (!this.initializing) {
-      const { collections, rest } = this.temp;
-      this.initializing = this.adapter.$initialize(
-        objectify<ICollectionInput, ICollection>(collections, ensureCollection),
-        rest
-      );
+      this.initializing = this.adapter.initialize();
     }
     await this.initializing;
   }
@@ -112,7 +96,7 @@ export class Debe<TBase = IItem> {
     collection: string,
     callback: IObserverCallback<(T & IGetItem)[]>
   ): IUnlisten {
-    return this.adapter.$listener({ collection }, callback);
+    return this.adapter.listen('insert', callback, { collection });
   }
   insert<T = IInsertItem>(
     collection: string,
@@ -135,11 +119,15 @@ export class Debe<TBase = IItem> {
       ...optionsInput
     } as any;
     if (Array.isArray(value)) {
-      return this.adapter.$insert<T>(collection, value, options);
+      return this.adapter.run<T & IGetItem>(
+        'insert',
+        collection,
+        value,
+        options
+      );
     }
-
     return this.adapter
-      .$insert<T>(collection, [value], options)
+      .run<(T & IGetItem)[]>('insert', collection, [value], options)
       .then(([x]) => x);
   }
   // remove
@@ -148,9 +136,9 @@ export class Debe<TBase = IItem> {
     value: string | string[]
   ): Promise<string | string[]> {
     if (Array.isArray(value)) {
-      return this.adapter.$remove(collection, value);
+      return this.adapter.run('remove', collection, value);
     }
-    return this.adapter.$remove(collection, [value]).then(x => x[0]);
+    return this.adapter.run('remove', collection, [value]).then(x => x[0]);
   }
   // all
   all<T = TBase>(collection: string): Promise<(T & IGetItem)[]>;
@@ -189,12 +177,12 @@ export class Debe<TBase = IItem> {
     }
     const query = cleanQuery(value);
     if (callback) {
-      return this.adapter.$listener<T[]>(
-        createListenerOptions('all', collection, query),
-        callback
-      );
+      return this.adapter.listen<T[]>('all', callback, {
+        collection,
+        query
+      });
     }
-    return this.adapter.$all<T>(collection, query);
+    return this.adapter.run<T[]>('all', collection, query);
   }
   // count
   count(collection: string): Promise<number>;
@@ -226,12 +214,12 @@ export class Debe<TBase = IItem> {
     }
     const query = cleanQuery(value);
     if (callback) {
-      return this.adapter.$listener<number>(
-        createListenerOptions('count', collection, query),
-        callback
-      );
+      return this.adapter.listen<number>('count', callback, {
+        collection,
+        query
+      });
     }
-    return this.adapter.$count(collection, query);
+    return this.adapter.run<number>('count', collection, query);
   }
   // get
   get<T = TBase>(
@@ -262,12 +250,12 @@ export class Debe<TBase = IItem> {
     }
     if (value && typeof value === 'string') {
       if (callback) {
-        return this.adapter.$listener<T>(
-          createListenerOptions('get', collection, value),
-          callback
-        );
+        return this.adapter.listen<T>('get', callback, {
+          collection,
+          query: value
+        });
       }
-      return this.adapter.$get<T>(collection, value);
+      return this.adapter.run<T & IGetItem>('get', collection, value);
     }
     if (value && Array.isArray(value)) {
       value = { id: value };
@@ -277,12 +265,14 @@ export class Debe<TBase = IItem> {
     const query = cleanQuery(value);
     if (callback !== undefined) {
       const cb = callback;
-      return this.adapter.$listener<T[]>(
-        createListenerOptions('all', collection, query),
-        result => cb(result[0] as any)
-      );
+      return this.adapter.listen<T[]>('all', result => cb(result[0] as any), {
+        collection,
+        query
+      });
     }
-    return this.adapter.$all<T>(collection, query).then(x => x[0]);
+    return this.adapter
+      .run<(T & IGetItem)[]>('all', collection, query)
+      .then(x => x[0]);
   }
 }
 
@@ -307,33 +297,4 @@ function cleanQuery(value: IQueryInput | any): IQuery {
   value.orderBy = value.orderBy ? ensureArray(value.orderBy) : undefined;
   value.id = value.id ? ensureArray(value.id) : undefined;
   return value as IQuery;
-}
-
-export interface IDebeUse<T> {
-  all(queryArgs: string[] | IQueryInput): Promise<T[]>;
-  all(
-    queryArgs: string[] | IQueryInput,
-    cb?: IObserverCallback<T[]>
-  ): () => void;
-  all(
-    queryArgs: string[] | IQueryInput,
-    cb?: IObserverCallback<T[]>
-  ): Promise<T[]> | (() => void);
-  count(queryArgs: IQueryInput): Promise<number>;
-  count(queryArgs: IQueryInput, cb?: IObserverCallback<number>): () => void;
-  count(
-    queryArgs: IQueryInput,
-    cb?: IObserverCallback<number>
-  ): Promise<number> | (() => void);
-  get(queryArgs: IQueryInput | string): Promise<T>;
-  get(queryArgs: IQueryInput | string, cb?: IObserverCallback<T>): () => void;
-  get(
-    queryArgs: IQueryInput | string,
-    cb?: IObserverCallback<T>
-  ): Promise<T> | (() => void);
-  remove(query: string | string[]): Promise<void>;
-  insert<T = any>(
-    value: (T & IInsertItem)[] | T & IInsertItem,
-    options?: IInsertInput
-  ): Promise<T & IGetItem>;
 }

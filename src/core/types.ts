@@ -1,4 +1,4 @@
-import { Debe } from './client';
+import { Debe } from './debe';
 
 export const types = {
   LISTEN: 'listen',
@@ -97,10 +97,11 @@ export interface IPlugins {
 
 export interface IListenerOptions {
   collection?: string;
-  method?: 'all' | 'count' | 'get' | 'insert';
   query?: string | string[] | IQuery;
 }
 
+export type listenTypes = 'get' | 'count' | 'all' | 'insert';
+export type actionTypes = 'get' | 'count' | 'all' | 'insert' | 'remove';
 export type IMiddleware<T = any> = (options: T) => IMiddleware2;
 export type IMiddleware2 = (db: Debe) => IMiddlewareInner;
 export interface IMiddlewareInner {
@@ -111,6 +112,7 @@ export interface IMiddlewareInner {
   close?: () => void | Promise<void>;
   // Listen
   listener?: <T>(
+    type: listenTypes,
     options: IListenerOptions,
     callback: IObserverCallback<T>
   ) => () => void;
@@ -143,4 +145,42 @@ export interface IMiddlewareInner {
     options: IInsert,
     result: IGetItem[]
   ) => void;
+}
+
+export interface IDebeUse<T> {
+  all(queryArgs: string[] | IQueryInput): Promise<T[]>;
+  all(
+    queryArgs: string[] | IQueryInput,
+    cb?: IObserverCallback<T[]>
+  ): () => void;
+  all(
+    queryArgs: string[] | IQueryInput,
+    cb?: IObserverCallback<T[]>
+  ): Promise<T[]> | (() => void);
+  count(queryArgs: IQueryInput): Promise<number>;
+  count(queryArgs: IQueryInput, cb?: IObserverCallback<number>): () => void;
+  count(
+    queryArgs: IQueryInput,
+    cb?: IObserverCallback<number>
+  ): Promise<number> | (() => void);
+  get(queryArgs: IQueryInput | string): Promise<T>;
+  get(queryArgs: IQueryInput | string, cb?: IObserverCallback<T>): () => void;
+  get(
+    queryArgs: IQueryInput | string,
+    cb?: IObserverCallback<T>
+  ): Promise<T> | (() => void);
+  remove(query: string | string[]): Promise<void>;
+  insert<T = any>(
+    value: (T & IInsertItem)[] | T & IInsertItem,
+    options?: IInsertInput
+  ): Promise<T & IGetItem>;
+}
+
+export interface IAdapterOptions {
+  idField: string;
+  [s: string]: any;
+}
+export interface IAdapterOptionsInput {
+  idField?: string;
+  [s: string]: any;
 }

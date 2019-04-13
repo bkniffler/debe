@@ -5,8 +5,9 @@ import {
   IQuery,
   ensureArray,
   IFieldTypes,
+  IInsert,
   DebeAdapter,
-  IInsert
+  ICollections
 } from 'debe';
 
 export abstract class SQLCore extends DebeAdapter {
@@ -16,11 +17,9 @@ export abstract class SQLCore extends DebeAdapter {
     type?: 'all' | 'get' | 'count' | 'insert' | 'remove'
   ): Promise<T>;
 
-  async initialize() {
+  async initialize(collections: ICollections, options: any) {
     await Promise.all(
-      Object.keys(this.collections).map(key =>
-        this.createTable(this.collections[key])
-      )
+      Object.keys(collections).map(key => this.createTable(collections[key]))
     );
   }
   close() {}

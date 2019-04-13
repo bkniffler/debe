@@ -5,7 +5,10 @@ import {
   ensureArray,
   ICollection,
   IInsert,
-  DebeAdapter
+  DebeAdapter,
+  ICollections,
+  Debe,
+  ICollectionInput
 } from 'debe';
 
 interface IStore {
@@ -26,12 +29,23 @@ export function pluck(sourceObject: IGetItem, keys: string[] = []): IGetItem {
   return newObject;
 }
 
+export class MemoryDebe extends Debe {
+  constructor(
+    collections: ICollectionInput[],
+    options: {
+      [s: string]: any;
+    } = {}
+  ) {
+    super(new MemoryAdapter(), collections, options);
+  }
+}
+
 export class MemoryAdapter extends DebeAdapter {
   private store: IStore = {};
   filter = createMemoryFilter().filter;
-  initialize() {
-    for (var key in this.collections) {
-      const collection = this.collections[key];
+  initialize(collections: ICollections) {
+    for (var key in collections) {
+      const collection = collections[key];
       this.store[collection.name] = new Map();
     }
   }
