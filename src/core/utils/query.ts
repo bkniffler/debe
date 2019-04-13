@@ -44,16 +44,23 @@ export interface IFilterReducer<T = any, T2 = T> {
   '!=': (state: T, field: string, value: any) => T2;
 }
 
+type IMapField = (field: string) => string;
 export class FilterReducer<T = any, T2 = T> {
   map: IFilterReducer<T, T2>;
-  constructor(map: IFilterReducer<T, T2>) {
+  mapField?: IMapField;
+  constructor(map: IFilterReducer<T, T2>, mapField?: IMapField) {
     this.map = map;
+    this.mapField = mapField;
   }
-  filter = (query: [string, ...any[]]): any => {
+  filter = (query: [string, ...any[]], mapField?: IMapField): any => {
     const array = queryToArray(query);
+    mapField = mapField || this.mapField;
     return (item: T) => {
       for (var i = 0; i < array.length; i++) {
-        const [left, operand, right] = array[i];
+        let [left, operand, right] = array[i];
+        if (mapField) {
+          left = mapField(left);
+        }
         if (!this.map[operand] || !this.map[operand](item, left, right)) {
           return false;
         }
@@ -61,11 +68,15 @@ export class FilterReducer<T = any, T2 = T> {
       return true;
     };
   };
-  reduce = (state: T, query: [string, ...any[]]): T => {
+  reduce = (state: T, query: [string, ...any[]], mapField?: IMapField): T => {
+    mapField = mapField || this.mapField;
     const array = queryToArray(query);
     for (var i = 0; i < array.length; i++) {
       let [left, operand, right] = array[i];
-      if (this.map[operand]) {
+      if (mapField) {
+        left = mapField(left);
+      }
+      if (this.map[operand] && left) {
         state = this.map[operand](state, left, right);
       }
     }

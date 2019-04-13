@@ -121,12 +121,11 @@ export function createAdapterTest(
     }
   });
 
-  const isQualified =
-    name !== 'dexie' && name !== 'nanosql' && name !== 'postgresql';
+  const isQualified = name !== 'dexie' && name !== 'postgresql';
   test(
     isQualified ? `adapter:${name}:million` : `adapter:${name}:thousand`,
     async () => {
-      const count = isQualified ? 1000000 : 10000;
+      const count = isQualified ? 1000000 : 1000;
       const pad = (num: any) => `${num}`.padStart(`${count}0`.length, '0');
       const collections = [
         { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
@@ -141,10 +140,12 @@ export function createAdapterTest(
       }
       await client.insert(table, items);
       let result = await client.all(table, {
+        orderBy: ['name ASC'],
         where: ['name < ?', pad(50)]
       } as any);
       expect(result.length).toBe(50);
       result = await client.all(table, {
+        orderBy: ['name ASC'],
         where: ['name >= ?', pad(50)]
       } as any);
       expect(result.length).toBe(count - 50);

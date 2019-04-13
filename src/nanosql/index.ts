@@ -18,8 +18,7 @@ const filter = new FilterReducer<InanoSQLQueryBuilder>({
 });
 
 export class NanoSQLAdapter extends DebeAdapter {
-  chunks = 10000;
-  chunkMode = 'sequencial';
+  chunks = 100000;
   adapter: 'TEMP' | 'LS' | 'WSQL' | 'IDB' | 'RKS' | 'LVL';
   path: string;
   name: string;
@@ -118,11 +117,21 @@ export class NanoSQLAdapter extends DebeAdapter {
         return item;
       });
     }
-    return await this.db
+
+    await this.db.rawImport(
+      {
+        [collection.name]: items.map(x =>
+          this.transformForStorage(collection, x)
+        )
+      },
+      false
+    );
+    /*await this.db
       .selectTable(collection.name)
       .query('upsert', items.map(x => this.transformForStorage(collection, x)))
-      .exec()
-      .then(() => items);
+      .exec();*/
+
+    return items;
   }
   remove(collection: ICollection, ids: string[]) {
     return this.db
@@ -140,28 +149,41 @@ export class NanoSQLAdapter extends DebeAdapter {
       .exec()
       .then(r => this.transformForFrontend(collection, r[0]));
   }
-  async all(collection: ICollection, query: IQuery) {
-    if (query.select) {
-      query.select = query.select.map(key =>
-        collection.fields[key] ? key : `${this.bodyField}.${key} AS ${key}`
-      );
+  cleanField(collection: ICollection) {
+    return (field: string) =>
+      collection.fields[field.trim()] ? field : `${this.bodyField}.${field}`;
+  }
+  cleanQuery(collection: ICollection, query: IQuery) {
+    if (query.orderBy) {
+      query.orderBy = query.orderBy.map(key => {
+        const [name] = key.split(' ');
+        return this.cleanField(collection)(name);
+      });
     }
+    if (query.select) {
+      query.select = query.select.map(this.cleanField(collection));
+    }
+    return query;
+  }
+  async all(collection: ICollection, query: IQuery) {
+    query = this.cleanQuery(collection, query);
     let q = this.db.selectTable(collection.name).query('select', query.select);
     if (query.limit) {
       q = q.limit(query.limit);
     }
     if (query.offset) {
-      q = q.limit(query.offset);
+      q = q.offset(query.offset);
     }
     if (query.orderBy) {
       q = q.orderBy(query.orderBy);
     }
     if (query.where) {
-      q = filter.reduce(q, query.where);
+      q = filter.reduce(q, query.where, this.cleanField(collection));
     }
     return q.exec().then(x => this.transformForFrontend(collection, x));
   }
   count(collection: ICollection, query: IQuery) {
+    query = this.cleanQuery(collection, query);
     let q = this.db
       .selectTable(collection.name)
       .query('select', ['COUNT(*) as count']);
@@ -169,13 +191,13 @@ export class NanoSQLAdapter extends DebeAdapter {
       q = q.limit(query.limit);
     }
     if (query.offset) {
-      q = q.limit(query.offset);
+      q = q.offset(query.offset);
     }
     if (query.orderBy) {
       q = q.orderBy(query.orderBy);
     }
     if (query.where) {
-      q = filter.reduce(q, query.where);
+      q = filter.reduce(q, query.where, this.cleanField(collection));
     }
     return q.exec().then(x => x[0].count);
   }

@@ -1,6 +1,6 @@
 import { IQuery, DebeAdapter, ICollection, IInsert } from 'debe';
 import Dexie from 'dexie';
-import { sortArray, createMemoryFilter, pluck } from 'debe-memory';
+import { createMemoryFilter, pluck } from 'debe-memory';
 
 /*const filter = new FilterReducer<Table<any, IndexableType>>({
   '!=': (col, field, value) => col.where(field).notEqual(value) as any,
@@ -15,6 +15,7 @@ import { sortArray, createMemoryFilter, pluck } from 'debe-memory';
 });*/
 
 export class DexieAdapter extends DebeAdapter {
+  chunks = 10000;
   filter = createMemoryFilter().filter;
   constructor(name = 'debe', version = 1) {
     super();
@@ -70,16 +71,23 @@ export class DexieAdapter extends DebeAdapter {
     if (query.select) {
       result = result.map(x => pluck(x, query.select));
     }
-    if (query.orderBy) {
-      result = sortArray(result, query.orderBy);
-    }
     return result;
   }
   count(collection: ICollection, query: IQuery) {
     return this.baseQuery(collection.name, query).count();
   }
-  private baseQuery(collection: string, { where, offset, limit }: IQuery) {
+  private baseQuery(
+    collection: string,
+    { where, offset, limit, orderBy }: IQuery
+  ) {
     let cursor = this.db.table(collection);
+    if (orderBy && orderBy.length) {
+      const [key, dir] = orderBy[0].split(' ');
+      cursor = cursor.orderBy(key) as any;
+      if (dir === 'DESC') {
+        cursor = cursor.reverse() as any;
+      }
+    }
     /*if (where) {
       //const filter = createFilter(where);
       if (filter) {
