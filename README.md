@@ -397,6 +397,8 @@ All contributions welcome :)
 
 ## Continuous Benchmarking
 
+This is some [basic benchmarks](./benchmark/index.ts), just to keep track of performance hits during internal changes. Minimal impacts up/down are always expected due to benchmarking inaccuracy.
+
 ![Continuous Benchmarking](./benchmark/chart.png)
 
 # Credits
