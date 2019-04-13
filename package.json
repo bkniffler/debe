@@ -90,6 +90,7 @@
       }
     },
     "modulePathIgnorePatterns": [
+      "experiments",
       "lib",
       ".old"
     ],
