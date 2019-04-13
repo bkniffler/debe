@@ -54,7 +54,9 @@
   - [PostgreSQL](#postgresql)
   - [Dexie](#dexie)
   - [NanoSQL](#nanosql)
-- [Roadmap](#roadmap)
+- [Development](#development)
+  - [Roadmap](#roadmap)
+  - [Continuous Benchmarking](#continuous-benchmarking)
 - [Credits](#credits)
   - [Dependencies](#dependencies)
   - [Similar](#similar)
@@ -350,7 +352,13 @@ Browser-only adapter for the supercool dexie database / indexeddb
 
 Multi database adapter, supports many databases in all environments (indexedb, dynamodb, rocksdb, ...)
 
-# Roadmap
+# Development
+
+## Contributing
+
+All contributions are welcome. Feel free to PR!
+
+## Roadmap
 
 All contributions welcome :)
 
@@ -386,6 +394,10 @@ All contributions welcome :)
 - Testing
   - [] Improve testing
   - [] Performance testing & benchmarking against others
+
+## Continuous Benchmarking
+
+![Continuous Benchmarking](./benchmark/chart.png)
 
 # Credits
 
