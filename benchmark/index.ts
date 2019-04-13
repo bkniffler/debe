@@ -1,13 +1,7 @@
 import { Debe, generate } from '../src/core';
 import { MemoryAdapter } from '../src/memory';
 import { Sqlite3Adapter } from '../src/better-sqlite3';
-import {
-  writeJSON,
-  readJSONSync,
-  removeSync,
-  ensureDirSync,
-  writeFile
-} from 'fs-extra';
+import { writeJSON, readJSONSync, removeSync, ensureDirSync } from 'fs-extra';
 import { resolve, join } from 'path';
 import { chartist } from './chartist';
 const Benchmark = require('benchmark');
@@ -15,8 +9,7 @@ const Benchmark = require('benchmark');
 console.log('Starting benchmark');
 
 const p = resolve(__dirname, 'results.json');
-const svg = resolve(__dirname, 'chart.svg');
-const html = resolve(__dirname, 'chart.html');
+const png = resolve(__dirname, 'chart.png');
 const versions = readJSONSync(p);
 const pkg = readJSONSync(resolve(__dirname, '../package.json'));
 versions[pkg.version] = {};
@@ -120,16 +113,15 @@ async function work() {
         suites[key].map(v => v / max[i])
       );
 
-      const [svgString, htmlString] = await chartist(
+      await chartist(
         'line',
-        { width: 800, height: 500 },
+        { width: 1200, height: 600 },
         {
           labels,
           series
-        }
+        },
+        png
       );
-      await writeFile(svg, svgString);
-      await writeFile(html, htmlString);
     })
     .run({ async: true });
 }

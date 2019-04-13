@@ -65,6 +65,7 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-resolve": "^4.2.1",
+    "svg2img": "^0.6.0",
     "ts-jest": "^24.0.2",
     "typedoc": "^0.14.2",
     "typescript": "^3.4.2"
