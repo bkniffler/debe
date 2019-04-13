@@ -337,6 +337,15 @@ NodeJS, electron adapter for PostgreSQL
 - NodeJS
 - Electron main
 
+### IndexedDB
+
+IndexedDB adapter based on idb package.
+
+**Targets**
+
+- Browser
+- Electron renderer
+
 # Development
 
 ## Contributing
@@ -357,6 +366,8 @@ All contributions welcome :)
   - [x] Chunking
   - [x] Batching
   - [ ] Conflict Resolution (automerge?)
+- Socket
+  - [ ] Autodiscovery
 - [x] Subscription
   - [x] Batching
 - Adapters
@@ -364,9 +375,9 @@ All contributions welcome :)
   - [x] Socket
   - [x] PostgreSQL
   - [x] SQLite
+  - [x] IndexedDB
   - [x] Dexie (EXPERIMENTAL)
   - [x] NanoSQL (EXPERIMENTAL)
-  - [ ] Raw IndexedDB
   - [ ] MongoDB
   - [ ] AWS DynamoDB
   - [ ] MS CosmosDB

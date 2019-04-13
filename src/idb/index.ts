@@ -1,5 +1,13 @@
-import { IQuery, DebeAdapter, ICollection, IInsert } from 'debe';
-import { createMemoryFilter } from 'debe-memory';
+import {
+  IQuery,
+  DebeAdapter,
+  ICollection,
+  IInsert,
+  ICollections,
+  chunkSequencial,
+  IGetItem
+} from 'debe';
+import { createMemoryFilter, pluck } from 'debe-memory';
 import { IDBPDatabase } from 'idb';
 const idb = require('idb/with-async-ittr-cjs');
 
@@ -16,7 +24,6 @@ const idb = require('idb/with-async-ittr-cjs');
 });*/
 
 export class IDBAdapter extends DebeAdapter {
-  chunks = 10000;
   filter = createMemoryFilter().filter;
   db: IDBPDatabase<any>;
   name: string;
@@ -28,8 +35,7 @@ export class IDBAdapter extends DebeAdapter {
     this.db.close();
     return Promise.resolve();
   }
-  async initialize() {
-    const collections = this.collections;
+  async initialize(collections: ICollections) {
     this.db = await idb.openDB(this.name, 1, {
       upgrade(db: IDBPDatabase) {
         for (var key in collections) {
@@ -39,7 +45,7 @@ export class IDBAdapter extends DebeAdapter {
             autoIncrement: false
           });
           for (var key in collection.index) {
-            store.createIndex(key, collection.index[key] || 'string');
+            store.createIndex(key, key);
           }
         }
       }
@@ -60,11 +66,15 @@ export class IDBAdapter extends DebeAdapter {
         return item;
       });
     }
-    const tx = this.db.transaction(collection.name, 'readwrite');
-    for (var item of items) {
-      tx.store.add(item);
-    }
-    await tx.done;
+
+    await chunkSequencial<any>(items, 1000, async items => {
+      const tx = this.db.transaction(collection.name, 'readwrite');
+      for (var item of items) {
+        tx.store.put(item);
+      }
+      await tx.done;
+      return items;
+    });
     return items;
   }
   async remove(collection: ICollection, ids: string[]) {
@@ -80,20 +90,34 @@ export class IDBAdapter extends DebeAdapter {
     return item;
   }
   async all(collection: ICollection, query: IQuery) {
-    /*let result = await this.baseQuery(collection.name, query).toArray();
-    if (query.select) {
-      result = result.map(x => pluck(x, query.select));
-    }*/
     const tx = this.db.transaction(collection.name, 'readwrite');
-    let values = [];
-    for await (const cursor of tx.store) {
-      values.push(cursor.value);
+    let values: IGetItem[] = [];
+    let offset = query.offset || 0;
+    const filter = query.where ? this.filter(query.where) : undefined;
+    const [index]: [string?, string?] = query.orderBy
+      ? (query.orderBy[0].split(' ') as any)
+      : [];
+    const iterable = index ? tx.store.index(index) : tx.store;
+    tx.store.openCursor();
+    for await (const cursor of iterable) {
+      if (offset <= 0) {
+        if (!filter || filter(cursor.value)) {
+          values.push(
+            query.select ? pluck(cursor.value, query.select) : cursor.value
+          );
+        }
+        if (query.limit && values.length >= query.limit) {
+          break;
+        }
+      } else {
+        offset = offset - 1;
+      }
     }
     await tx.done;
     return values;
   }
-  count(collection: ICollection, query: IQuery) {
-    return 0; // this.baseQuery(collection.name, query).count();
+  async count(collection: ICollection, query: IQuery) {
+    return this.all(collection, query).then(x => x.length);
   }
   /*private baseQuery(
     collection: string,
