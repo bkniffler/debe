@@ -83,12 +83,20 @@ Object.keys(paths).forEach(key => {
         file: join(lib, 'index.umd.js'),
         format: 'umd',
         extend: true,
-        globals: Object.keys(paths).reduce((state, k) => {
-          state[k] = 'debe';
-          return state;
-        }, {})
+        globals: Object.keys(paths).reduce(
+          (state, k) => {
+            state[k] = 'debe';
+            return state;
+          },
+          {
+            react: 'React'
+          }
+        )
       },
-      external: Object.keys(paths).filter(x => integrate.indexOf(x) === -1),
+      external: [
+        ...Object.keys(paths).filter(x => integrate.indexOf(x) === -1),
+        'react'
+      ],
       plugins: [
         buildIns(),
         alias(
