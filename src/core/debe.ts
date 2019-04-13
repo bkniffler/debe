@@ -15,7 +15,8 @@ import {
   IDebeUse
 } from './types';
 import { DebeDispatcher } from './dispatcher';
-import { DebeAdapter, DebeAdapterDispatcher } from './adapter';
+import { DebeBackend } from './backend';
+import { DebeAdapter } from './adapter';
 
 export function ensureCollection(collection: ICollectionInput): ICollection {
   if (!collection.fields) {
@@ -60,7 +61,7 @@ export class Debe<TBase = IItem> {
         collections,
         ensureCollection
       );
-      this.dispatcher = new DebeAdapterDispatcher(
+      this.dispatcher = new DebeBackend(
         this,
         adapterOrAdapter,
         collectionsObj,

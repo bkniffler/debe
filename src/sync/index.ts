@@ -1,4 +1,4 @@
-import { Debe, createLog, ensureCollection, DebeAdapterDispatcher } from 'debe';
+import { Debe, createLog, ensureCollection, DebeBackend } from 'debe';
 import { syncstateTable } from './constants';
 import { initiateSync } from './sync';
 import { IAddress } from './types';
@@ -16,7 +16,7 @@ export class Sync {
   constructor(db: Debe, where?: string[]) {
     this.db = db;
     this.where = where;
-    (db.dispatcher as DebeAdapterDispatcher).middlewares.push({
+    (db.dispatcher as DebeBackend).middlewares.push({
       collections(collections) {
         collections[syncstateTable] = ensureCollection({
           name: syncstateTable
@@ -37,8 +37,7 @@ export class Sync {
     await this.db.initializing;
     // LOgic
     let cancels: Function[] = [];
-    const collections = (this.db.dispatcher as DebeAdapterDispatcher)
-      .collections;
+    const collections = (this.db.dispatcher as DebeBackend).collections;
     Object.keys(collections)
       .filter(x => x !== syncstateTable)
       .forEach(table => {

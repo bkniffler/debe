@@ -1,4 +1,4 @@
-import { addToQuery, Debe, IItem, IGetItem, DebeAdapterDispatcher } from 'debe';
+import { addToQuery, Debe, IItem, IGetItem, DebeBackend } from 'debe';
 import { ISocketBase } from 'asyngular-client';
 import {
   ICountInitialChanges,
@@ -14,7 +14,7 @@ export function createServerChannels(
   client: Debe,
   server: IAGServer
 ) {
-  const collections = (client.dispatcher as DebeAdapterDispatcher).collections;
+  const collections = (client.dispatcher as DebeBackend).collections;
   for (let key in collections) {
     const collection = collections[key];
     (async () => {
@@ -61,7 +61,7 @@ export async function createSocketChannels(
   socket: ISocketBase,
   server: IAGServer
 ) {
-  const collections = (client.dispatcher as DebeAdapterDispatcher).collections;
+  const collections = (client.dispatcher as DebeBackend).collections;
   (async () => {
     for await (let req of socket.procedure<ICountInitialChanges, number>(
       'countInitialChanges'
