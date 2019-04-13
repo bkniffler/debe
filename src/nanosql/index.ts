@@ -118,18 +118,10 @@ export class NanoSQLAdapter extends DebeAdapter {
       });
     }
 
-    await this.db.rawImport(
-      {
-        [collection.name]: items.map(x =>
-          this.transformForStorage(collection, x)
-        )
-      },
-      false
-    );
-    /*await this.db
+    await this.db
       .selectTable(collection.name)
       .query('upsert', items.map(x => this.transformForStorage(collection, x)))
-      .exec();*/
+      .exec();
 
     return items;
   }
@@ -149,9 +141,11 @@ export class NanoSQLAdapter extends DebeAdapter {
       .exec()
       .then(r => this.transformForFrontend(collection, r[0]));
   }
-  cleanField(collection: ICollection) {
+  cleanField(collection: ICollection, as = false) {
     return (field: string) =>
-      collection.fields[field.trim()] ? field : `${this.bodyField}.${field}`;
+      collection.fields[field.trim()]
+        ? field
+        : `${this.bodyField}.${field}${as ? ` AS ${field}` : ''}`;
   }
   cleanQuery(collection: ICollection, query: IQuery) {
     if (query.orderBy) {
@@ -161,7 +155,7 @@ export class NanoSQLAdapter extends DebeAdapter {
       });
     }
     if (query.select) {
-      query.select = query.select.map(this.cleanField(collection));
+      query.select = query.select.map(this.cleanField(collection, true));
     }
     return query;
   }
