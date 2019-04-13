@@ -25,6 +25,10 @@ export class Sync {
       }
     });
   }
+  async initialize() {
+    await this.db.initialize();
+    return this;
+  }
   forceSync() {
     return new Promise(yay => setTimeout(yay, 3000));
   }

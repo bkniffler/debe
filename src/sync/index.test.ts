@@ -27,15 +27,12 @@ async function generateItemsInto(db: Debe, count: number = 1000, prefix = '') {
 }
 async function spawnServer(port: number, syncTo?: number) {
   const db = new Debe(new MemoryAdapter(), schema);
-  const server = new SyncServer(db, port, syncTo ? ['localhost', syncTo] : []);
-  await server.initialize();
-  return server;
+  const target: any = syncTo ? ['localhost', syncTo] : undefined;
+  return new SyncServer(db, port, target).initialize();
 }
 async function spawnClient(port: number) {
   const db = new Debe(new MemoryAdapter(), schema);
-  const sync = new SyncClient(db, ['localhost', port]);
-  await db.initialize();
-  return sync;
+  return new SyncClient(db, ['localhost', port]).initialize();
 }
 async function generateClients(port: number, numberOfClients: number) {
   const clients: SyncClient[] = [];

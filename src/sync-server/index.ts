@@ -28,6 +28,7 @@ export class SyncServer {
     this.serverListener();
     this.socketListener();
     setTimeout(() => this.httpServer.listen(this.port));
+    return this;
   }
   async serverListener() {
     createServerChannels(this.id, this.db, this.agServer);

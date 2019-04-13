@@ -79,6 +79,7 @@ export class Debe<TBase = IItem> {
       this.initializing = this.dispatcher.initialize();
     }
     await this.initializing;
+    return this;
   }
   use<T = IItem>(collection: string): IDebeUse<T> {
     const proxy = this;
