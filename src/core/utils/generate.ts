@@ -7,6 +7,27 @@ export function setIdGenerator(generator: (size?: number) => string) {
 export function generate(size?: number) {
   return _generate(size);
 }
+
+let me =
+  typeof window !== 'undefined'
+    ? window
+    : typeof self !== 'undefined'
+    ? self
+    : undefined;
+if (me) {
+  const crypto = me.crypto || me['msCrypto'];
+  const url =
+    'Uint8ArdomValuesObj012345679BCDEFGHIJKLMNPQRSTWXYZ_cfghkpqvwxyz-';
+  _generate = function(size: number) {
+    size = size || 21;
+    var id = '';
+    var bytes = crypto.getRandomValues(new Uint8Array(size));
+    while (0 < size--) {
+      id += url[bytes[size] & 63];
+    }
+    return id;
+  };
+}
 /*
 var lut: string[] = [];
 for (var i = 0; i < 256; i++) {

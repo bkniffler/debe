@@ -4,9 +4,9 @@
     <script src="../../lib/memory/index.umd.js"></script>
     <script>
       console.log(window.debe);
-      /*const MemoryDebe = window.debe.MemoryDebe;
-      async function work(changeListener) {
-        const db = new MemoryDebe({ changeListener });
+      const MemoryDebe = window.debe.MemoryDebe;
+      async function work() {
+        const db = new MemoryDebe([{ name: 'lorem' }]);
         await db.initialize();
         const items = [];
         const length = 100000;
@@ -23,7 +23,7 @@
         );
         await db.all('lorem');
       }
-      work(true).then(x => work(false));*/
+      work().then(x => work(false));
     </script>
   </head>
 </html>
