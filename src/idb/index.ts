@@ -11,18 +11,6 @@ import { createMemoryFilter, pluck } from 'debe-memory';
 import { IDBPDatabase } from 'idb';
 const idb = require('idb/with-async-ittr-cjs');
 
-/*const filter = new FilterReducer<Table<any, IndexableType>>({
-  '!=': (col, field, value) => col.where(field).notEqual(value) as any,
-  '<': (col, field, value) => col.where(field).below(value) as any,
-  '<=': (col, field, value) => col.where(field).belowOrEqual(value) as any,
-  '=': (col, field, value) => col.where(field).equals(value) as any,
-  '>': (col, field, value) => col.where(field).above(value) as any,
-  '>=': (col, field, value) => col.where(field).aboveOrEqual(value) as any,
-  IN: (col, field, value) => col.where(field).anyOf(value) as any,
-  'NOT IN': (col, field, value) => col.where(field).noneOf(value) as any,
-  'IS NULL': (col, field) => col.where(field).equals(null). as any
-});*/
-
 export class IDBAdapter extends DebeAdapter {
   filter = createMemoryFilter().filter;
   db: IDBPDatabase<any>;
@@ -31,9 +19,8 @@ export class IDBAdapter extends DebeAdapter {
     super();
     this.name = name;
   }
-  close() {
+  async close() {
     this.db.close();
-    return Promise.resolve();
   }
   async initialize(collections: ICollections) {
     this.db = await idb.openDB(this.name, 1, {
@@ -119,34 +106,4 @@ export class IDBAdapter extends DebeAdapter {
   async count(collection: ICollection, query: IQuery) {
     return this.all(collection, query).then(x => x.length);
   }
-  /*private baseQuery(
-    collection: string,
-    { where, offset, limit, orderBy }: IQuery
-  ) {
-    let cursor = this.db.table(collection);
-    if (orderBy && orderBy.length) {
-      const [key, dir] = orderBy[0].split(' ');
-      cursor = cursor.orderBy(key) as any;
-      if (dir === 'DESC') {
-        cursor = cursor.reverse() as any;
-      }
-    }
-    /*if (where) {
-      //const filter = createFilter(where);
-      if (filter) {
-        cursor = cursor.filter(filter) as any;
-      }
-      // cursor = filter.reduce(cursor, where);
-    }*
-    if (where) {
-      cursor = cursor.filter(this.filter(where)) as any;
-    }
-    if (offset) {
-      cursor = cursor.offset(offset) as any;
-    }
-    if (limit) {
-      cursor = cursor.limit(limit) as any;
-    }
-    return cursor;
-  }*/
 }

@@ -43,18 +43,6 @@ async function work() {
       { defer: true }
     )
     .add(
-      'merge',
-      function(deferred: any) {
-        clientMemory
-          .insert(table, {
-            id: 'asd0',
-            name: 'Hallo'
-          })
-          .then(() => deferred.resolve());
-      },
-      { defer: true }
-    )
-    .add(
       'better-sqlite3',
       function(deferred: any) {
         clientSqlite3
