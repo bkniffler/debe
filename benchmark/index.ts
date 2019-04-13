@@ -115,7 +115,7 @@ async function work() {
 
       await chartist(
         'line',
-        { width: 1200, height: 600 },
+        { width: 1200, height: 400 },
         {
           labels,
           series
