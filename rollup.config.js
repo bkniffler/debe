@@ -1,6 +1,7 @@
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import buildIns from 'rollup-plugin-node-builtins';
+import replace from 'rollup-plugin-replace';
 import autoExternal from 'rollup-plugin-auto-external';
 import alias from 'rollup-plugin-alias';
 import json from 'rollup-plugin-json';
@@ -98,6 +99,9 @@ Object.keys(paths).forEach(key => {
         'react'
       ],
       plugins: [
+        replace({
+          'process.env.NODE_ENV': JSON.stringify('production')
+        }),
         buildIns(),
         alias(
           integrate.reduce(
