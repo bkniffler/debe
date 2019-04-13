@@ -14,7 +14,7 @@ let me =
     : typeof self !== 'undefined'
     ? self
     : undefined;
-if (me && !id) {
+if (me && typeof _generate !== 'function') {
   const crypto = me.crypto || me['msCrypto'];
   if (crypto) {
     const url =
