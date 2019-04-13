@@ -119,8 +119,7 @@ export function createAdapterTest(
     }
   });
 
-  const isQualified =
-    name !== 'dexie' && name !== 'postgresql' && name !== 'nanosql';
+  const isQualified = name !== 'idb' && name !== 'postgresql';
   test(
     isQualified ? `adapter:${name}:million` : `adapter:${name}:thousand`,
     async () => {

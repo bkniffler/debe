@@ -52,7 +52,10 @@ export class FilterReducer<T = any, T2 = T> {
     this.map = map;
     this.mapField = mapField;
   }
-  filter = (query: [string, ...any[]], mapField?: IMapField): any => {
+  filter = (
+    query: [string, ...any[]],
+    mapField?: IMapField
+  ): ((item: T) => boolean) => {
     const array = queryToArray(query);
     mapField = mapField || this.mapField;
     return (item: T) => {

@@ -8,6 +8,8 @@ import {
 import { IObject } from './utils';
 
 export abstract class DebeAdapter<TBase = IItem> {
+  chunks = 1000000;
+  chunkMode = 'parallel';
   // Abstract
   abstract initialize(
     collections: IObject<ICollection>,

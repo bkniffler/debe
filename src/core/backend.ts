@@ -32,11 +32,11 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
   options: IBackendOptions;
   collections: IObject<ICollection> = {};
   middlewares: IMiddlewareInner[] = [];
-  frontend: Debe;
-  backend: DebeAdapter;
+  db: Debe;
+  adapter: DebeAdapter;
   constructor(
-    frontend: Debe,
-    backend: DebeAdapter,
+    db: Debe,
+    adapter: DebeAdapter,
     collections: ICollections,
     options: IBackendOptions = {}
   ) {
@@ -48,16 +48,16 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
       changeListener = true,
       softDelete = false
     } = options;
-    this.frontend = frontend;
-    this.backend = backend;
+    this.db = db;
+    this.adapter = adapter;
     if (changeListener) {
-      this.middlewares.push(changeListenerPlugin(options as any)(frontend));
+      this.middlewares.push(changeListenerPlugin(options as any)(db));
     }
     if (softDelete) {
-      this.middlewares.push(softDeletePlugin(options as any)(frontend));
+      this.middlewares.push(softDeletePlugin(options as any)(db));
     }
     for (var middleware of middlewares) {
-      this.middlewares.push(middleware(frontend));
+      this.middlewares.push(middleware(db));
     }
   }
   run(action: actionTypes, collection: string, payload?: any, options?: any) {
@@ -77,7 +77,7 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
     return this.collections[name];
   }
   async close() {
-    await this.backend.close();
+    await this.adapter.close();
   }
   async initialize() {
     this.options = { idField: this.options.idField || 'id' };
@@ -97,7 +97,7 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
       }
     }
     this.collections = this.collections;
-    await this.backend.initialize(this.collections, this.options);
+    await this.adapter.initialize(this.collections, this.options);
   }
 
   transformItemIn<T = TBase>(
@@ -158,14 +158,13 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
     value: (T & IInsertItem)[],
     options: IInsert
   ): Promise<(T & IGetItem)[]> {
-    if (this.chunks && value.length > this.chunks) {
-      return (this.chunkMode === 'sequencial'
-        ? chunkSequencial
-        : chunkParallel)<T & IInsertItem, T & IGetItem>(
-        value,
-        this.chunks,
-        items => this.insert(collection, items, { ...options })
-      );
+    const chunks = this.adapter.chunks || this.chunks;
+    const chunkMode = this.adapter.chunkMode || this.chunkMode;
+    if (chunks && value.length > chunks) {
+      return (chunkMode === 'sequencial' ? chunkSequencial : chunkParallel)<
+        T & IInsertItem,
+        T & IGetItem
+      >(value, chunks, items => this.insert(collection, items, { ...options }));
     }
 
     if (!options.new) {
@@ -184,7 +183,7 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
       }
     }
 
-    const result = await this.backend.insert(c, input, options);
+    const result = await this.adapter.insert(c, input, options);
     const transformed = result.map(x => this.transformItemOut(c, x));
     for (var middleware of this.middlewares) {
       if (middleware.afterInsert) {
@@ -203,7 +202,7 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
         }
       }
     }
-    const result = await this.backend.remove(c, value);
+    const result = await this.adapter.remove(c, value);
     for (var middleware of this.middlewares) {
       if (middleware.afterRemove) {
         middleware.afterRemove(c, value, result);
@@ -217,13 +216,13 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
   ): Promise<(T & IGetItem)[]> {
     const c = this.collection(collection);
     value = this.query(c, value);
-    const result = await this.backend.all(c, value);
+    const result = await this.adapter.all(c, value);
     return this.transformItemOut(c, result);
   }
   async count(collection: string, value: IQuery): Promise<number> {
     const c = this.collection(collection);
     value = this.query(c, value);
-    const result = await this.backend.count(c, value);
+    const result = await this.adapter.count(c, value);
     return result;
   }
   async get<T = TBase>(
@@ -231,7 +230,7 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
     value: string
   ): Promise<T & IGetItem> {
     const c = this.collection(collection);
-    const result = await this.backend.get(c, value);
+    const result = await this.adapter.get(c, value);
     return this.transformItemOut(c, result);
   }
 }
