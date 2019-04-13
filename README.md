@@ -364,8 +364,8 @@ All contributions welcome :)
   - [x] Socket
   - [x] PostgreSQL
   - [x] SQLite
-  - [x] Dexie
-  - [x] NanoSQL
+  - [x] Dexie (EXPERIMENTAL)
+  - [x] NanoSQL (EXPERIMENTAL)
   - [ ] Raw IndexedDB
   - [ ] MongoDB
   - [ ] AWS DynamoDB
