@@ -364,14 +364,14 @@ All contributions welcome :)
 
 - Middleware
   - [x] Chunk insert
-  - [] Chunk all/fetch
+  - [ ] Chunk all/fetch
 - Docs
-  - [] Write real docs :(
+  - [ ] Write real docs :(
 - Replication
-  - [] Progress
+  - [ ] Progress
   - [x] Chunking
   - [x] Batching
-  - [] Conflict Resolution (automerge?)
+  - [ ] Conflict Resolution (automerge?)
 - [x] Subscription
   - [x] Batching
 - Adapters
@@ -381,19 +381,19 @@ All contributions welcome :)
   - [x] SQLite
   - [x] Dexie
   - [x] NanoSQL
-  - [] Raw IndexedDB
-  - [] MongoDB
-  - [] AWS DynamoDB
-  - [] MS CosmosDB
-  - [] CouchDB/Cloudant
-  - [] RocksDB
-  - [] Redis
+  - [ ] Raw IndexedDB
+  - [ ] MongoDB
+  - [ ] AWS DynamoDB
+  - [ ] MS CosmosDB
+  - [ ] CouchDB/Cloudant
+  - [ ] RocksDB
+  - [ ] Redis
 - Bindings
   - [x] React
-  - [] Vue
+  - [ ] Vue
 - Testing
-  - [] Improve testing
-  - [] Performance testing & benchmarking against others
+  - [ ] Improve testing
+  - [ ] Performance testing & benchmarking against others
 
 ## Continuous Benchmarking
 
