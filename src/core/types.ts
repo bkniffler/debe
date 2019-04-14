@@ -86,25 +86,25 @@ export interface IListenerOptions {
 }
 
 export interface IDebeUse<T> {
-  all(queryArgs: string[] | IQueryInput): Promise<T[]>;
+  all(queryArgs?: string[] | IQueryInput): Promise<T[]>;
   all(
-    queryArgs: string[] | IQueryInput,
+    queryArgs?: string[] | IQueryInput,
     cb?: IObserverCallback<T[]>
   ): () => void;
   all(
-    queryArgs: string[] | IQueryInput,
+    queryArgs?: string[] | IQueryInput,
     cb?: IObserverCallback<T[]>
   ): Promise<T[]> | (() => void);
-  count(queryArgs: IQueryInput): Promise<number>;
-  count(queryArgs: IQueryInput, cb?: IObserverCallback<number>): () => void;
+  count(queryArgs?: IQueryInput): Promise<number>;
+  count(queryArgs?: IQueryInput, cb?: IObserverCallback<number>): () => void;
   count(
-    queryArgs: IQueryInput,
+    queryArgs?: IQueryInput,
     cb?: IObserverCallback<number>
   ): Promise<number> | (() => void);
-  get(queryArgs: IQueryInput | string): Promise<T>;
-  get(queryArgs: IQueryInput | string, cb?: IObserverCallback<T>): () => void;
+  get(queryArgs?: IQueryInput | string): Promise<T>;
+  get(queryArgs?: IQueryInput | string, cb?: IObserverCallback<T>): () => void;
   get(
-    queryArgs: IQueryInput | string,
+    queryArgs?: IQueryInput | string,
     cb?: IObserverCallback<T>
   ): Promise<T> | (() => void);
   remove(query: string | string[]): Promise<void>;

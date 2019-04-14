@@ -39,7 +39,7 @@ export class Sync {
     }
   }
   async connect(socket: ISocket) {
-    await this.db.initializing;
+    await this.db.initialize();
     // LOgic
     let cancels: Function[] = [];
     const collections = (this.db.dispatcher as DebeBackend).collections;

@@ -18,7 +18,10 @@ export function useAllOnce<T>(
   );
 }
 
-export function useGetOnce<T>(collection: string, query: IQueryInput | string) {
+export function useGetOnce<T>(
+  collection: string,
+  query?: IQueryInput | string
+) {
   return useBebeBase<(T & IGetItem) | undefined>(
     collection,
     (proxy, cb) => {
@@ -29,7 +32,7 @@ export function useGetOnce<T>(collection: string, query: IQueryInput | string) {
   );
 }
 
-export function useAll<T>(collection: string, query: IQueryInput | string[]) {
+export function useAll<T>(collection: string, query?: IQueryInput | string[]) {
   return useBebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
     (proxy, cb) =>
@@ -145,15 +148,14 @@ export function DebeProvider({
     debe
       .initialize()
       .then(() => initialize(debe))
-      .then(() => {
-        setState(true);
-      })
+      .then(() => setState(true))
       .catch(err => console.log(err));
     return () => {
       // debe.close();
     };
   }, []);
   let child = null;
+  console.log(isInitialized);
   if (!isInitialized && loading) {
     child = loading();
   } else if (isInitialized && render) {

@@ -46,6 +46,9 @@ export const changeListenerPlugin: IMiddleware<IChangeListenerOptions> = ({
     afterInsert(collection, items, options) {
       emitter.emit(collection.name, items, options);
     },
+    afterRemove(collection, items, options) {
+      emitter.emit(collection.name, items, options);
+    },
     collection(collection) {
       collection.specialFields.rev = revField;
       collection.fields[revField] = 'string';

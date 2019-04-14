@@ -66,9 +66,6 @@ export class MemoryAdapter extends DebeAdapter {
     return length;
   }
   insert(collection: ICollection, items: any[], options: IInsert) {
-    if (!this.store[collection.name]) {
-      console.log(Object.keys(this.store), collection.name);
-    }
     for (var item of items) {
       const update = options.existing.indexOf(item.id) !== -1 && options.update;
       this.handle(collection.name, item, update);
