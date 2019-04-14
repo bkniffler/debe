@@ -1,10 +1,10 @@
-import { PostgreSQLAdapter } from './index';
-import { createAdapterTest } from 'debe/adapter.test';
+import { PostgreSQLDebe } from './index';
+import { createAdapterTest } from 'debe/dispatcher.test';
 
 if (process.env.PG_CONNECTIONSTRING) {
   createAdapterTest(
     'postgresql',
-    () => new PostgreSQLAdapter(process.env.PG_CONNECTIONSTRING + '')
+    col => new PostgreSQLDebe(process.env.PG_CONNECTIONSTRING + '', col)
   );
 } else {
   test('postgresql:many', async () => {

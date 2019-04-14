@@ -1,5 +1,5 @@
 import { Debe } from 'debe';
-import { MemoryAdapter } from 'debe-memory';
+import { MemoryDebe } from 'debe-memory';
 import { SyncServer } from 'debe-sync-server';
 import { SyncClient } from './index';
 
@@ -26,12 +26,12 @@ async function generateItemsInto(db: Debe, count: number = 1000, prefix = '') {
   await db.insert('lorem', items);
 }
 async function spawnServer(port: number, syncTo?: number) {
-  const db = new Debe(new MemoryAdapter(), schema);
+  const db = new MemoryDebe(schema);
   const target: any = syncTo ? ['localhost', syncTo] : undefined;
   return new SyncServer(db, port, target).initialize();
 }
 async function spawnClient(port: number) {
-  const db = new Debe(new MemoryAdapter(), schema);
+  const db = new MemoryDebe(schema);
   return new SyncClient(db, ['localhost', port]).initialize();
 }
 async function generateClients(port: number, numberOfClients: number) {

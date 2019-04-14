@@ -3,8 +3,6 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
-    "debe-flow": "*",
-    "nanoid": "^2.0.1",
     "tslib": "^1.9.3"
   }
 }

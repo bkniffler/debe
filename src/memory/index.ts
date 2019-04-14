@@ -1,43 +1,28 @@
 import {
   IGetItem,
   IQuery,
-  FilterReducer,
-  ensureArray,
   ICollection,
   IInsert,
-  DebeAdapter,
   ICollections,
   Debe,
   ICollectionInput
 } from 'debe';
+import {
+  DebeAdapter,
+  createMemoryFilter,
+  sortArray,
+  pluck,
+  DebeBackend
+} from 'debe-adapter';
+
+export class MemoryDebe extends Debe {
+  constructor(collections: ICollectionInput[], options?: any) {
+    super(new DebeBackend(new MemoryAdapter(), collections, options));
+  }
+}
 
 interface IStore {
   [s: string]: Map<string, IGetItem>;
-}
-
-export function pluck(sourceObject: IGetItem, keys: string[] = []): IGetItem {
-  if (!sourceObject) {
-    return sourceObject;
-  }
-  const newObject = {
-    id: sourceObject.id,
-    rev: sourceObject.rev
-  };
-  for (var key of keys) {
-    newObject[key] = sourceObject[key];
-  }
-  return newObject;
-}
-
-export class MemoryDebe extends Debe {
-  constructor(
-    collections: ICollectionInput[],
-    options: {
-      [s: string]: any;
-    } = {}
-  ) {
-    super(new MemoryAdapter(), collections, options);
-  }
 }
 
 export class MemoryAdapter extends DebeAdapter {
@@ -108,34 +93,4 @@ export class MemoryAdapter extends DebeAdapter {
     }
     return item;
   }
-}
-
-export const createMemoryFilter = () =>
-  new FilterReducer<any, boolean>({
-    '!=': (col, field, value) => (col[field] || null) != (value || null),
-    '<': (col, field, value) => col[field] < value,
-    '<=': (col, field, value) => col[field] <= value,
-    '=': (col, field, value) => (col[field] || null) == (value || null),
-    '>': (col, field, value) => col[field] > value,
-    '>=': (col, field, value) => col[field] >= value,
-    IN: (col, field, value) => ensureArray(value).indexOf(col[field]) >= 0,
-    'NOT IN': (col, field, value) => ensureArray(value).indexOf(col[field]) < 0,
-    'IS NULL': (col, field) => (col[field] || null) === null
-  });
-
-export function sortArray(arr: any[], orderer: string | string[]): any[] {
-  if (Array.isArray(orderer)) {
-    return orderer.reduce((arr, str) => sortArray(arr, str), arr);
-  }
-  const [fieldName = '', direction = ''] = (orderer || '').split(' ');
-  if (fieldName) {
-    const isDesc = direction.toUpperCase() === 'DESC';
-    const compare = (a: any, b: any) => {
-      if (a[fieldName] < b[fieldName]) return isDesc ? 1 : -1;
-      if (a[fieldName] > b[fieldName]) return isDesc ? -1 : 1;
-      return 0;
-    };
-    return arr.sort(compare);
-  }
-  return arr;
 }

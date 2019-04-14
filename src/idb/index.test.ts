@@ -1,6 +1,9 @@
 require('fake-indexeddb/auto');
-import { generate } from 'debe';
-import { IDBAdapter } from './index';
-import { createAdapterTest } from 'debe/adapter.test';
+import { generate } from 'debe-adapter';
+import { IDBDebe } from './index';
+import { createAdapterTest } from 'debe/dispatcher.test';
 
-createAdapterTest('idb', () => new IDBAdapter(generate().substr(0, 3)));
+createAdapterTest(
+  'idb',
+  (col, options) => new IDBDebe(col, generate().substr(0, 3), options)
+);

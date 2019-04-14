@@ -1,11 +1,12 @@
-import { Debe, generate } from 'debe';
-import { PostgreSQLAdapter } from 'debe-postgresql';
+import { Debe } from 'debe';
+import { PostgreSQLDebe } from 'debe-postgresql';
 import { delta } from './index';
-import { Sqlite3Adapter } from 'debe-better-sqlite3';
+import { BetterSqlite3Debe } from 'debe-better-sqlite3';
 import { join } from 'path';
 import { removeSync, ensureDirSync } from 'fs-extra';
-import { MemoryAdapter } from 'debe-memory';
+import { MemoryDebe } from 'debe-memory';
 import * as Automerge from 'automerge';
+import { generate } from 'debe-adapter';
 
 const schema = [
   {
@@ -20,9 +21,9 @@ interface ILorem {
   lastName?: string;
 }
 
-async function t(adapter: any) {
+async function t(getDebe: (schema: any[], options: any) => Debe) {
   const merged = {};
-  const db = new Debe(adapter, schema, {
+  const db = getDebe(schema, {
     softDelete: true,
     middlewares: [
       delta({
@@ -92,13 +93,16 @@ async function t(adapter: any) {
 }
 
 test('delta:simple:memory', async cb => {
-  await t(new MemoryAdapter());
+  await t((col, opt) => new MemoryDebe(col, opt));
   cb();
 });
 
 if (process.env.PG_CONNECTIONSTRING) {
   test('delta:simple:postgresql', async cb => {
-    await t(new PostgreSQLAdapter(process.env.PG_CONNECTIONSTRING + ''));
+    await t(
+      (col, opt) =>
+        new PostgreSQLDebe(process.env.PG_CONNECTIONSTRING + '', col, opt)
+    );
     cb();
   });
 }
@@ -108,6 +112,6 @@ removeSync(dbDir);
 ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');
 test('delta:simple:better-sqlite3', async cb => {
-  await t(new Sqlite3Adapter(getDBDir()));
+  await t((col, opt) => new BetterSqlite3Debe(getDBDir(), col, opt));
   cb();
 });

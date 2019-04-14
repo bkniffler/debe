@@ -1,11 +1,6 @@
-import {
-  ICollection,
-  IItem,
-  IQuery,
-  IInsert,
-  IAdapterOptionsInput
-} from './types';
+import { IAdapterOptionsInput } from './types';
 import { IObject } from './utils';
+import { IItem, ICollection, IQuery, IInsert } from 'debe';
 
 export abstract class DebeAdapter<TBase = IItem> {
   chunks = 1000000;

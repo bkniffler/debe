@@ -1,8 +1,0 @@
-.env
-.DS_Store
-coverage
-node_modules
-lib
-yarn-error.log
-.temp
-*.sqlite

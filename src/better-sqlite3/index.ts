@@ -2,21 +2,18 @@ import { SQLJsonCore } from 'debe-sql';
 //@ts-ignore
 import * as _sql from 'better-sqlite3';
 import { ICollection, Debe, ICollectionInput } from 'debe';
+import { DebeBackend } from 'debe-adapter';
 const sql = _sql;
 
-export class Sqlite3Debe extends Debe {
-  constructor(
-    collections: ICollectionInput[],
-    dbPath: string,
-    options: {
-      [s: string]: any;
-    } = {}
-  ) {
-    super(new Sqlite3Adapter(dbPath), collections, options);
+export class BetterSqlite3Debe extends Debe {
+  constructor(dbPath: string, collections: ICollectionInput[], options?: any) {
+    super(
+      new DebeBackend(new BetterSqlite3Adapter(dbPath), collections, options)
+    );
   }
 }
 
-export class Sqlite3Adapter extends SQLJsonCore {
+export class BetterSqlite3Adapter extends SQLJsonCore {
   db: any;
   chunks = 50 * 10000;
   constructor(dbPath: string) {

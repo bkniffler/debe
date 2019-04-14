@@ -1,11 +1,13 @@
-import { Debe, generate } from 'debe';
+import { Debe } from 'debe';
 import * as http from 'http';
 import { attach } from 'asyngular-server';
 import { createServerChannels, createSocketChannels } from './server';
 import { SyncClient, IAddress } from 'debe-sync';
 
 export class SyncServer {
-  id = generate();
+  id = `${Math.random()
+    .toString(36)
+    .substr(2, 9)}`;
   port: number;
   sockets: SyncClient[] = [];
   httpServer = http.createServer();

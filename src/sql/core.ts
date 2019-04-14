@@ -4,11 +4,11 @@ import {
   IGetItem,
   IQuery,
   ensureArray,
-  IFieldTypes,
   IInsert,
-  DebeAdapter,
-  ICollections
+  ICollections,
+  fieldType
 } from 'debe';
+import { DebeAdapter } from 'debe-adapter';
 
 export abstract class SQLCore extends DebeAdapter {
   abstract exec<T>(
@@ -23,7 +23,7 @@ export abstract class SQLCore extends DebeAdapter {
     );
   }
   close() {}
-  getColumnType(type: IFieldTypes, secondType?: IFieldTypes): string {
+  getColumnType(type: fieldType, secondType?: fieldType): string {
     if (type === 'boolean') {
       return 'BOOLEAN';
     } else if (type === 'json') {

@@ -1,5 +1,6 @@
-import { generate, fieldTypes, IInsertInput, IMiddleware } from 'debe';
+import { IInsertInput } from 'debe';
 import * as Automerge from 'automerge';
+import { generate, IMiddleware } from 'debe-adapter';
 
 Automerge.uuid.setFactory(generate);
 
@@ -24,10 +25,10 @@ export const delta: IMiddleware<IMergePluginOptions> = (options = {}) => db => {
   return {
     collection(collection) {
       collection.specialFields.automerge = automergeField;
-      collection.fields[automergeField] = fieldTypes.STRING;
+      collection.fields[automergeField] = 'string';
       collection.specialFields.actor = automergeField;
-      collection.fields[actorField] = fieldTypes.STRING;
-      collection.index[actorField] = fieldTypes.STRING;
+      collection.fields[actorField] = 'string';
+      collection.index[actorField] = 'string';
       return collection;
     },
     async beforeInsert(collection, items, options) {

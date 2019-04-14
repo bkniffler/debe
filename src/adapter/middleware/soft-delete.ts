@@ -1,5 +1,5 @@
-import { fieldTypes, IMiddleware } from '../types';
-import { toISO, isNull, and } from '../utils';
+import { IMiddleware } from '../types';
+import { isNull, and } from 'debe';
 
 export interface ISoftDeleteOptions {
   removedField: string;
@@ -10,8 +10,8 @@ export const softDeletePlugin: IMiddleware<ISoftDeleteOptions> = ({
 }) => db => ({
   collection(collection) {
     collection.specialFields.rem = removedField;
-    collection.fields[removedField] = fieldTypes.STRING;
-    collection.index[removedField] = fieldTypes.STRING;
+    collection.fields[removedField] = 'string';
+    collection.index[removedField] = 'string';
     return collection;
   },
   query(collection, query) {
@@ -23,7 +23,7 @@ export const softDeletePlugin: IMiddleware<ISoftDeleteOptions> = ({
       collection.name,
       ids.map(id => ({
         id: id,
-        [removedField]: toISO(new Date())
+        [removedField]: new Date().toISOString()
       }))
     );
     return ids;

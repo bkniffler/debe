@@ -1,5 +1,5 @@
-import { Debe, generate, ICollectionInput, DebeAdapter } from './index';
-import { DebeDispatcher } from './dispatcher';
+import { generate } from 'debe-adapter';
+import { Debe, ICollectionInput } from './index';
 
 test('adapter:test', async () => {
   expect(1).toBe(1);
@@ -11,7 +11,7 @@ interface IServer {
 }
 export function createAdapterTest(
   name: string,
-  createAdapter: (i: number) => DebeAdapter | DebeDispatcher | any,
+  createDB: (collections: any[], options?: any) => Debe,
   init: (
     collections: ICollectionInput[],
     i: number,
@@ -24,7 +24,7 @@ export function createAdapterTest(
     ];
     const ini = await init(collections, 0);
     const table = collections[0].name;
-    const client = new Debe(createAdapter(0), collections);
+    const client = createDB(collections, {});
     await client.initialize();
     const insertResult = await client.insert<any>(table, {
       id: 'asd0',
@@ -52,7 +52,7 @@ export function createAdapterTest(
     ];
     const ini = await init(collections, 0);
     const table = collections[0].name;
-    const client = new Debe(createAdapter(0), collections, {
+    const client = createDB(collections, {
       changeListener: false
     });
     await client.initialize();
@@ -85,7 +85,7 @@ export function createAdapterTest(
     ];
     const ini = await init(collections, 0);
     const table = collections[0].name;
-    const client = new Debe(createAdapter(0), collections);
+    const client = createDB(collections);
     await client.initialize();
     const insertResult = await client.insert<any>(table, {
       id: 'asd0',
@@ -130,7 +130,7 @@ export function createAdapterTest(
       ];
       const ini = await init(collections, 1);
       const table = collections[0].name;
-      const client = new Debe(createAdapter(1), collections);
+      const client = createDB(collections);
       await client.initialize();
       const items = [];
       for (let x = 0; x < count; x++) {
@@ -185,7 +185,7 @@ export function createAdapterTest(
     ];
     const ini = await init(collections, 1);
     const table = collections[0].name;
-    const client = new Debe(createAdapter(1), collections);
+    const client = createDB(collections);
     await client.initialize();
     async function isMatch(item?: any) {
       const single = item || (await client.get(table, 'a0'));
@@ -231,7 +231,7 @@ export function createAdapterTest(
     ];
     const ini = await init(collections, 2);
     const table = collections[0].name;
-    const client = new Debe(createAdapter(2), collections);
+    const client = createDB(collections);
     await client.initialize();
     let calls = 0;
     let countCalls = 0;
@@ -266,7 +266,7 @@ export function createAdapterTest(
       softDelete: true
     });
     const table = collections[0].name;
-    const client = new Debe(createAdapter(3), collections, {
+    const client = createDB(collections, {
       softDelete: true
     });
     await client.initialize();

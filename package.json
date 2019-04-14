@@ -17,7 +17,8 @@
     "react"
   ],
   "workspaces": [
-    "./src/*"
+    "./src/*",
+    "./example/*"
   ],
   "author": "Benjamin Kniffler <bkniffler@me.com>",
   "bugs": {
@@ -91,9 +92,8 @@
       }
     },
     "modulePathIgnorePatterns": [
-      "experiments",
-      "lib",
-      ".old"
+      "example",
+      "lib"
     ],
     "collectCoverage": false,
     "collectCoverageFrom": [

@@ -1,12 +1,3 @@
-/*export function chunk(list: any[], chunkSize = 50) {
-  return new Array(Math.ceil(list.length / chunkSize))
-    .fill(0)
-    .map((_: any, i: number) =>
-      list.slice(i * chunkSize, i * chunkSize + chunkSize)
-    );
-}
-*/
-
 function chunk(list: any[], chunkSize = 10000) {
   return new Array(Math.ceil(list.length / chunkSize))
     .fill(0)
@@ -14,7 +5,6 @@ function chunk(list: any[], chunkSize = 10000) {
       list.slice(i * chunkSize, i * chunkSize + chunkSize)
     );
 }
-
 export async function chunkWork<T, TResult = T>(
   items: T[],
   max = [250000, 10000],
@@ -24,7 +14,6 @@ export async function chunkWork<T, TResult = T>(
     chunkParallel(items, max[1], work)
   );
 }
-
 export async function chunkSequencial<T, TResult = T>(
   items: T[],
   max = 1000,
@@ -40,7 +29,6 @@ export async function chunkSequencial<T, TResult = T>(
   );
   return results;
 }
-
 export async function chunkParallel<T, TResult = T>(
   items: T[],
   max = 1000,

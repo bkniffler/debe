@@ -1,24 +1,29 @@
 import {
-  ICollection,
-  IItem,
-  IQuery,
-  IInsert,
   IMiddleware2,
   IMiddlewareInner,
+  IListenerOptions,
+  IObserverCallback
+} from './types';
+import { IObject, generate, objectify } from './utils';
+import {
+  Debe,
+  DebeDispatcher,
+  IItem,
+  ICollection,
   ICollections,
   actionTypes,
-  IListenerOptions,
   listenTypes,
-  IObserverCallback,
+  IInsert,
+  IQuery,
   IInsertItem,
   IGetItem,
-  fieldTypes
-} from './types';
-import { IObject, generate, chunkSequencial, chunkParallel } from './utils';
-import { DebeDispatcher } from './dispatcher';
-import { Debe } from './debe';
-import { changeListenerPlugin, softDeletePlugin } from './middleware';
+  chunkSequencial,
+  chunkParallel,
+  ICollectionInput,
+  ensureCollection
+} from 'debe';
 import { DebeAdapter } from './adapter';
+import { changeListenerPlugin, softDeletePlugin } from './middleware';
 
 interface IBackendOptions {
   middlewares?: IMiddleware2[];
@@ -35,26 +40,30 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
   db: Debe;
   adapter: DebeAdapter;
   constructor(
-    db: Debe,
     adapter: DebeAdapter,
-    collections: ICollections,
+    collections: ICollections | ICollectionInput[] | IObject<ICollection>,
     options: IBackendOptions = {}
   ) {
     super();
-    this.collections = collections;
+    this.collections = Array.isArray(collections)
+      ? objectify<ICollectionInput, ICollection>(collections, ensureCollection)
+      : collections;
     this.options = options;
+    this.adapter = adapter;
+  }
+  welcome(db: Debe) {
+    super.welcome(db);
     const {
       middlewares = [],
       changeListener = true,
       softDelete = false
-    } = options;
-    this.db = db;
-    this.adapter = adapter;
+    } = this.options;
+    // this.db = db;
     if (changeListener) {
-      this.middlewares.push(changeListenerPlugin(options as any)(db));
+      this.middlewares.push(changeListenerPlugin(this.options as any)(db));
     }
     if (softDelete) {
-      this.middlewares.push(softDeletePlugin(options as any)(db));
+      this.middlewares.push(softDeletePlugin(this.options as any)(db));
     }
     for (var middleware of middlewares) {
       this.middlewares.push(middleware(db));
@@ -87,8 +96,8 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
       }
     }
     for (var key in this.collections) {
-      this.collections[key].fields[this.options.idField] = fieldTypes.STRING;
-      this.collections[key].index[this.options.idField] = fieldTypes.STRING;
+      this.collections[key].fields[this.options.idField] = 'string';
+      this.collections[key].index[this.options.idField] = 'string';
       this.collections[key].specialFields.id = this.options.idField;
       for (var middleware of this.middlewares) {
         if (middleware.collection) {

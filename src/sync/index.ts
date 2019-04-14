@@ -1,8 +1,9 @@
-import { Debe, createLog, ensureCollection, DebeBackend } from 'debe';
+import { Debe, createLog, ensureCollection } from 'debe';
 import { syncstateTable } from './constants';
 import { initiateSync } from './sync';
 import { IAddress } from './types';
 import { ISocket, create } from 'asyngular-client';
+import { DebeBackend } from 'debe-adapter';
 
 export * from './sync';
 export * from './types';

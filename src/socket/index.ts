@@ -5,7 +5,6 @@ import {
   IGetItem,
   chunkWork,
   IInsertItem,
-  generate,
   actionTypes,
   listenTypes,
   DebeDispatcher,
@@ -22,13 +21,8 @@ export const allowedMethods = [
 ];
 
 export class SocketDebe extends Debe {
-  constructor(
-    [hostname, port = 8000]: [string, number],
-    options: {
-      [s: string]: any;
-    } = {}
-  ) {
-    super(new SocketAdapter(hostname, port), [], options);
+  constructor([hostname, port = 8000]: [string, number]) {
+    super(new SocketAdapter(hostname, port));
   }
 }
 
@@ -76,7 +70,9 @@ export class SocketAdapter extends DebeDispatcher {
     callback: IObserverCallback<T>,
     options: IListenerOptions
   ) {
-    let channelId = generate();
+    let channelId = `${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
     const listen = async () => {
       for await (let data of this.socket.receiver(channelId)) {
         callback(data);

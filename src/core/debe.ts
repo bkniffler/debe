@@ -1,75 +1,23 @@
-import { ensureArray, objectify } from './utils';
 import {
   IObserverCallback,
   IItem,
   IGetItem,
   IInsertItem,
-  ICollectionInput,
   IQueryInput,
   IInsertInput,
-  IQuery,
   IUnlisten,
-  ICollection,
-  fieldTypes,
   IInsert,
   IDebeUse
 } from './types';
 import { DebeDispatcher } from './dispatcher';
-import { DebeBackend } from './backend';
-import { DebeAdapter } from './adapter';
-
-export function ensureCollection(collection: ICollectionInput): ICollection {
-  if (!collection.fields) {
-    collection.fields = {};
-  } else if (Array.isArray(collection.fields)) {
-    collection.fields = collection.fields.reduce(
-      (result, field) => ({ ...result, [field]: fieldTypes.STRING }),
-      {}
-    );
-  }
-  if (!collection.index) {
-    collection.index = {};
-  } else if (Array.isArray(collection.index)) {
-    collection.index = collection.index.reduce(
-      (result, field) => ({ ...result, [field]: fieldTypes.STRING }),
-      {}
-    );
-  }
-  if (!collection.plugins) {
-    collection.plugins = [];
-  }
-  if (!collection.specialFields) {
-    collection.specialFields = {};
-  }
-  return collection as ICollection;
-}
-
-interface IOptions {
-  [s: string]: any;
-}
+import { ensureQuery } from './sanitize';
 
 export class Debe<TBase = IItem> {
   dispatcher: DebeDispatcher<TBase>;
   initializing: Promise<void>;
-  constructor(
-    adapterOrAdapter: DebeDispatcher | DebeAdapter,
-    collections: ICollectionInput[],
-    options: IOptions = {}
-  ) {
-    if (adapterOrAdapter instanceof DebeAdapter) {
-      const collectionsObj = objectify<ICollectionInput, ICollection>(
-        collections,
-        ensureCollection
-      );
-      this.dispatcher = new DebeBackend(
-        this,
-        adapterOrAdapter,
-        collectionsObj,
-        options
-      );
-    } else {
-      this.dispatcher = adapterOrAdapter;
-    }
+  constructor(dispatcher: DebeDispatcher) {
+    this.dispatcher = dispatcher;
+    dispatcher.welcome(this);
   }
   async close() {
     await this.dispatcher.close();
@@ -177,7 +125,7 @@ export class Debe<TBase = IItem> {
     } else if (value && typeof value === 'object' && Array.isArray(value.id)) {
       value = { id: value.id };
     }
-    const query = cleanQuery(value);
+    const query = ensureQuery(value);
     if (callback) {
       return this.dispatcher.listen<T[]>('all', callback, {
         collection,
@@ -214,7 +162,7 @@ export class Debe<TBase = IItem> {
     } else if (value && typeof value === 'object' && Array.isArray(value.id)) {
       value = { id: value.id };
     }
-    const query = cleanQuery(value);
+    const query = ensureQuery(value);
     if (callback) {
       return this.dispatcher.listen<number>('count', callback, {
         collection,
@@ -264,7 +212,7 @@ export class Debe<TBase = IItem> {
     } else if (value && typeof value === 'object' && Array.isArray(value.id)) {
       value = { id: value.id };
     }
-    const query = cleanQuery(value);
+    const query = ensureQuery(value);
     if (callback !== undefined) {
       const cb = callback;
       return this.dispatcher.listen<T[]>(
@@ -280,27 +228,4 @@ export class Debe<TBase = IItem> {
       .run<(T & IGetItem)[]>('all', collection, query)
       .then(x => x[0]);
   }
-}
-
-function cleanQuery(value: IQueryInput | any): IQuery {
-  if (!value) {
-    value = {};
-  }
-  if (value.id) {
-    if (Array.isArray(value.id)) {
-      value.where = [`id IN (?)`, value.id];
-    } else {
-      value.where = [`id = ?`, value.id];
-    }
-  }
-  if (Array.isArray(value.limit) && value.limit.length === 2) {
-    value.offset = value.limit[1];
-    value.limit = value.limit[0];
-  } else if (Array.isArray(value.limit) && value.limit.length === 1) {
-    value.limit = value.limit[0];
-  }
-  value.select = value.select ? ensureArray(value.select) : undefined;
-  value.orderBy = value.orderBy ? ensureArray(value.orderBy) : undefined;
-  value.id = value.id ? ensureArray(value.id) : undefined;
-  return value as IQuery;
 }

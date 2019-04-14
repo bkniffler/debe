@@ -1,16 +1,15 @@
-import { createAdapterTest } from 'debe/adapter.test';
-import { MemoryAdapter } from 'debe-memory';
+import { createAdapterTest } from 'debe/dispatcher.test';
+import { MemoryDebe } from 'debe-memory';
 import { SocketServer } from 'debe-socket-server';
-import { Debe } from 'debe';
-import { SocketAdapter } from './index';
+import { SocketDebe } from './index';
 
 let port = 5560;
 createAdapterTest(
   'socket',
-  i => new SocketAdapter('localhost', port + i) as any,
+  () => new SocketDebe(['localhost', port]),
   async (collections, i, options) => {
-    const db = new Debe(new MemoryAdapter(), collections, options);
-    await db.initialize();
-    return new SocketServer(db, port + i);
+    port = port + 1;
+    const db = await new MemoryDebe(collections, options).initialize();
+    return new SocketServer(db, port);
   }
 );

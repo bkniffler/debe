@@ -2,16 +2,21 @@ import { SQLJsonCore } from 'debe-sql';
 //@ts-ignore
 import { Pool } from 'pg';
 import { ICollection, Debe, ICollectionInput } from 'debe';
+import { DebeBackend } from 'debe-adapter';
 
 export class PostgreSQLDebe extends Debe {
   constructor(
-    collections: ICollectionInput[],
     connectionString: string,
-    options: {
-      [s: string]: any;
-    } = {}
+    collections: ICollectionInput[],
+    options?: any
   ) {
-    super(new PostgreSQLAdapter(connectionString), collections, options);
+    super(
+      new DebeBackend(
+        new PostgreSQLAdapter(connectionString),
+        collections,
+        options
+      )
+    );
   }
 }
 

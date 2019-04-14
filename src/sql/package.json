@@ -4,6 +4,7 @@
   "browser": false,
   "version": "1.0.0",
   "dependencies": {
-    "debe": "*"
+    "debe": "*",
+    "debe-adapter": "*"
   }
 }

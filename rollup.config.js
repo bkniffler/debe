@@ -8,7 +8,7 @@ import json from 'rollup-plugin-json';
 import { join } from 'path';
 
 const fs = require('fs');
-const integrate = ['debe-sql'];
+const integrate = ['debe', 'debe-sql', 'debe-adapter'];
 
 // destination.txt will be created or overwritten by default.
 const jobs = [];
@@ -66,6 +66,7 @@ Object.keys(paths).forEach(key => {
   jobs.push({
     context: '{}',
     input: join(lib, 'index.js'),
+    external: [...Object.keys(paths), 'react', 'idb/with-async-ittr-cjs'],
     output: [{ file: join(lib, 'index.cjs.js'), format: 'cjs' }],
     plugins: [
       json(),
@@ -121,6 +122,7 @@ Object.keys(paths).forEach(key => {
         commonjs({
           include: [/node_modules/],
           namedExports: {
+            'node_modules/idb/with-async-ittr-cjs.js': ['openDB'],
             'node_modules/automerge/dist/automerge.js': [
               'init',
               'change',

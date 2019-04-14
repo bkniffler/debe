@@ -2,9 +2,8 @@ import * as React from 'react';
 import { act } from 'react-dom/test-utils';
 import { useAll, DebeProvider, useCollection } from './index';
 import { render, waitForElement, fireEvent } from 'react-testing-library';
-import { MemoryAdapter } from 'debe-memory';
+import { MemoryDebe } from 'debe-memory';
 import 'jest-dom/extend-expect';
-import { Debe } from 'debe';
 
 interface ILorem {
   name: string;
@@ -23,7 +22,7 @@ test('react:basic', async cb => {
       initialize={async db => {
         await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
       }}
-      value={() => new Debe(new MemoryAdapter(), collections)}
+      value={() => new MemoryDebe(collections)}
       render={() => <Component />}
       loading={() => <span>Loading...</span>}
     />
@@ -65,7 +64,7 @@ test('react:many', async cb => {
         }
         await db.insert('lorem', items);
       }}
-      value={() => new Debe(new MemoryAdapter(), collections)}
+      value={() => new MemoryDebe(collections)}
       render={() => <Component />}
       loading={() => <span>Loading...</span>}
     />
@@ -106,7 +105,7 @@ test('react:listen', async cb => {
           1000
         );
       }}
-      value={() => new Debe(new MemoryAdapter(), collections)}
+      value={() => new MemoryDebe(collections)}
       render={() => <Component />}
       loading={() => <span>Loading...</span>}
     />
@@ -150,7 +149,7 @@ test('react:interact', async cb => {
       initialize={async db => {
         await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
       }}
-      value={() => new Debe(new MemoryAdapter(), collections)}
+      value={() => new MemoryDebe(collections)}
       render={() => <Component />}
       loading={() => <span>Loading...</span>}
     />

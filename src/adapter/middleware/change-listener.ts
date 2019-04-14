@@ -1,5 +1,5 @@
-import { fieldTypes, IMiddleware } from '../types';
-import { toISO, Emitter, isEqual } from '../utils';
+import { IMiddleware } from '../types';
+import { Emitter, isEqual } from '../utils';
 
 export interface IChangeListenerOptions {
   emitter?: Emitter;
@@ -15,7 +15,7 @@ export const changeListenerPlugin: IMiddleware<IChangeListenerOptions> = ({
     if (!item) {
       return item;
     }
-    item[revField] = toISO(new Date());
+    item[revField] = new Date().toISOString();
     return item;
   };
 
@@ -48,8 +48,8 @@ export const changeListenerPlugin: IMiddleware<IChangeListenerOptions> = ({
     },
     collection(collection) {
       collection.specialFields.rev = revField;
-      collection.fields[revField] = fieldTypes.STRING;
-      collection.index[revField] = fieldTypes.STRING;
+      collection.fields[revField] = 'string';
+      collection.index[revField] = 'string';
       return collection;
     }
   };

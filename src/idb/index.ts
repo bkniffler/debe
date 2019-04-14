@@ -1,15 +1,27 @@
 import {
   IQuery,
-  DebeAdapter,
   ICollection,
   IInsert,
   ICollections,
-  chunkSequencial,
-  IGetItem
+  IGetItem,
+  Debe,
+  ICollectionInput
 } from 'debe';
-import { createMemoryFilter, pluck } from 'debe-memory';
+import {
+  DebeAdapter,
+  createMemoryFilter,
+  pluck,
+  DebeBackend
+} from 'debe-adapter';
 import { IDBPDatabase } from 'idb';
-const idb = require('idb/with-async-ittr-cjs');
+// @ts-ignore
+import * as idb from 'idb/with-async-ittr-cjs';
+
+export class IDBDebe extends Debe {
+  constructor(collections: ICollectionInput[], name: string, options?: any) {
+    super(new DebeBackend(new IDBAdapter(name), collections, options));
+  }
+}
 
 export class IDBAdapter extends DebeAdapter {
   filter = createMemoryFilter().filter;
@@ -54,14 +66,11 @@ export class IDBAdapter extends DebeAdapter {
       });
     }
 
-    await chunkSequencial<any>(items, 1000, async items => {
-      const tx = this.db.transaction(collection.name, 'readwrite');
-      for (var item of items) {
-        tx.store.put(item);
-      }
-      await tx.done;
-      return items;
-    });
+    const tx = this.db.transaction(collection.name, 'readwrite');
+    for (var item of items) {
+      tx.store.put(item);
+    }
+    await tx.done;
     return items;
   }
   async remove(collection: ICollection, ids: string[]) {

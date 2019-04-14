@@ -1,4 +1,4 @@
-import { addToQuery, Debe, IItem, IGetItem, DebeBackend } from 'debe';
+import { addToQuery, Debe, IItem, IGetItem } from 'debe';
 import { ISocketBase } from 'asyngular-client';
 import {
   ICountInitialChanges,
@@ -8,6 +8,7 @@ import {
   batchTransfer
 } from 'debe-sync';
 import { IAGServer } from 'asyngular-server';
+import { DebeBackend } from 'debe-adapter/backend';
 
 export function createServerChannels(
   serverId: string,

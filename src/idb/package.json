@@ -5,6 +5,7 @@
   "dependencies": {
     "debe": "*",
     "debe-memory": "*",
+    "debe-adapter": "*",
     "idb": "^4.0.3"
   },
   "devDependencies": {

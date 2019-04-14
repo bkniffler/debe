@@ -26,6 +26,7 @@
     "paths": {
       "*": ["types/*"],
       "debe": ["./src/core"],
+      "debe-adapter": ["./src/adapter"],
       "debe-idb": ["./src/idb"],
       "debe-memory": ["./src/memory"],
       "debe-sql": ["./src/sql"],
