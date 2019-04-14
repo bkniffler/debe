@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <script src="../../lib/core/index.umd.js"></script>
+    <script src="../../lib/idb/index.umd.js"></script>
+    <script>
+      console.log(window.debe);
+      const { IDBDebe } = window.debe;
+      async function work() {
+        console.log('Start');
+        const db = await new IDBDebe([{ name: 'lorem' }]).initialize();
+        const items = [];
+        const length = 100000;
+        console.log('Items');
+        for (var i = 0; i < length; i++) {
+          items.push({
+            // id: i,
+            name: 'item' + i
+          });
+        }
+        const start = new Date().getTime();
+        await db.insert('lorem', items);
+        console.log(
+          `Created ${length} items in ${new Date().getTime() - start}`
+        );
+        await db.all('lorem');
+      }
+      work().then(x => work(false));
+    </script>
+  </head>
+</html>

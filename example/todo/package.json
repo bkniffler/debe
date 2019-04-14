@@ -1,0 +1,21 @@
+{
+  "name": "debe-todo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "ts-node fuse.ts",
+    "start": "node lib/server",
+    "watch": "nodemon --watch lib --exec npm run start"
+  },
+  "dependencies": {
+    "@types/classnames": "^2.2.7",
+    "classnames": "^2.2.6",
+    "fuse-box": "^3.7.1",
+    "nodemon": "^1.18.11",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "todomvc-app-css": "^2.2.0",
+    "todomvc-common": "^1.0.5"
+  }
+}

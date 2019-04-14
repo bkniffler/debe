@@ -1,0 +1,10 @@
+{
+  "name": "debe-nanosql",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "debe": "*",
+    "debe-memory": "*",
+    "@nano-sql/core": "^2.2.4"
+  }
+}
