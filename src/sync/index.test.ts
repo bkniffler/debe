@@ -46,6 +46,7 @@ async function isEqual(...args: Debe[]) {
   for (var db of args) {
     const items = await db.all('lorem', { orderBy: ['name ASC'] });
     const arr = [...new Set([...items.map(x => x.name)])];
+    console.log(previous, arr);
     if (previous !== undefined && previous.join(',') !== arr.join(',')) {
       // console.log(previous.join(','), 'vs', arr.join(','));
       return false;
@@ -66,7 +67,7 @@ async function awaitIsEqual(maxTries = 10, ...dbs: Debe[]) {
   return false;
 }
 
-test('sync:10x3', async cb => {
+test('sync:init:10x3', async cb => {
   const port = getPort(0);
   const count = 10;
   const server = await spawnServer(port);
@@ -86,7 +87,7 @@ test('sync:10x3', async cb => {
   cb();
 }, 120000);
 
-test('sync:10000x3', async cb => {
+test('sync:init:10000x3', async cb => {
   const port = getPort(1);
   const count = 10000;
   const server = await spawnServer(port);
@@ -104,7 +105,7 @@ test('sync:10000x3', async cb => {
   cb();
 }, 120000);
 
-test('sync:1000x10', async cb => {
+test('sync:init:1000x10', async cb => {
   const port = getPort(2);
   const count = 1000;
   const server = await spawnServer(port);
@@ -122,7 +123,7 @@ test('sync:1000x10', async cb => {
   cb();
 }, 120000);
 
-test('sync:multimaster', async cb => {
+test('sync:init:multimaster', async cb => {
   const port0 = getPort(3);
   const port1 = getPort(4);
   const count = 100;

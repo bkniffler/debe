@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { Debe, IDebeUse, IItem, IQueryInput, IGetItem } from 'debe';
-
-const context = React.createContext<Debe>(undefined as any);
-const Provider = context.Provider;
+import { IDebeUse, IItem, IQueryInput, IGetItem } from 'debe';
+import { debeContext } from './context';
 
 export function useAllOnce<T>(
   collection: string,
@@ -74,7 +72,7 @@ function useBebeBase<TBase, TResult = TBase>(
     err: undefined,
     res: defaultValue
   });
-  const client = React.useContext(context);
+  const client = React.useContext(debeContext);
 
   React.useEffect(() => {
     if (!client) {
@@ -121,47 +119,6 @@ export function useDebeMethod<T>(
 }*/
 
 export function useCollection<T = IItem>(service: string): IDebeUse<T> {
-  const debe = React.useContext(context);
+  const debe = React.useContext(debeContext);
   return debe.use(service);
-}
-
-export function DebeProvider({
-  render,
-  children,
-  value,
-  loading,
-  initialize = () => Promise.resolve()
-}: {
-  initialize?: (db: Debe) => Promise<void>;
-  value: Debe | (() => Debe);
-  render?: () => React.ReactNode;
-  authError?: () => React.ReactNode;
-  loading?: () => React.ReactNode;
-  children?: React.ReactNode;
-}) {
-  const [isInitialized, setState] = React.useState(false);
-  const debe = React.useMemo(
-    () => (typeof value === 'function' ? value() : value),
-    []
-  );
-  React.useEffect(() => {
-    debe
-      .initialize()
-      .then(() => initialize(debe))
-      .then(() => setState(true))
-      .catch(err => console.log(err));
-    return () => {
-      // debe.close();
-    };
-  }, []);
-  let child = null;
-  console.log(isInitialized);
-  if (!isInitialized && loading) {
-    child = loading();
-  } else if (isInitialized && render) {
-    child = render();
-  } else {
-    child = children;
-  }
-  return <Provider value={debe}>{child}</Provider>;
 }

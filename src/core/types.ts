@@ -32,7 +32,7 @@ export interface IQueryInput {
   id?: string[] | string;
   limit?: number | [number] | [number, number];
   offset?: number;
-  where?: [string, ...any[]];
+  where?: [string, ...any[]] | undefined | null;
   select?: string[] | string;
   orderBy?: string[] | string;
 }
@@ -56,7 +56,7 @@ export interface IInsert {
   [s: string]: any;
 }
 
-export type IObserverCallback<T> = (value: T) => void;
+export type IObserverCallback<T> = (value: T, options?: any) => void;
 export type IUnlisten = () => void;
 
 export interface IObject<T> {

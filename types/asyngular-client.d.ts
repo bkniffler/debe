@@ -20,17 +20,31 @@ declare module 'asyngular-client' {
     transmitPublish: (data: T) => void;
   }
   export type IChannel<T> = Promise<T>[] & IChannelMethods<T>;
+  export interface IListenerExtension<T> {
+    once: () => Promise<T>;
+  }
   export interface ISocketBase {
     id: string;
     procedure: <T1 = any, T2 = any>(channel: string) => Promise<IReq<T1, T2>>[];
     transmit: <T = any>(channel: string, data: T) => void;
-    listener: <T = any>(channel: string) => Promise<T>[];
-    receiver: <T = any>(channel: string) => Promise<T>[];
+    listener: <T = any>(
+      channel: string
+    ) => Promise<T>[] & IListenerExtension<T>;
+    receiver: <T = any>(
+      channel: string
+    ) => Promise<T>[] & IListenerExtension<T>;
     invoke: <T = any, T2 = any>(channel: string, payload: T) => Promise<T2>;
     closeReceiver: (channel: string) => void;
     disconnect: (code?: number, data?: any) => void;
   }
+  export type IConnectionState =
+    | 'connecting'
+    | 'open'
+    | 'closed'
+    | 'authenticated'
+    | 'unauthenticated';
   export interface ISocket extends ISocketBase {
+    state: IConnectionState;
     subscribe: <T>(channel: string) => IChannel<T>;
   }
 }

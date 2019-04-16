@@ -125,8 +125,10 @@ export function sortArray(arr: any[], orderer: string | string[]): any[] {
   if (fieldName) {
     const isDesc = direction.toUpperCase() === 'DESC';
     const compare = (a: any, b: any) => {
-      if (a[fieldName] < b[fieldName]) return isDesc ? 1 : -1;
-      if (a[fieldName] > b[fieldName]) return isDesc ? -1 : 1;
+      a = `${a[fieldName]}`.toLowerCase();
+      b = `${b[fieldName]}`.toLowerCase();
+      if (a < b) return isDesc ? 1 : -1;
+      if (a > b) return isDesc ? -1 : 1;
       return 0;
     };
     return arr.sort(compare);

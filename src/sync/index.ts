@@ -2,7 +2,7 @@ import { Debe, createLog, ensureCollection } from 'debe';
 import { syncstateTable } from './constants';
 import { initiateSync } from './sync';
 import { IAddress } from './types';
-import { ISocket, create } from 'asyngular-client';
+import { ISocket, create, IConnectionState } from 'asyngular-client';
 import { DebeBackend } from 'debe-adapter';
 
 export * from './sync';
@@ -12,23 +12,32 @@ export * from './utils';
 const log = createLog('sync');
 
 export class Sync {
+  socket: ISocket;
   db: Debe;
   where?: string[];
-  constructor(db: Debe, where?: string[]) {
+  constructor(db: Debe, [hostname = 'localhost', port = 8000]: IAddress = []) {
     this.db = db;
-    this.where = where;
-    (db.dispatcher as DebeBackend).middlewares.push({
-      collections(collections) {
-        collections[syncstateTable] = ensureCollection({
-          name: syncstateTable
-        });
-        return collections;
-      }
+    // this.where = where;
+    const backend = this.db.dispatcher as DebeBackend;
+    if (backend.middlewares) {
+      (db.dispatcher as DebeBackend).middlewares.push({
+        collections(collections) {
+          collections[syncstateTable] = ensureCollection({
+            name: syncstateTable
+          });
+          return collections;
+        }
+      });
+    }
+    this.db['sync'] = this;
+    this.socket = create({
+      hostname,
+      port
     });
   }
   async initialize() {
     await this.db.initialize();
-    return this;
+    this.loop();
   }
   forceSync() {
     return new Promise(yay => setTimeout(yay, 3000));
@@ -37,8 +46,16 @@ export class Sync {
     if (this['_close']) {
       await this['_close']();
     }
+    this.socket.disconnect();
+    await this.db.close();
   }
-  async connect(socket: ISocket) {
+  async disconnect() {
+    if (this['_close']) {
+      await this['_close']();
+    }
+    this.socket.disconnect();
+  }
+  async connect() {
     await this.db.initialize();
     // LOgic
     let cancels: Function[] = [];
@@ -47,39 +64,46 @@ export class Sync {
       .filter(x => x !== syncstateTable)
       .forEach(table => {
         cancels.push(
-          initiateSync(this.db, socket, collections[table], this.where, log)
+          initiateSync(
+            this.db,
+            this.socket,
+            collections[table],
+            this.where,
+            log
+          )
         );
       });
     this['_close'] = async () => {
       await Promise.all((cancels as any[]).map(x => x()));
     };
   }
-}
-
-export class SyncClient extends Sync {
-  socket: ISocket;
-  constructor(db: Debe, [hostname = 'localhost', port = 8000]: IAddress = []) {
-    super(db);
-    this.socket = create({
-      hostname,
-      port
-    });
-    this.loop();
+  get state() {
+    return this.socket.state;
+  }
+  onConnectionState(func: (state: IConnectionState) => void) {
+    let cancel = false;
+    (async () => {
+      for await (let event of this.socket.listener('connect')) {
+        event;
+        if (cancel) {
+          return;
+        }
+        func(this.state);
+      }
+    })();
+    (async () => {
+      for await (let event of this.socket.listener('disconnect')) {
+        event;
+        if (cancel) {
+          return;
+        }
+        func(this.state);
+      }
+    })();
+    return () => (cancel = true);
   }
   async loop() {
-    for await (let event of this.socket.listener('connect')) {
-      event;
-      this.connect(this.socket);
-    }
-  }
-  async close() {
-    await super.close();
-    /*const promise = Promise.race([
-      this.socket.listener('disconnect')['once'](),
-      this.socket.listener('connectAbort')['once']()
-    ]);*/
-    this.socket.disconnect();
-    // await promise;
-    await this.db.close();
+    await this.socket.listener('connect').once();
+    this.connect();
   }
 }

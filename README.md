@@ -404,6 +404,10 @@ This is some [basic benchmarks](./benchmark/index.ts), just to keep track of per
 - [nanoid](https://github.com/ai/nanoid)
 - [asyngular](https://asyngular.io)
 
+## References
+
+- http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.8635&rep=rep1&type=pdf
+
 ## Similar
 
 - PouchDB

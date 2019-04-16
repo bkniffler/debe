@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "module": "esnext",
     "declaration": true,
     "noImplicitAny": true,
@@ -16,12 +17,11 @@
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
-    "declarationMap": true,
+    "declarationMap": false,
     "sourceMap": true,
     "importHelpers": true,
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/.cache/typescript",
-    "baseUrl": "./",
     "downlevelIteration": true,
     "paths": {
       "*": ["types/*"],

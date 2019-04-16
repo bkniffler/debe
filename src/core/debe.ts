@@ -88,7 +88,9 @@ export class Debe<TBase = IItem> {
     if (Array.isArray(value)) {
       return this.dispatcher.run('remove', collection, value);
     }
-    return this.dispatcher.run('remove', collection, [value]).then(x => x[0]);
+    return this.dispatcher
+      .run('remove', collection, [value])
+      .then(x => x && x[0]);
   }
   // all
   all<T = TBase>(collection: string): Promise<(T & IGetItem)[]>;
@@ -226,6 +228,6 @@ export class Debe<TBase = IItem> {
     }
     return this.dispatcher
       .run<(T & IGetItem)[]>('all', collection, query)
-      .then(x => x[0]);
+      .then(x => x && x[0]);
   }
 }

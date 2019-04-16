@@ -1,5 +1,4 @@
 import { IGetItem } from 'debe';
-import { batchSize } from './constants';
 
 export function hashCode(str: string = '') {
   var hash = 0,
@@ -81,28 +80,44 @@ export function getBigger(comparer0?: string, comparer1?: string) {
 }
 
 type IFetchCount = () => Promise<number>;
-type IFetchItems<T> = (page: number) => Promise<T[]>;
-type ITransferItems<T> = (items: T[]) => Promise<any> | void;
-export const batchTransfer = async (
+type IFetchItems<TResult = any> = (
+  page: number
+) => Promise<TResult[]> | TResult[];
+type ITransferItems<TInput, TResult = TInput> = (
+  items: TInput[]
+) => Promise<TResult[]>;
+
+export async function batchTransfer<TFetchResult = any>(
   fetchCount: IFetchCount,
-  fetchItems: IFetchItems<any>,
-  transferItems?: ITransferItems<any>
-): Promise<any> => {
+  fetchItems: IFetchItems<TFetchResult>
+): Promise<TFetchResult[]>;
+export async function batchTransfer<TFetchResult = any, TTransferResult = any>(
+  fetchCount: IFetchCount,
+  fetchItems: IFetchItems<TFetchResult>,
+  transferItems: ITransferItems<TFetchResult, TTransferResult>
+): Promise<[TFetchResult[], TTransferResult[]]>;
+export async function batchTransfer<TFetchResult = any, TTransferResult = any>(
+  fetchCount: IFetchCount,
+  fetchItems: IFetchItems<TFetchResult>,
+  transferItems?: ITransferItems<TFetchResult, TTransferResult>
+): Promise<any> {
   let changeCount = await fetchCount();
-  if (changeCount) {
-    const inner = async (page = 0, items: any[] = []): Promise<any> => {
-      const changes = await fetchItems(page);
-      changeCount = changeCount - changes.length;
-      if (changes.length && transferItems) {
-        await transferItems(changes);
+  let page = 0;
+  let items: TFetchResult[] = [];
+  let transferred: TTransferResult[] = [];
+  while (changeCount > 0) {
+    const changes = await fetchItems(page);
+    if (changes.length) {
+      if (transferItems) {
+        transferred = transferred.concat(await transferItems(changes));
       }
-      if (changes.length >= batchSize && changeCount > 0) {
-        return inner(page + 1, items.concat(changes));
-      }
-      return Promise.resolve(items.concat(changes));
-    };
-    return inner(0);
-  } else {
-    return Promise.resolve([]);
+      items = items.concat(changes);
+    }
+    changeCount = changeCount - changes.length;
+    page = page + 1;
   }
-};
+  if (transferItems) {
+    return [items, transferred];
+  }
+  return items;
+}

@@ -15,6 +15,7 @@ interface ITodo {
   completed: boolean;
 }
 interface ITodoAppProps {
+  title: string;
   collection: IDebeUse<ITodo>;
   todos: ITodo[];
 }
@@ -148,9 +149,9 @@ class TodoApp extends React.Component<ITodoAppProps> {
     }
 
     return (
-      <div>
+      <div style={{ flex: 1 }}>
         <header className="header">
-          <h1>todos</h1>
+          <h1>{this.props.title || 'todo'}</h1>
           <input
             className="new-todo"
             placeholder="What needs to be done?"

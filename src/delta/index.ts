@@ -10,7 +10,7 @@ export interface IDelta {
   item: IInsertInput;
 }
 export interface IMergePluginOptions {
-  submitDelta?: (deltas: IDelta[]) => void;
+  submitDelta?: (collection: string, deltas: IDelta[]) => void;
   getMessage?: () => string;
   automergeField?: string;
   actorField?: string;
@@ -88,7 +88,7 @@ export const delta: IMiddleware<IMergePluginOptions> = (options = {}) => db => {
       });
 
       if (submitDelta) {
-        submitDelta(delta);
+        submitDelta(collection.name, delta);
       }
 
       return newItems;

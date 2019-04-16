@@ -1,36 +1,49 @@
 import * as React from 'react';
-import { DebeProvider, useAll, useCollection } from 'debe-react';
+import {
+  DebeProvider,
+  useAll,
+  useCollection,
+  useConnectionState
+} from 'debe-react';
 import App from './components/app';
 import { IDBDebe } from 'debe-idb';
 import { MemoryDebe } from 'debe-memory';
 import { SyncClient } from 'debe-sync';
 import { Debe } from 'debe';
+import { schema } from '../shared';
 
-const schema = [{ name: 'todo' }];
 interface ITodo {
   id?: string;
   title: string;
   completed: boolean;
 }
 
-function Todo() {
-  const [all] = useAll<ITodo>('todo');
+function Todo({ title }: { title: string }) {
+  const state = useConnectionState();
+  const [all] = useAll<ITodo>('todo', { orderBy: 'title' });
   const collection = useCollection<ITodo>('todo');
-  return <App todos={all} collection={collection} />;
+  if (typeof document !== 'undefined') {
+    const clean = document.title.split('(')[0].trim();
+    const num = all.filter(x => !x.completed).length;
+    document.title = num ? `${clean} (${num})` : clean;
+  }
+  return (
+    <App title={`${title} (${state})`} todos={all} collection={collection} />
+  );
 }
 
-function Instance({ get }: { get: () => Debe }) {
+function Instance({ get, title }: { get: () => Debe; title: string }) {
   return (
     <DebeProvider
       value={() => {
         const db = get();
-        new SyncClient(db, ['localhost', 9911]);
+        const sync = new SyncClient(db, ['localhost', 9911]);
         return db;
       }}
       initialize={async db => {
-        /*const todo = db.use<ITodo>('todo');
-        await db.initialize();
-        if (await todo.count()) {
+        /*
+        const todo = db.use<ITodo>('todo');
+        await db.initialize();if (await todo.count()) {
           return;
         }
         await todo.insert({
@@ -42,7 +55,7 @@ function Instance({ get }: { get: () => Debe }) {
           completed: true
         });*/
       }}
-      render={() => <Todo />}
+      render={() => <Todo title={title} />}
       loading={() => (
         <div style={{ textAlign: 'center', height: 200, padding: 50 }}>
           Is loading ...
@@ -52,14 +65,30 @@ function Instance({ get }: { get: () => Debe }) {
   );
 }
 
+const hash = window.location.hash && window.location.hash.substr(1);
 export default function() {
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
       <Instance
-        name="todo"
-        get={() => new IDBDebe(schema, name, { softDelete: true })}
+        title="IndexedDebe #1"
+        get={() =>
+          new IDBDebe(schema, `todo${hash}`, {
+            softDelete: true
+          })
+        }
       />
-      <Instance name="todo2" get={() => new MemoryDebe(schema)} />
+      {/*<Instance
+        title="IndexedDebe #2"
+        get={() => new IDBDebe(schema, 'todo2', { softDelete: true })}
+      />
+      <Instance
+        title="MemoryDebe #1"
+        get={() => new MemoryDebe(schema, { softDelete: true })}
+      />
+      <Instance
+        title="MemoryDebe #2"
+        get={() => new MemoryDebe(schema, { softDelete: true })}
+      />*/}
     </div>
   );
 }
