@@ -1,34 +1,23 @@
-import { Debe, createLog, ensureCollection } from 'debe';
-import { syncstateTable } from './constants';
-import { initiateSync } from './sync';
+import { Debe } from 'debe';
 import { IAddress } from './types';
 import { ISocket, create, IConnectionState } from 'asyngular-client';
 import { DebeBackend } from 'debe-adapter';
-
-export * from './sync';
 export * from './types';
 export * from './constants';
 export * from './utils';
-const log = createLog('sync');
+import { SyncState } from './state';
+import { listenToDatabase, initialSync, listenToSync } from './sync';
+import { ensureSync } from './ensure-sync';
 
 export class Sync {
+  syncState: SyncState;
   socket: ISocket;
   db: Debe;
   where?: string[];
   constructor(db: Debe, [hostname = 'localhost', port = 8000]: IAddress = []) {
     this.db = db;
-    // this.where = where;
-    const backend = this.db.dispatcher as DebeBackend;
-    if (backend.middlewares) {
-      (db.dispatcher as DebeBackend).middlewares.push({
-        collections(collections) {
-          collections[syncstateTable] = ensureCollection({
-            name: syncstateTable
-          });
-          return collections;
-        }
-      });
-    }
+    this.syncState = new SyncState(db);
+    ensureSync(this.db);
     this.db['sync'] = this;
     this.socket = create({
       hostname,
@@ -38,6 +27,7 @@ export class Sync {
   async initialize() {
     await this.db.initialize();
     this.loop();
+    return this;
   }
   forceSync() {
     return new Promise(yay => setTimeout(yay, 3000));
@@ -55,28 +45,32 @@ export class Sync {
     }
     this.socket.disconnect();
   }
+  initialSyncComplete = Promise.resolve();
   async connect() {
     await this.db.initialize();
-    // LOgic
+    await this.syncState.init();
+    // console.log(this.syncState);
     let cancels: Function[] = [];
-    const collections = (this.db.dispatcher as DebeBackend).collections;
-    Object.keys(collections)
-      .filter(x => x !== syncstateTable)
-      .forEach(table => {
-        cancels.push(
-          initiateSync(
-            this.db,
-            this.socket,
-            collections[table],
-            this.where,
-            log
-          )
-        );
-      });
+    const { collections } = this.db.dispatcher as DebeBackend;
+    const isDelta = (key: string) => collections[key]['sync'] === 'delta';
+    const keys = Object.keys(collections).filter(x => collections[x]['sync']);
+    initialSync(keys, isDelta, this.socket, this.db, this.syncState);
+    cancels.push(
+      listenToDatabase(
+        keys,
+        isDelta,
+        this.db,
+        this.socket,
+        this.initialSyncComplete
+      )
+    );
+
+    cancels.push(listenToSync(this.socket, this.db, this.syncState));
     this['_close'] = async () => {
       await Promise.all((cancels as any[]).map(x => x()));
     };
   }
+  listener() {}
   get state() {
     return this.socket.state;
   }
@@ -103,7 +97,13 @@ export class Sync {
     return () => (cancel = true);
   }
   async loop() {
-    await this.socket.listener('connect').once();
-    this.connect();
+    if (this.state !== 'open') {
+      await this.socket.listener('connect').once();
+    }
+    if (this.state !== 'open') {
+      this.loop();
+    } else {
+      this.connect();
+    }
   }
 }

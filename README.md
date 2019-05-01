@@ -1,10 +1,10 @@
 <div align="center">
   <a href="https://github.com/bkniffler/debe">
-    <img alt="flowzilla" src="https://raw.githubusercontent.com/bkniffler/debe/master/assets/logo.png" height="400px" />
+    <img alt="debe" src="https://raw.githubusercontent.com/bkniffler/debe/master/assets/logo.png" height="400px" />
   </a>
 </div>
 <div align="center">
-  <strong>Tiny, flexible and reactive offline-first Javascript datastore for browsers, node, electron and react-native with focus on performance, simplicitiy and querying. Includes support for multi-master/client database replication via plugin.</strong>
+  <strong>Flexible and reactive offline-first Javascript datastore for browsers, node, electron and react-native with focus on performance and simplicitiy. Includes support for concurrent multi-master/client database replication via plugin.</strong>
     <br />
     <br />
   <i><small>Debe is currently under development, feel free to participate via PR or issues. Consider debe to not be production ready yet. Core API is considered pretty final, though plugin API like replication might change a bit.</small></i>
@@ -37,6 +37,8 @@
 
 # Content
 
+- [Intro](#intro)
+- [Features](#features)
 - [Why](#why)
 - [Guides](#guides)
   - [Basic](#basic)
@@ -60,13 +62,38 @@
   - [Similar](#similar)
   - [Assets](#assets)
 
+# Intro
+
+## Features
+
+- Simple API
+- Lightweight
+- Native Typescript
+- Rich querying using SQL-alike syntax
+- Schemaless, thus no migrations needed
+- Query listening/subscription
+- Offline first
+- Soft deletion
+- Support for any JS environment (electron, react-native, nodeJS, browser)
+- React bindings
+- Great performance with large datasets
+- Access to native database features (raw SQL queries, custom indices)
+- Realtime sync
+- Multi-master replication
+- Replication-Filters
+- Server-side authentication/authorization
+- Automatic conflict resolution (CRDT)
+- Undo/Redo capabilities
+- Easy scaling with Kubernetes
+- Continuos testing and benchmarking
+
 ## Why
 
-PouchDB/RxDB are great and very mature solutions for replicating databases, but being forced to build your services on top of CouchDB can be unfitting for some users. Debe is a fast and modern solution if you want to replicate and fetch your data in every way imaginable, so master-to-clients, master-to-masters-to-clients or master-to-client-to-master-to-client. There are multiple adapters available and implementing new ones is super simple due to the simple API surface. For a starting point, you can always take a look at memory-adapter. Also, there is a headless socket client adapter that connects to any remote debe instance to perform queries. This works great for electronJS where you might want to pipe all requests to another thread that performs the data access or for non-offline web applications that should not persist nor replicate locally.
+PouchDB/RxDB are great and very mature solutions for replicating databases, but being forced to build your services on top of CouchDB can be unfitting for some users. Debe is a fast and modern solution if you want to replicate and fetch your data in every way imaginable, so master-to-clients, master-to-masters-to-clients or master-to-client-to-master-to-client. There are multiple adapters available and implementing new ones is super simple due to the simple API surface. For a starting point, you can always take a look at memory-adapter. Also, there is a headless socket client adapter that connects to any remote debe instance to perform queries. This works great for electronJS where you might want to pipe all requests to another thread that performs the actual data access or for always-online web applications that would neither persist nor replicate locally.
 
-PouchDB also stores data in a way that makes it really hard to query the underlying database directly. Debes SQL adapters store the data body as JSON type and make use of neat JSON indexing SQLite and PostgreSQL provide, so you get great performance without sacrificing flexibility of your schema or direct queryability. Also there is no need for external index tables.
+Debes SQL adapters store the data body as JSON type and make use of the neat JSON indexing features SQLite and PostgreSQL provide, so you get great performance without sacrificing flexibility of your schema or direct queryability (which makes native full-text search indexing easy). There is no need for external index tables.
 
-Also, doing complex authorization with CouchDB is difficult, thats why the one-database-per-user approach is the most popular choice for separating data between the users. With debe and the whole data flow in Javascript/NodeJS some cool possibilities to control data access and filter & transform incoming/outgoing data according to what user tries to access it opens up.
+Authorization and authentication are also difficult to implement with other database solutions, at least if you want to have full control of these features through nodeJS. Debe, and having the whole data flow in Javascript, offers some cool possibilities to control data access and filter & transform incoming/outgoing data according to user permissions. This works through middlewares.
 
 Please note, Debe is currently not supporting relations, and probably never really will. If you're interested in relational data and graphs, you might be better off with graphQL, apollo and AppSync. Debe is focused on offline-first, performance, simplicity and being super slim.
 
@@ -116,7 +143,7 @@ https://codesandbox.io/s/y27xmr9rvj
 ```js
 const { Debe } = require('debe');
 const { MemoryAdapter } = require('debe-memory');
-const { SyncClient } = require('debe-sync');
+const { Sync } = require('debe-sync');
 const { SyncServer } = require('debe-sync-server');
 
 const schema = [{ name: 'lorem', index: ['name'] }];
@@ -153,7 +180,7 @@ async function spawnServer(port) {
 
 async function spawnClient(port) {
   const db = new Debe(new MemoryAdapter(), schema);
-  const sync = new SyncClient(db, ['localhost', port]);
+  const sync = new Sync(db, ['localhost', port]);
   await db.initialize();
   return sync;
 }
@@ -180,7 +207,7 @@ work().catch(err => console.log(err));
 
 ## Querying
 
-Querying is simple and similar to SQL. You can subscribe to query changes by providing a callback
+Querying is simple and similar to SQL. You can subscribe to query changes by providing a callback.
 
 ```tsx
 // Javascript
@@ -208,10 +235,10 @@ db1.all<ILorem>('lorem', {
 
 ## Use
 
-You can create a collection-scoped instance of your db.
+With `use`, you can create a collection-scoped instance of debe.
 
 ```tsx
-// Non-Scoped
+// General
 await db.insert('lorem', { name: 'Lorem' });
 // Scoped
 const lorem = db.use('lorem');
@@ -339,7 +366,7 @@ NodeJS, electron adapter for PostgreSQL
 
 ### IndexedDB
 
-IndexedDB adapter based on idb package.
+IndexedDB adapter based on idb.
 
 **Targets**
 
@@ -356,18 +383,17 @@ All contributions are welcome. Feel free to PR!
 
 All contributions welcome :)
 
-- Middleware
-  - [x] Chunk insert
-  - [ ] Chunk all/fetch
 - Docs
   - [ ] Write real docs :(
+  - [ ] Kubernetes & scaling docs
 - Replication
   - [ ] Progress
   - [x] Chunking
   - [x] Batching
-  - [ ] Conflict Resolution (automerge?)
+  - [x] Conflict Resolution (automerge?)
+  - [ ] Improve replication tests
 - Socket
-  - [ ] Autodiscovery
+  - [ ] Autodiscovery (bonjour, UDP broadcast)
 - [x] Subscription
   - [x] Batching
 - Adapters
@@ -376,8 +402,6 @@ All contributions welcome :)
   - [x] PostgreSQL
   - [x] SQLite
   - [x] IndexedDB
-  - [x] Dexie (EXPERIMENTAL)
-  - [x] NanoSQL (EXPERIMENTAL)
   - [ ] MongoDB
   - [ ] AWS DynamoDB
   - [ ] MS CosmosDB
@@ -387,9 +411,12 @@ All contributions welcome :)
 - Bindings
   - [x] React
   - [ ] Vue
+- Comparison
+  - [ ] Comparison chart with other libraries (find non-biased features)
+  - [ ] Performance comparison
 - Testing
   - [ ] Improve testing
-  - [ ] Performance testing & benchmarking against others
+  - [ ] Performance testing
 
 ## Continuous Benchmarking
 
@@ -403,6 +430,7 @@ This is some [basic benchmarks](./benchmark/index.ts), just to keep track of per
 
 - [nanoid](https://github.com/ai/nanoid)
 - [asyngular](https://asyngular.io)
+- [automerge](https://github.com/automerge/automerge)
 
 ## References
 
@@ -413,6 +441,7 @@ This is some [basic benchmarks](./benchmark/index.ts), just to keep track of per
 - PouchDB
 - RxDB
 - Realm
+- GunJS
 - NanoSQL
 - Google Firebase
 

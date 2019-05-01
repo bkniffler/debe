@@ -1,5 +1,6 @@
-import { IMiddleware } from '../types';
 import { Emitter, isEqual } from '../utils';
+import { DebeBackend } from '../backend';
+import { addMiddleware } from '../utils';
 
 export interface IChangeListenerOptions {
   emitter?: Emitter;
@@ -7,19 +8,32 @@ export interface IChangeListenerOptions {
 }
 
 const defaultRevisionField = 'rev';
-export const changeListenerPlugin: IMiddleware<IChangeListenerOptions> = ({
-  emitter = new Emitter(),
-  revField = defaultRevisionField
-}) => db => {
+
+let counter = -1;
+let lastTime = '';
+let getTime = () => {
+  let newTime = new Date().toISOString();
+  if (newTime === lastTime) {
+    counter = counter + 1;
+    return newTime + `${counter}`.padStart(5, '0');
+  }
+  counter = -1;
+  lastTime = newTime;
+  return lastTime + '00000';
+};
+export function changeListenerPlugin(
+  adapter: DebeBackend,
+  { emitter = new Emitter(), revField = defaultRevisionField }
+) {
   const addRev = (item: any): [any, any] => {
     if (!item) {
       return item;
     }
-    item[revField] = new Date().toISOString();
+    item[revField] = getTime();
     return item;
   };
 
-  return {
+  addMiddleware(adapter, {
     listener(method = 'insert', { collection = '*', query }, callback) {
       if (method === 'insert') {
         return emitter.on(collection, callback);
@@ -28,7 +42,7 @@ export const changeListenerPlugin: IMiddleware<IChangeListenerOptions> = ({
       const listener = async () => {
         // let isInitial = lastResult === undefined;
         try {
-          const newValue = await (db[method] as any)(collection, query);
+          const newValue = await (adapter.db[method] as any)(collection, query);
           if (!isEqual(lastResult, newValue as any, revField)) {
             callback((newValue === null ? undefined : newValue) as any);
           }
@@ -43,11 +57,11 @@ export const changeListenerPlugin: IMiddleware<IChangeListenerOptions> = ({
     transformItemIn(collection, item) {
       return addRev(item) as any;
     },
-    afterInsert(collection, items, options) {
-      emitter.emit(collection.name, items, options);
+    afterInsert(collection, items, options: any = {}) {
+      emitter.emit(collection.name, items, options, collection.name);
     },
-    afterRemove(collection, items, options) {
-      emitter.emit(collection.name, items, options);
+    afterRemove(collection, items, options: any = {}) {
+      emitter.emit(collection.name, items, options, collection.name);
     },
     collection(collection) {
       collection.specialFields.rev = revField;
@@ -55,5 +69,5 @@ export const changeListenerPlugin: IMiddleware<IChangeListenerOptions> = ({
       collection.index[revField] = 'string';
       return collection;
     }
-  };
-};
+  });
+}

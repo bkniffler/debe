@@ -7,8 +7,7 @@ import {
 } from 'debe-react';
 import App from './components/app';
 import { IDBDebe } from 'debe-idb';
-import { MemoryDebe } from 'debe-memory';
-import { SyncClient } from 'debe-sync';
+import { Sync } from 'debe-sync';
 import { Debe } from 'debe';
 import { schema } from '../shared';
 
@@ -37,7 +36,8 @@ function Instance({ get, title }: { get: () => Debe; title: string }) {
     <DebeProvider
       value={() => {
         const db = get();
-        const sync = new SyncClient(db, ['localhost', 9911]);
+        const sync = new Sync(db, ['localhost', 9911]);
+        sync.initialize();
         return db;
       }}
       initialize={async db => {
@@ -70,7 +70,7 @@ export default function() {
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
       <Instance
-        title="IndexedDebe #1"
+        title="IndexedDebe"
         get={() =>
           new IDBDebe(schema, `todo${hash}`, {
             softDelete: true

@@ -1,4 +1,6 @@
 export * from './generate';
+export * from './middleware';
+export * from './plugin';
 
 interface IHasName {
   name: string;

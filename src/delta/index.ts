@@ -1,51 +1,58 @@
-import { IInsertInput } from 'debe';
 import * as Automerge from 'automerge';
-import { generate, IMiddleware } from 'debe-adapter';
+import { generate, addMiddleware, DebeBackend, hasPlugin } from 'debe-adapter';
+export * from './merge';
 
 Automerge.uuid.setFactory(generate);
 
-export interface IDelta {
-  id: string;
-  changes: Automerge.Change[];
-  item: IInsertInput;
-}
+export type IChange = Automerge.Change;
+export type IChanges = IChange[];
+export type IDelta = [string, IChanges] | [string, IChanges, string];
 export interface IMergePluginOptions {
-  submitDelta?: (collection: string, deltas: IDelta[]) => void;
+  submitDelta?: (collection: string, deltas: IDelta[], options?: any) => void;
   getMessage?: () => string;
-  automergeField?: string;
+  mergeField?: string;
   actorField?: string;
 }
-export const delta: IMiddleware<IMergePluginOptions> = (options = {}) => db => {
+
+export function deltaPlugin(
+  adapter: DebeBackend,
+  options: IMergePluginOptions = {}
+) {
   const {
-    automergeField = 'merge',
+    mergeField = 'merge',
     actorField = 'actor',
     getMessage,
     submitDelta
   } = options;
-  return {
+  addMiddleware(adapter, {
+    name: 'delta',
     collection(collection) {
-      collection.specialFields.automerge = automergeField;
-      collection.fields[automergeField] = 'string';
-      collection.specialFields.actor = automergeField;
-      collection.fields[actorField] = 'string';
-      collection.index[actorField] = 'string';
+      if (hasPlugin(collection, 'delta')) {
+        collection.specialFields.merge = mergeField;
+        collection.fields[mergeField] = 'string';
+        collection.specialFields.actor = mergeField;
+        collection.fields[actorField] = 'string';
+        collection.index[actorField] = 'string';
+      }
       return collection;
     },
     async beforeInsert(collection, items, options) {
+      if (!collection.specialFields.merge || options['skipMerge']) {
+        return;
+      }
       let { message } = options;
       if (!message && getMessage && typeof getMessage === 'function') {
         message = getMessage();
       }
+
       const delta: IDelta[] = [];
       const needFetch = items.filter(item => {
-        return (
-          !item[automergeField] && options.existing.indexOf(item.id + '') >= 0
-        );
+        return !item[mergeField] && options.existing.indexOf(item.id + '') >= 0;
       });
 
       const map = {};
       if (needFetch.length) {
-        (await db.all(collection.name, {
+        (await adapter.db.all(collection.name, {
           id: needFetch.map(x => x.id + '')
         })).forEach(item => {
           map[item.id] = item;
@@ -61,8 +68,8 @@ export const delta: IMiddleware<IMergePluginOptions> = (options = {}) => db => {
         const {
           rev,
           id,
-          rem,
-          [automergeField]: automerge,
+          // rem,
+          [mergeField]: automerge,
           [actorField]: actor,
           ...item
         } = i;
@@ -76,22 +83,23 @@ export const delta: IMiddleware<IMergePluginOptions> = (options = {}) => db => {
         const latestActor = changes.length
           ? changes[changes.length - 1].actor
           : actor;
-        delta.push({ id, changes, item });
+        delta.push([id, changes, rev]);
         return {
           ...item,
           [actorField]: latestActor,
           id,
-          rem,
+          // rem,
           rev,
-          [automergeField]: Automerge.save(newDoc)
+          [mergeField]: Automerge.save(newDoc)
         };
       });
 
+      options['delta'] = delta;
       if (submitDelta) {
-        submitDelta(collection.name, delta);
+        submitDelta(collection.name, delta, options);
       }
 
       return newItems;
     }
-  };
-};
+  });
+}

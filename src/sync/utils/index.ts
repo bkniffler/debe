@@ -57,7 +57,7 @@ export async function waitFor<T>(
 ): Promise<T> {
   let tries = 0;
   let result: T;
-  while (!(result = cb()) && tries <= maxRetries) {
+  while (!(result = await cb()) && tries <= maxRetries) {
     tries += 1;
     await new Promise(yay =>
       setTimeout(
@@ -79,7 +79,7 @@ export function getBigger(comparer0?: string, comparer1?: string) {
   return comparer1;
 }
 
-type IFetchCount = () => Promise<number>;
+type IFetchCount = () => Promise<number> | number;
 type IFetchItems<TResult = any> = (
   page: number
 ) => Promise<TResult[]> | TResult[];
@@ -87,37 +87,40 @@ type ITransferItems<TInput, TResult = TInput> = (
   items: TInput[]
 ) => Promise<TResult[]>;
 
-export async function batchTransfer<TFetchResult = any>(
-  fetchCount: IFetchCount,
-  fetchItems: IFetchItems<TFetchResult>
-): Promise<TFetchResult[]>;
-export async function batchTransfer<TFetchResult = any, TTransferResult = any>(
-  fetchCount: IFetchCount,
-  fetchItems: IFetchItems<TFetchResult>,
-  transferItems: ITransferItems<TFetchResult, TTransferResult>
-): Promise<[TFetchResult[], TTransferResult[]]>;
-export async function batchTransfer<TFetchResult = any, TTransferResult = any>(
-  fetchCount: IFetchCount,
-  fetchItems: IFetchItems<TFetchResult>,
-  transferItems?: ITransferItems<TFetchResult, TTransferResult>
-): Promise<any> {
+export async function batchTransfer<TFetchResult = any, TTransferResult = any>({
+  fetchCount,
+  fetchItems,
+  transferItems,
+  reporter
+}: {
+  fetchCount: IFetchCount;
+  fetchItems: IFetchItems<TFetchResult>;
+  transferItems?: ITransferItems<TFetchResult, TTransferResult>;
+  reporter?: (percent: number) => void;
+}): Promise<[TFetchResult[], TTransferResult[]]> {
   let changeCount = await fetchCount();
+  let current = changeCount;
   let page = 0;
   let items: TFetchResult[] = [];
   let transferred: TTransferResult[] = [];
-  while (changeCount > 0) {
+  while (current > 0) {
     const changes = await fetchItems(page);
     if (changes.length) {
       if (transferItems) {
         transferred = transferred.concat(await transferItems(changes));
       }
       items = items.concat(changes);
+    } else {
+      break;
     }
-    changeCount = changeCount - changes.length;
+    current = current - changes.length;
     page = page + 1;
+    if (reporter) {
+      reporter(Math.abs((100 / changeCount) * current - 100));
+    }
   }
   if (transferItems) {
     return [items, transferred];
   }
-  return items;
+  return [items, []];
 }

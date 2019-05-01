@@ -56,7 +56,11 @@ export interface IInsert {
   [s: string]: any;
 }
 
-export type IObserverCallback<T> = (value: T, options?: any) => void;
+export type IObserverCallback<T> = (
+  value: T,
+  options?: any,
+  collection?: string
+) => void;
 export type IUnlisten = () => void;
 
 export interface IObject<T> {

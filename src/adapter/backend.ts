@@ -1,9 +1,4 @@
-import {
-  IMiddleware2,
-  IMiddlewareInner,
-  IListenerOptions,
-  IObserverCallback
-} from './types';
+import { IListenerOptions, IObserverCallback, IMiddleware } from './types';
 import { IObject, generate, objectify } from './utils';
 import {
   Debe,
@@ -26,7 +21,7 @@ import { DebeAdapter } from './adapter';
 import { changeListenerPlugin, softDeletePlugin } from './middleware';
 
 interface IBackendOptions {
-  middlewares?: IMiddleware2[];
+  middlewares?: ((adapter: DebeBackend, options: any) => void)[];
   changeListener?: boolean;
   softDelete?: boolean;
   [s: string]: any;
@@ -36,7 +31,7 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
   chunkMode = 'parallel';
   options: IBackendOptions;
   collections: IObject<ICollection> = {};
-  middlewares: IMiddlewareInner[] = [];
+  middlewares: IMiddleware[] = [];
   db: Debe;
   adapter: DebeAdapter;
   constructor(
@@ -50,30 +45,26 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
       : collections;
     this.options = options;
     this.adapter = adapter;
-  }
-  welcome(db: Debe) {
-    super.welcome(db);
+
     const {
       middlewares = [],
       changeListener = true,
       softDelete = false
-    } = this.options;
-    // this.db = db;
+    } = options;
     if (changeListener) {
-      this.middlewares.push(changeListenerPlugin(this.options as any)(db));
+      changeListenerPlugin(this, options as any);
     }
     if (softDelete) {
-      this.middlewares.push(softDeletePlugin(this.options as any)(db));
+      softDeletePlugin(this, options as any);
     }
     for (var middleware of middlewares) {
-      this.middlewares.push(middleware(db));
+      middleware(this, options as any);
     }
   }
   run(action: actionTypes, collection: string, payload?: any, options?: any) {
     if (this[action]) {
       return this[action].apply(this, [collection, payload, options]);
     }
-    throw new Error('Method does not exist: ' + action);
   }
   listen<T>(
     action: listenTypes,

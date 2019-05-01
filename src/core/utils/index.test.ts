@@ -1,9 +1,4 @@
-import { toISO, createLog, log as logging, overwriteLog } from './index';
-
-test('utils:toISO', () => {
-  const date = new Date();
-  expect(date.toISOString()).toBe(toISO(date));
-});
+import { createLog, log as logging, overwriteLog } from './index';
 
 test('utils:log', () => {
   const { info, warn, log, error } = console;

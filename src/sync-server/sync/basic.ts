@@ -4,17 +4,19 @@ import {
   ICountInitialChanges,
   IInitialFetchChanges,
   batchSize,
-  ISendChanges
+  ISendChanges,
+  CHANNELS
 } from 'debe-sync';
 import { DebeBackend } from 'debe-adapter';
+const { COUNT_INITIAL, FETCH_INITIAL, SEND } = CHANNELS;
 
-export async function createSocketChannels(client: Debe, socket: ISocketBase) {
+export async function createBasicProcedures(client: Debe, socket: ISocketBase) {
   const collections = (client.dispatcher as DebeBackend).collections;
 
   // Get a count of all items that need to be synced with client
   (async () => {
     for await (let req of socket.procedure<ICountInitialChanges, number>(
-      'countInitialChanges'
+      COUNT_INITIAL
     )) {
       let { type, since, where } = req.data;
       const collection = collections[type];
@@ -40,7 +42,7 @@ export async function createSocketChannels(client: Debe, socket: ISocketBase) {
     for await (let req of socket.procedure<
       IInitialFetchChanges,
       (IItem & IGetItem)[]
-    >('initialFetchChanges')) {
+    >(FETCH_INITIAL)) {
       let { type, since, where, page = 0 } = req.data;
       const collection = collections[type];
       if (since) {
@@ -67,11 +69,14 @@ export async function createSocketChannels(client: Debe, socket: ISocketBase) {
 
   // Receive changes
   (async () => {
-    for await (let req of socket.procedure<ISendChanges>('sendChanges')) {
-      let [type, items] = req.data;
+    for await (let req of socket.procedure<ISendChanges>(SEND)) {
+      let [type, items, options = {}] = req.data;
       const collection = collections[type];
       const newItems = await client
-        .insert(collection.name, items, { synced: socket.id } as any)
+        .insert(collection.name, items, {
+          ...options,
+          synced: socket.id
+        } as any)
         .catch(x => console.error('Error while client.insert', x) as any);
       req.end(newItems.length ? newItems[newItems.length - 1].rev : undefined);
     }

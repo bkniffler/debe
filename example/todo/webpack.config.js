@@ -7,6 +7,7 @@ const NodemonPlugin = require('nodemon-webpack-plugin'); // Ding
 
 const base = {
   mode: 'development',
+  stats: 'minimal',
   optimization: {
     minimize: false
   },

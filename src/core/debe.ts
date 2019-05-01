@@ -12,12 +12,12 @@ import {
 import { DebeDispatcher } from './dispatcher';
 import { ensureQuery } from './sanitize';
 
-export class Debe<TBase = IItem> {
-  dispatcher: DebeDispatcher<TBase>;
+export class Debe<TBase = IItem, TDispatcher = DebeDispatcher<TBase>> {
+  dispatcher: TDispatcher & DebeDispatcher<TBase>;
   initializing: Promise<void>;
-  constructor(dispatcher: DebeDispatcher) {
+  constructor(dispatcher: TDispatcher & DebeDispatcher<TBase>) {
     this.dispatcher = dispatcher;
-    dispatcher.welcome(this);
+    dispatcher.db = this;
   }
   async close() {
     await this.dispatcher.close();

@@ -8,6 +8,7 @@ import {
   IGetItem,
   listenTypes
 } from 'debe';
+import { DebeBackend } from './backend';
 
 export type IObserverCallback<T> = (value: T) => void;
 export type IUnlisten = () => void;
@@ -17,9 +18,8 @@ export interface IListenerOptions {
   query?: string | string[] | IQuery;
 }
 
-export type IMiddleware<T = any> = (options: T) => IMiddleware2;
-export type IMiddleware2 = (db: Debe) => IMiddlewareInner;
-export interface IMiddlewareInner {
+export interface IMiddleware {
+  name?: string;
   // Lifecycle
   initialize?: () => void;
   collection?: (collection: ICollection) => ICollection;
@@ -53,7 +53,7 @@ export interface IMiddlewareInner {
     collection: ICollection,
     items: (T & IInsertItem)[],
     options: IInsert
-  ) => Promise<T[]> | T[] | void;
+  ) => Promise<T[] | void | undefined> | T[] | void | undefined;
   afterInsert?: (
     collection: ICollection,
     items: IInsertItem[],

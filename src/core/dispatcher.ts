@@ -1,14 +1,17 @@
 import { IItem, IListenerOptions } from './types';
 import { Debe } from './debe';
 
-export type listenTypes = 'get' | 'count' | 'all' | 'insert';
-export type actionTypes = 'get' | 'count' | 'all' | 'insert' | 'remove';
+export type listenTypes = 'get' | 'count' | 'all' | 'insert' | string;
+export type actionTypes =
+  | 'get'
+  | 'count'
+  | 'all'
+  | 'insert'
+  | 'remove'
+  | string;
 
 export abstract class DebeDispatcher<TBase = IItem> {
   db: Debe;
-  welcome(db: Debe) {
-    this.db = db;
-  }
   abstract close(): Promise<void>;
   abstract initialize(): Promise<void>;
   abstract run<T = TBase>(

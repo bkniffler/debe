@@ -1,6 +1,6 @@
-import { Debe, generate } from '../src/core';
-import { MemoryAdapter } from '../src/memory';
-import { Sqlite3Adapter } from '../src/better-sqlite3';
+import { generate } from '../src/adapter';
+import { MemoryDebe } from '../src/memory';
+import { BetterSqlite3Debe } from '../src/better-sqlite3';
 import { writeJSON, readJSONSync, removeSync, ensureDirSync } from 'fs-extra';
 import { resolve, join } from 'path';
 import { chartist } from './chartist';
@@ -24,8 +24,8 @@ async function work() {
     { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
   ];
   const table = collections[0].name;
-  const clientMemory = new Debe(new MemoryAdapter(), collections);
-  const clientSqlite3 = new Debe(new Sqlite3Adapter(getDBDir()), collections);
+  const clientMemory = new MemoryDebe(collections);
+  const clientSqlite3 = new BetterSqlite3Debe(getDBDir(), collections);
   await clientMemory.initialize();
   await clientSqlite3.initialize();
   var suite = new Benchmark.Suite();

@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { debeContext } from './context';
-import { SyncClient } from 'debe-sync';
+import { Sync } from 'debe-sync';
 import { IConnectionState } from 'asyngular-client';
 
-export const syncContext = React.createContext<SyncClient>(undefined as any);
+export const syncContext = React.createContext<Sync>(undefined as any);
 
 export function useConnectionState(): IConnectionState {
   const client = React.useContext(debeContext);

@@ -1,17 +1,18 @@
 import { Debe } from 'debe';
 import { PostgreSQLDebe } from 'debe-postgresql';
-import { delta } from './index';
+import { deltaPlugin } from './index';
 import { BetterSqlite3Debe } from 'debe-better-sqlite3';
 import { join } from 'path';
 import { removeSync, ensureDirSync } from 'fs-extra';
 import { MemoryDebe } from 'debe-memory';
 import * as Automerge from 'automerge';
-import { generate } from 'debe-adapter';
+import { generate, DebeBackend } from 'debe-adapter';
 
 const schema = [
   {
     name: 'lorem' + generate().substr(0, 3),
-    index: ['firstName', 'lastName', 'age']
+    index: ['firstName', 'lastName', 'age'],
+    plugins: ['delta']
   }
 ];
 const collectionName = schema[0].name;
@@ -24,20 +25,18 @@ interface ILorem {
 async function t(getDebe: (schema: any[], options: any) => Debe) {
   const merged = {};
   const db = getDebe(schema, {
-    softDelete: true,
-    middlewares: [
-      delta({
-        getMessage: () => 'Yay',
-        submitDelta: delta => {
-          for (var item of delta) {
-            if (!merged[item.id]) {
-              merged[item.id] = [];
-            }
-            merged[item.id] = [...item.changes, ...merged[item.id]];
-          }
+    softDelete: true
+  });
+  deltaPlugin(db.dispatcher as DebeBackend, {
+    getMessage: () => 'Yay',
+    submitDelta: (collection, delta) => {
+      for (var [id, changes] of delta) {
+        if (!merged[id]) {
+          merged[id] = [];
         }
-      })
-    ]
+        merged[id] = [...changes, ...merged[id]];
+      }
+    }
   });
   await db.initialize();
   const item = await db.insert<ILorem>(collectionName, {

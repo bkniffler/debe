@@ -16,8 +16,14 @@ import {
 } from 'debe-adapter';
 
 export class MemoryDebe extends Debe {
-  constructor(collections: ICollectionInput[], options?: any) {
-    super(new DebeBackend(new MemoryAdapter(), collections, options));
+  constructor(
+    collections: ICollectionInput[],
+    options?: any,
+    initialData: IInitialData = {}
+  ) {
+    super(
+      new DebeBackend(new MemoryAdapter(initialData), collections, options)
+    );
   }
 }
 
@@ -25,13 +31,27 @@ interface IStore {
   [s: string]: Map<string, IGetItem>;
 }
 
+interface IInitialData {
+  [s: string]: IGetItem[];
+}
+
 export class MemoryAdapter extends DebeAdapter {
   private store: IStore = {};
   filter = createMemoryFilter().filter;
+  initialData: IInitialData;
+  constructor(initialData: IInitialData = {}) {
+    super();
+    this.initialData = initialData;
+  }
   initialize(collections: ICollections) {
     for (var key in collections) {
       const collection = collections[key];
       this.store[collection.name] = new Map();
+      if (this.initialData[collection.name]) {
+        this.initialData[collection.name].forEach(item => {
+          this.store[collection.name].set(item.id, item);
+        });
+      }
     }
   }
   get(collection: ICollection, id: string) {
@@ -58,7 +78,7 @@ export class MemoryAdapter extends DebeAdapter {
     if (query.select) {
       items = items.map(x => pluck(x, query.select));
     }
-    return [...items];
+    return [...items.map(item => ({ ...item }))];
   }
   count(collection: ICollection, query: IQuery) {
     delete query.orderBy;
@@ -86,7 +106,7 @@ export class MemoryAdapter extends DebeAdapter {
         ...item
       });
     } else {
-      this.store[type].set(item.id, item);
+      this.store[type].set(item.id, { ...item });
     }
     return item;
   }

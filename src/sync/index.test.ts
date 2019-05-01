@@ -1,71 +1,11 @@
-import { Debe } from 'debe';
-import { MemoryDebe } from 'debe-memory';
-import { SyncServer } from 'debe-sync-server';
-import { SyncClient } from './index';
-
-const schema = [
-  {
-    name: 'lorem',
-    index: ['name']
-  }
-];
-
-function getPort(i: number) {
-  return 9999 + i;
-}
-let alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
-async function generateItemsInto(db: Debe, count: number = 1000, prefix = '') {
-  const items = [];
-  for (var x = 0; x < count; x++) {
-    items.push({
-      //id: uuid4(),
-      // id: prefix + `${x}`.padStart(`${count}`.length + 1, '0'),
-      name: prefix + `${x}`.padStart(`${count}`.length + 1, '0')
-    });
-  }
-  await db.insert('lorem', items);
-}
-async function spawnServer(port: number, syncTo?: number) {
-  const db = new MemoryDebe(schema);
-  const target: any = syncTo ? ['localhost', syncTo] : undefined;
-  return new SyncServer(db, port, target).initialize();
-}
-async function spawnClient(port: number) {
-  const db = new MemoryDebe(schema);
-  return new SyncClient(db, ['localhost', port]).initialize();
-}
-async function generateClients(port: number, numberOfClients: number) {
-  const clients: SyncClient[] = [];
-  for (var i = 0; i < numberOfClients; i++) {
-    clients.push(await spawnClient(port));
-  }
-  return clients;
-}
-async function isEqual(...args: Debe[]) {
-  let previous: string[] | undefined = undefined;
-  for (var db of args) {
-    const items = await db.all('lorem', { orderBy: ['name ASC'] });
-    const arr = [...new Set([...items.map(x => x.name)])];
-    console.log(previous, arr);
-    if (previous !== undefined && previous.join(',') !== arr.join(',')) {
-      // console.log(previous.join(','), 'vs', arr.join(','));
-      return false;
-    }
-    previous = arr;
-  }
-  return true;
-}
-
-async function awaitIsEqual(maxTries = 10, ...dbs: Debe[]) {
-  await new Promise(yay => setTimeout(yay, 5000));
-  for (var i = 0; i < maxTries; i++) {
-    if (await isEqual(...dbs)) {
-      return true;
-    }
-    await new Promise(yay => setTimeout(yay, 5000));
-  }
-  return false;
-}
+import {
+  getPort,
+  spawnServer,
+  generateClients,
+  generateItemsInto,
+  alphabet,
+  awaitIsEqual
+} from './test';
 
 test('sync:init:10x3', async cb => {
   const port = getPort(0);
@@ -77,13 +17,11 @@ test('sync:init:10x3', async cb => {
       generateItemsInto(x.db, count, `${alphabet[i]}.`)
     )
   );
-  expect(await awaitIsEqual(3, server.db, ...clients.map(x => x.db))).toBe(
+  expect(await awaitIsEqual(20, server.db, ...clients.map(x => x.db))).toBe(
     true
   );
-  await new Promise(yay => setTimeout(yay, 3000));
   await server.close();
   await Promise.all(clients.map(client => client.close()));
-  await new Promise(yay => setTimeout(yay, 3000));
   cb();
 }, 120000);
 
@@ -126,7 +64,7 @@ test('sync:init:1000x10', async cb => {
 test('sync:init:multimaster', async cb => {
   const port0 = getPort(3);
   const port1 = getPort(4);
-  const count = 100;
+  const count = 10;
   const server0 = await spawnServer(port0);
   const server1 = await spawnServer(port1, port0);
   const clients0 = await generateClients(port0, 3);
@@ -138,7 +76,7 @@ test('sync:init:multimaster', async cb => {
   );
   expect(
     await awaitIsEqual(
-      3,
+      20,
       server0.db,
       server1.db,
       ...clients0.map(x => x.db),
@@ -152,7 +90,7 @@ test('sync:init:multimaster', async cb => {
   );
   expect(
     await awaitIsEqual(
-      3,
+      20,
       server0.db,
       server1.db,
       ...clients0.map(x => x.db),

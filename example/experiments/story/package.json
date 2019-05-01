@@ -1,0 +1,23 @@
+{
+  "name": "story",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@storybook/addon-actions": "^5.1.0-alpha.33",
+    "@storybook/addon-links": "^5.1.0-alpha.33",
+    "@storybook/addons": "^5.1.0-alpha.33",
+    "@storybook/react": "^5.1.0-alpha.33",
+    "babel-loader": "^8.0.5",
+    "ts-loader": "^5.4.3"
+  }
+}

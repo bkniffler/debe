@@ -1,47 +1,60 @@
-import { Debe } from 'debe';
+import { Debe, ensureCollection } from 'debe';
 import * as http from 'http';
 import { attach } from 'asyngular-server';
-import { createSocketChannels } from './server';
-import { SyncClient, IAddress } from 'debe-sync';
-import { DebeBackend } from 'debe-adapter';
+import { Sync, IAddress, syncstateTable } from 'debe-sync';
+import { DebeBackend, addMiddleware, addPlugin } from 'debe-adapter';
+import { deltaPlugin } from 'debe-delta';
+import {
+  createDeltaProcedures,
+  createBasicProcedures,
+  databaseListener,
+  addFilterMiddleware
+} from './sync';
 
 export class SyncServer {
   id = `${Math.random()
     .toString(36)
     .substr(2, 9)}`;
   port: number;
-  sockets: SyncClient[] = [];
+  sockets: Sync[] = [];
   httpServer = http.createServer();
   agServer = attach(this.httpServer);
   db: Debe;
   constructor(db: Debe, port: number = 8000, syncTo?: IAddress[] | IAddress) {
     this.db = db;
     this.port = port;
+
+    const backend = this.db.dispatcher as DebeBackend;
+    if (backend.middlewares) {
+      addMiddleware(backend, {
+        name: 'sync',
+        collection(collection) {
+          if (collection['sync'] && collection['sync'] === 'delta') {
+            addPlugin(collection, 'delta');
+          }
+          return collection;
+        },
+        collections(collections) {
+          collections[syncstateTable] = ensureCollection({
+            name: syncstateTable
+          });
+          return collections;
+        }
+      });
+
+      deltaPlugin(backend);
+    }
+
     if (syncTo && syncTo.length) {
       if (!Array.isArray(syncTo[0])) {
         syncTo = [syncTo] as any;
       }
       this.sockets = (syncTo as IAddress[]).map(
-        (pair: IAddress) => new SyncClient(db, pair)
+        (pair: IAddress) => new Sync(db, pair)
       );
     }
 
-    this.agServer.setMiddleware(
-      this.agServer.MIDDLEWARE_OUTBOUND,
-      async middlewareStream => {
-        for await (let action of middlewareStream) {
-          // Don't publish back to origin socket
-          if (
-            action.type === action.PUBLISH_OUT &&
-            action.data[0] === action.socket.id
-          ) {
-            action.block();
-            continue;
-          }
-          action.allow();
-        }
-      }
-    );
+    addFilterMiddleware(this.agServer);
     this.agServer.setMiddleware(
       this.agServer.MIDDLEWARE_INBOUND,
       async middlewareStream => {
@@ -70,41 +83,18 @@ export class SyncServer {
   }
   async initialize() {
     await this.db.initialize();
-    this.socketListener();
-    this.serverListener();
+    await Promise.all(this.sockets.map(socket => socket.initialize()));
+    this.listen();
+    databaseListener(this.agServer, this.db, this.id);
     setTimeout(() => this.httpServer.listen(this.port));
     return this;
   }
-  async socketListener() {
+  async listen() {
     for await (let { socket } of this.agServer.listener('connection')) {
-      createSocketChannels(this.db, socket);
+      createDeltaProcedures(this.db, socket, this.agServer);
+      createBasicProcedures(this.db, socket);
     }
   }
-  async serverListener() {
-    const collections = (this.db.dispatcher as DebeBackend).collections;
-    for (let key in collections) {
-      const collection = collections[key];
-      // this.serverCollectionListener(collection);
-      this.db.listen(collection.name, (items, options) => {
-        this.agServer.exchange.invokePublish(collection.name, [
-          options.synced || this.id,
-          items
-        ]);
-      });
-    }
-  }
-  /*async serverCollectionListener(collection: ICollection) {
-    const channel = this.agServer.exchange.subscribe<[string, IGetItem[]]>(
-      collection.name
-    );
-    for await (let data of channel) {
-      const [id, payload] = data;
-      if (id === this.id) continue;
-      await this.db
-        .insert(collection.name, payload, { synced: 'master' } as any)
-        .catch(x => console.error('Error while client.insert', x) as any);
-    }
-  }*/
   async disconnect() {
     await Promise.all(this.sockets.map(socket => socket.close()));
     await this.agServer.close();
