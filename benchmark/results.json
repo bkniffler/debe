@@ -28,5 +28,11 @@
     "better-sqlite3": 887,
     "memory-100x": 172,
     "better-sqlite3-100x": 20
+  },
+  "1.2.0-beta.9": {
+    "memory": 221915,
+    "better-sqlite3": 925,
+    "memory-100x": 158,
+    "better-sqlite3-100x": 20
   }
 }
