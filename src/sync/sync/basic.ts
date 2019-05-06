@@ -1,19 +1,11 @@
 import { batchSize } from '../constants';
 import { CHANNELS } from '../types';
 import { batchTransfer } from '../utils';
-import { ISocket } from 'asyngular-client';
-import { Debe, IItem } from 'debe';
-import { IUpdateState } from '../state';
+import { IItem } from 'debe';
 import { ISyncType } from './type';
 
 export const basic: ISyncType = {
-  async initialDown(
-    collection: string,
-    since: string | undefined,
-    count: number,
-    socket: ISocket,
-    db: Debe
-  ) {
+  async initialDown(collection, since, count, socket, db, isClosing) {
     const [remoteChanges] = await batchTransfer({
       fetchCount: () => count,
       fetchItems: async page => {
@@ -22,9 +14,10 @@ export const basic: ISyncType = {
           since,
           page
         });
-      }
+      },
+      shouldCancel: isClosing
     });
-    if (remoteChanges.length) {
+    if (remoteChanges.length && !isClosing()) {
       const options = {
         synced: 'client'
       };
@@ -34,13 +27,7 @@ export const basic: ISyncType = {
     }
     return [undefined, undefined];
   },
-  async initialUp(
-    collection: string,
-    since: string | undefined,
-    count: number,
-    socket: ISocket,
-    db: Debe
-  ) {
+  async initialUp(collection, since, count, socket, db, isClosing) {
     let latestResult: any = undefined;
     let latestUpload: any = undefined;
     try {
@@ -60,24 +47,26 @@ export const basic: ISyncType = {
               }
               return x;
             }),
-        transferItems: items => basic.up(collection, db, socket, items, {})
+        transferItems: items =>
+          basic.up(collection, db, socket, items, {}, isClosing),
+        shouldCancel: isClosing
       });
       return [latestUpload, latestResult ? latestResult.latestRev : undefined];
     } catch (err) {
       return [undefined, undefined];
     }
   },
-  listen(socket: ISocket, db: Debe, updateState: IUpdateState) {
-    let cancel = false;
+  listen(socket, db, updateState, registerTask, isClosing) {
     const channel = socket.subscribe<[string, IItem[], any?]>(
       CHANNELS.SUBSCRIBE_CHANGES
     );
     (async () => {
       for await (let data of channel) {
-        if (cancel) {
+        if (isClosing()) {
           return;
         }
         let [type, items, options = {}] = data;
+        const task = registerTask();
         options.synced = socket.id;
         const lastRemoteRev =
           items[items.length - 1] && items[items.length - 1].rev;
@@ -85,23 +74,23 @@ export const basic: ISyncType = {
         const lastLocalRev =
           newItems[newItems.length - 1] && newItems[newItems.length - 1].rev;
         updateState(type, lastLocalRev, lastRemoteRev);
+        task();
       }
     })();
     return {
-      cancel: () => (cancel = true),
       wait: new Promise(yay => setTimeout(yay, 10))
     };
   },
-  up(
-    collection: string,
-    db: Debe,
-    socket: ISocket,
-    items: IItem[],
-    options: any
-  ) {
-    return socket.invoke<[string, IItem[]], any>(CHANNELS.SEND, [
-      collection,
-      items
-    ]);
+  up(collection, db, socket, items, options, isClosing) {
+    if (isClosing()) {
+      return Promise.resolve();
+    }
+    return socket
+      .invoke<[string, IItem[]], any>(CHANNELS.SEND, [collection, items])
+      .catch(err => {
+        if (!isClosing()) {
+          throw err;
+        }
+      });
   }
 };

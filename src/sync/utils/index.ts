@@ -91,13 +91,16 @@ export async function batchTransfer<TFetchResult = any, TTransferResult = any>({
   fetchCount,
   fetchItems,
   transferItems,
-  reporter
+  reporter,
+  shouldCancel
 }: {
   fetchCount: IFetchCount;
   fetchItems: IFetchItems<TFetchResult>;
   transferItems?: ITransferItems<TFetchResult, TTransferResult>;
   reporter?: (percent: number) => void;
+  shouldCancel?: () => boolean;
 }): Promise<[TFetchResult[], TTransferResult[]]> {
+  const canceled = shouldCancel ? shouldCancel : () => false;
   let changeCount = await fetchCount();
   let current = changeCount;
   let page = 0;
@@ -105,7 +108,7 @@ export async function batchTransfer<TFetchResult = any, TTransferResult = any>({
   let transferred: TTransferResult[] = [];
   while (current > 0) {
     const changes = await fetchItems(page);
-    if (changes.length) {
+    if (changes.length && !canceled()) {
       if (transferItems) {
         transferred = transferred.concat(await transferItems(changes));
       }

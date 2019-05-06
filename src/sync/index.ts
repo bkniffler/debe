@@ -6,11 +6,12 @@ export * from './types';
 export * from './constants';
 export * from './utils';
 import { SyncState } from './state';
-import { listenToDatabase, initialSync, listenToSync } from './sync';
+import { SyncEngine } from './sync';
 import { ensureSync } from './ensure-sync';
 
 export class Sync {
   syncState: SyncState;
+  engine: SyncEngine;
   socket: ISocket;
   db: Debe;
   where?: string[];
@@ -29,8 +30,11 @@ export class Sync {
     this.loop();
     return this;
   }
-  forceSync() {
-    return new Promise(yay => setTimeout(yay, 3000));
+  get initialSync() {
+    return this.engine.initialSyncComplete;
+  }
+  get isSyncing() {
+    return this.engine.isSyncing;
   }
   async close() {
     if (this['_close']) {
@@ -45,30 +49,16 @@ export class Sync {
     }
     this.socket.disconnect();
   }
-  initialSyncComplete = Promise.resolve();
   async connect() {
     await this.db.initialize();
     await this.syncState.init();
+    this.engine = new SyncEngine();
     // console.log(this.syncState);
-    let cancels: Function[] = [];
     const { collections } = this.db.dispatcher as DebeBackend;
     const isDelta = (key: string) => collections[key]['sync'] === 'delta';
     const keys = Object.keys(collections).filter(x => collections[x]['sync']);
-    initialSync(keys, isDelta, this.socket, this.db, this.syncState);
-    cancels.push(
-      listenToDatabase(
-        keys,
-        isDelta,
-        this.db,
-        this.socket,
-        this.initialSyncComplete
-      )
-    );
-
-    cancels.push(listenToSync(this.socket, this.db, this.syncState));
-    this['_close'] = async () => {
-      await Promise.all((cancels as any[]).map(x => x()));
-    };
+    this.engine.initial(keys, isDelta, this.socket, this.db, this.syncState);
+    this['_close'] = async () => this.engine.close();
   }
   listener() {}
   get state() {
