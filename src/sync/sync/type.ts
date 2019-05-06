@@ -1,6 +1,4 @@
-import { ISocket } from 'asyngular-client';
-import { Debe, IItem } from 'debe';
-import { IUpdateState } from '../state';
+import { IItem } from 'debe';
 import { SyncEngine } from '../sync';
 
 export interface IListenReturn {
