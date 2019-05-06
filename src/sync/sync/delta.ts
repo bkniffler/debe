@@ -50,33 +50,37 @@ export const delta: ISyncType = {
   ) {
     let latestResult: any = undefined;
     let latestUpload: any = undefined;
-    await batchTransfer<any, any>({
-      fetchCount: () => count,
-      fetchItems: async page =>
-        db
-          .all(collection, {
-            where: since ? ['rev > ?', since] : undefined,
-            orderBy: ['rev ASC', 'id ASC'],
-            limit: batchSize,
-            offset: page * batchSize
-          })
-          .then(x => {
-            if (x.length) {
-              latestUpload = x[x.length - 1].rev;
-            }
-            return x;
-          }),
-      transferItems: items =>
-        delta
-          .up(collection, db, socket, items, {
-            delta: items.map(x => [x.id, x['merge'], x.rev])
-          })
-          .then(x => {
-            latestResult = x;
-            return x;
-          })
-    });
-    return [latestUpload, latestResult ? latestResult.latestRev : undefined];
+    try {
+      await batchTransfer<any, any>({
+        fetchCount: () => count,
+        fetchItems: async page =>
+          db
+            .all(collection, {
+              where: since ? ['rev > ?', since] : undefined,
+              orderBy: ['rev ASC', 'id ASC'],
+              limit: batchSize,
+              offset: page * batchSize
+            })
+            .then(x => {
+              if (x.length) {
+                latestUpload = x[x.length - 1].rev;
+              }
+              return x;
+            }),
+        transferItems: items =>
+          delta
+            .up(collection, db, socket, items, {
+              delta: items.map(x => [x.id, x['merge'], x.rev])
+            })
+            .then(x => {
+              latestResult = x;
+              return x;
+            })
+      });
+      return [latestUpload, latestResult ? latestResult.latestRev : undefined];
+    } catch (err) {
+      return [undefined, undefined];
+    }
   },
   listen(socket: ISocket, db: Debe, updateState: IUpdateState) {
     let cancel = false;

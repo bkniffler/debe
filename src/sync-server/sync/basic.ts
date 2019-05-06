@@ -10,7 +10,8 @@ import {
 import { DebeBackend } from 'debe-adapter';
 const { COUNT_INITIAL, FETCH_INITIAL, SEND } = CHANNELS;
 
-export async function createBasicProcedures(client: Debe, socket: ISocketBase) {
+export function createBasicProcedures(client: Debe, socket: ISocketBase) {
+  let stop = false;
   const collections = (client.dispatcher as DebeBackend).collections;
 
   // Get a count of all items that need to be synced with client
@@ -18,6 +19,9 @@ export async function createBasicProcedures(client: Debe, socket: ISocketBase) {
     for await (let req of socket.procedure<ICountInitialChanges, number>(
       COUNT_INITIAL
     )) {
+      if (stop) {
+        return;
+      }
       let { type, since, where } = req.data;
       const collection = collections[type];
       if (since) {
@@ -43,6 +47,9 @@ export async function createBasicProcedures(client: Debe, socket: ISocketBase) {
       IInitialFetchChanges,
       (IItem & IGetItem)[]
     >(FETCH_INITIAL)) {
+      if (stop) {
+        return;
+      }
       let { type, since, where, page = 0 } = req.data;
       const collection = collections[type];
       if (since) {
@@ -70,15 +77,27 @@ export async function createBasicProcedures(client: Debe, socket: ISocketBase) {
   // Receive changes
   (async () => {
     for await (let req of socket.procedure<ISendChanges>(SEND)) {
+      if (stop) {
+        return;
+      }
       let [type, items, options = {}] = req.data;
       const collection = collections[type];
-      const newItems = await client
-        .insert(collection.name, items, {
+      try {
+        const newItems = await client.insert(collection.name, items, {
           ...options,
           synced: socket.id
-        } as any)
-        .catch(x => console.error('Error while client.insert', x) as any);
-      req.end(newItems.length ? newItems[newItems.length - 1].rev : undefined);
+        } as any);
+        req.end(
+          newItems.length ? newItems[newItems.length - 1].rev : undefined
+        );
+      } catch (err) {
+        console.log('Err on insert, was DB closed?', err);
+        req.end(err);
+      }
     }
   })();
+
+  return () => {
+    stop = true;
+  };
 }

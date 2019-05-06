@@ -14,10 +14,6 @@ export const schema = [
   }
 ];
 
-export function getPort(i: number) {
-  return 9999 + i;
-}
-
 export let alphabet = [
   'a',
   'b',

@@ -63,6 +63,9 @@ export function listenToDatabase(
   // this.serverCollectionListener(collection);
   return db.listen('*', async (items, options, key) => {
     await initialSyncComplete;
+    if (socket.state !== 'open') {
+      return;
+    }
     if (
       !key ||
       collections.indexOf(key) === -1 ||
@@ -73,7 +76,9 @@ export function listenToDatabase(
     if (isDelta(key)) {
       delta.up(key, db, socket, items, options);
     } else {
-      basic.up(key, db, socket, items, options);
+      basic
+        .up(key, db, socket, items, options)
+        .catch(err => console.log('ERR', err, err.stack, socket.state));
     }
   });
 }

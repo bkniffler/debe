@@ -16,11 +16,12 @@ const {
   FETCH_MISSING_DELTA
 } = CHANNELS;
 
-export async function createDeltaProcedures(
+export function createDeltaProcedures(
   client: Debe,
   socket: ISocketBase,
   server: IAGServer
 ) {
+  let stop = false;
   const collections = (client.dispatcher as DebeBackend).collections;
   const select = ['id', 'actor', 'merge', 'rev'];
 
@@ -29,6 +30,9 @@ export async function createDeltaProcedures(
     for await (let req of socket.procedure<ICountInitialChanges, number>(
       COUNT_INITIAL_DELTA
     )) {
+      if (stop) {
+        return;
+      }
       let { type, since, where } = req.data;
       const collection = collections[type];
       if (since) {
@@ -50,6 +54,9 @@ export async function createDeltaProcedures(
   // Fetch all changes and send back
   (async () => {
     for await (let req of socket.procedure<any, any[]>(FETCH_INITIAL_DELTA)) {
+      if (stop) {
+        return;
+      }
       let { type, since, where, page = 0 } = req.data;
       const collection = collections[type];
       if (since) {
@@ -78,6 +85,9 @@ export async function createDeltaProcedures(
   // Receive change
   (async () => {
     for await (let req of socket.procedure<ISendDelta>(SEND_DELTA)) {
+      if (stop) {
+        return;
+      }
       let [type, items, options = {}] = req.data;
       // console.log('RECEIVE DELTA', items.length);
 
@@ -102,6 +112,9 @@ export async function createDeltaProcedures(
   // Get missing change
   (async () => {
     for await (let req of socket.procedure(FETCH_MISSING_DELTA)) {
+      if (stop) {
+        return;
+      }
       let [type, items] = req.data;
       const missing = await client.all(type, {
         id: items,
@@ -110,4 +123,8 @@ export async function createDeltaProcedures(
       req.end(missing.map(x => [x.id, x['merge'], x.rev]));
     }
   })();
+
+  return () => {
+    stop = true;
+  };
 }

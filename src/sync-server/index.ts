@@ -1,6 +1,6 @@
 import { Debe, ensureCollection } from 'debe';
 import * as http from 'http';
-import { attach } from 'asyngular-server';
+import { attach, ISocketBase } from 'asyngular-server';
 import { Sync, IAddress, syncstateTable } from 'debe-sync';
 import { DebeBackend, addMiddleware, addPlugin } from 'debe-adapter';
 import { deltaPlugin } from 'debe-delta';
@@ -11,6 +11,21 @@ import {
   addFilterMiddleware
 } from './sync';
 
+class SocketHandler {
+  handlers: any[];
+  constructor(db: Debe, socket: ISocketBase, agServer: any) {
+    this.start(db, socket, agServer);
+  }
+  async start(db: Debe, socket: ISocketBase, agServer: any) {
+    this.handlers = [
+      createDeltaProcedures(db, socket, agServer),
+      createBasicProcedures(db, socket)
+    ];
+  }
+  stop() {
+    this.handlers.forEach(x => x());
+  }
+}
 export class SyncServer {
   id = `${Math.random()
     .toString(36)
@@ -89,11 +104,22 @@ export class SyncServer {
     setTimeout(() => this.httpServer.listen(this.port));
     return this;
   }
+  clients: { [key: string]: SocketHandler } = {};
   async listen() {
-    for await (let { socket } of this.agServer.listener('connection')) {
-      createDeltaProcedures(this.db, socket, this.agServer);
-      createBasicProcedures(this.db, socket);
-    }
+    (async () => {
+      for await (let { socket } of this.agServer.listener('connection')) {
+        this.clients[socket.id] = new SocketHandler(
+          this.db,
+          socket,
+          this.agServer
+        );
+      }
+    })();
+    (async () => {
+      for await (let { socket } of this.agServer.listener('disconnection')) {
+        this.clients[socket.id].stop();
+      }
+    })();
   }
   async disconnect() {
     await Promise.all(this.sockets.map(socket => socket.close()));
@@ -102,6 +128,8 @@ export class SyncServer {
   }
   async close() {
     await Promise.all(this.sockets.map(socket => socket.close()));
+    Object.keys(this.clients).map(key => this.clients[key].stop());
+    this.agServer.closeAllListeners();
     await this.agServer.close();
     this.httpServer.close();
     await this.db.close();
