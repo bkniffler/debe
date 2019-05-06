@@ -4,7 +4,8 @@ import { createAdapterTest } from 'debe/dispatcher.test';
 if (process.env.PG_CONNECTIONSTRING) {
   createAdapterTest(
     'postgresql',
-    col => new PostgreSQLDebe(process.env.PG_CONNECTIONSTRING + '', col)
+    (col, opt) =>
+      new PostgreSQLDebe(process.env.PG_CONNECTIONSTRING + '', col, opt)
   );
 } else {
   test('postgresql:many', async () => {

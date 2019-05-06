@@ -1,5 +1,4 @@
 import {
-  Debe,
   IQuery,
   ICollections,
   ICollection,
@@ -8,7 +7,6 @@ import {
   IGetItem,
   listenTypes
 } from 'debe';
-import { DebeBackend } from './backend';
 
 export type IObserverCallback<T> = (value: T) => void;
 export type IUnlisten = () => void;
