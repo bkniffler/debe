@@ -1,6 +1,7 @@
 import { ISocket } from 'asyngular-client';
 import { Debe, IItem } from 'debe';
 import { IUpdateState } from '../state';
+import { SyncEngine } from '../sync';
 
 export interface IListenReturn {
   wait: Promise<void | any>;
@@ -10,31 +11,19 @@ export interface ISyncType {
     collection: string,
     since: string | undefined,
     count: number,
-    socket: ISocket,
-    db: Debe,
-    isClosing: () => boolean
+    sync: SyncEngine
   ): Promise<[string | undefined, string | undefined]>;
-  listen(
-    socket: ISocket,
-    db: Debe,
-    updateState: IUpdateState,
-    createTask: () => () => void,
-    isClosing: () => boolean
-  ): IListenReturn;
+  listen(sync: SyncEngine): IListenReturn;
   up(
     collection: string,
-    db: Debe,
-    socket: ISocket,
     items: IItem[],
     options: any,
-    isClosing: () => boolean
+    sync: SyncEngine
   ): Promise<any>;
   initialDown(
     collection: string,
     since: string | undefined,
     count: number,
-    socket: ISocket,
-    db: Debe,
-    isClosing: () => boolean
-  ): Promise<[string | undefined, string | undefined]>;
+    sync: SyncEngine
+  ): Promise<() => Promise<[string | undefined, string | undefined]>>;
 }

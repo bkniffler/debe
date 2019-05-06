@@ -7,6 +7,15 @@ import { SyncState } from '../state';
 import { IListenReturn } from './type';
 
 export class SyncEngine {
+  syncState: SyncState;
+  socket: ISocket;
+  db: Debe;
+  constructor(socket: ISocket, db: Debe, state: SyncState) {
+    this.socket = socket;
+    this.db = db;
+    this.syncState = state;
+  }
+
   initialSyncComplete = Promise.resolve();
   get isInitialComplete() {
     return this.tasks['initial'] !== true;
@@ -17,34 +26,18 @@ export class SyncEngine {
   private cancels: Function[] = [];
   private tasks = {};
   isClosing = false;
-  initial(
-    collections: string[],
-    isDelta: Function,
-    socket: ISocket,
-    db: Debe,
-    syncState: SyncState
-  ) {
+
+  initial(collections: string[], isDelta: Function) {
     const release = this.registerTask('initial');
-    this.initialSyncComplete = this.initialSync(
-      collections,
-      isDelta,
-      socket,
-      db,
-      syncState
-    ).finally(() => {
-      release();
-    });
-    this.cancels.push(
-      this.listenToDatabase(
-        collections,
-        isDelta,
-        db,
-        socket,
-        this.initialSyncComplete
-      )
+    this.initialSyncComplete = this.initialSync(collections, isDelta).finally(
+      () => {
+        release();
+      }
     );
-    this.listenToSync(socket, db, syncState);
+    this.cancels.push(this.listenToDatabase(collections, isDelta));
+    this.listenToSync();
   }
+
   close() {
     this.isClosing = true;
     this['_close'] = async () => {
@@ -52,26 +45,10 @@ export class SyncEngine {
     };
   }
 
-  listenToSync(socket: ISocket, db: Debe, syncState: SyncState) {
+  listenToSync() {
     const cancels: IListenReturn[] = [];
-    cancels.push(
-      delta.listen(
-        socket,
-        db,
-        syncState.update,
-        () => this.registerTask(),
-        () => this.isClosing
-      )
-    );
-    cancels.push(
-      basic.listen(
-        socket,
-        db,
-        syncState.update,
-        () => this.registerTask(),
-        () => this.isClosing
-      )
-    );
+    cancels.push(delta.listen(this));
+    cancels.push(basic.listen(this));
   }
 
   async getRemoteChangeCount(
@@ -125,33 +102,27 @@ export class SyncEngine {
     };
   }
 
-  listenToDatabase(
-    collections: string[],
-    isDelta: Function,
-    db: Debe,
-    socket: ISocket,
-    initialSyncComplete: Promise<any>
-  ) {
+  listenToDatabase(collections: string[], isDelta: Function) {
     // this.serverCollectionListener(collection);
-    return db.listen('*', async (items, options, key) => {
-      await initialSyncComplete;
-      if (socket.state !== 'open') {
+    return this.db.listen('*', async (items, options, key) => {
+      await this.initialSyncComplete;
+      if (this.socket.state !== 'open') {
         return;
       }
       const release = this.registerTask();
       if (
         !key ||
         collections.indexOf(key) === -1 ||
-        options.synced === socket.id
+        options.synced === this.socket.id
       ) {
         return;
       }
       if (isDelta(key)) {
-        delta.up(key, db, socket, items, options, () => this.isClosing);
+        delta.up(key, items, options, this);
       } else {
         basic
-          .up(key, db, socket, items, options, () => this.isClosing)
-          .catch(err => console.log('ERR', err, err.stack, socket.state))
+          .up(key, items, options, this)
+          .catch(err => console.log('ERR', err, err.stack, this.socket.state))
           .finally(() => {
             release();
           });
@@ -159,45 +130,36 @@ export class SyncEngine {
     });
   }
 
-  async initialSync(
-    collections: string[],
-    isDelta: Function,
-    socket: ISocket,
-    db: Debe,
-    syncState: SyncState
-  ) {
+  async initialSync(collections: string[], isDelta: Function) {
     // Get all counts of changes
     const remoteCounts = await this.getRemoteChangeCount(
-      socket,
+      this.socket,
       collections,
-      syncState
+      this.syncState
     );
     const localCounts = await this.getLocalChangeCount(
-      db,
+      this.db,
       collections,
-      syncState
+      this.syncState
     );
     for (var key of collections) {
       const down = isDelta(key) ? delta.initialDown : basic.initialDown;
-      const [local, remote] = await down(
+      const persist = await down(
         key,
-        syncState.remote(key),
+        this.syncState.remote(key),
         remoteCounts[key],
-        socket,
-        db,
-        () => this.isClosing
+        this
       );
-      syncState.update(key, local, remote);
       const up = isDelta(key) ? delta.initialUp : basic.initialUp;
       const [local2, remote2] = await up(
         key,
-        syncState.local(key),
+        this.syncState.local(key),
         localCounts[key],
-        socket,
-        db,
-        () => this.isClosing
+        this
       );
-      syncState.update(key, local2, remote2);
+      const [local, remote] = await persist();
+      this.syncState.update(key, local, remote);
+      this.syncState.update(key, local2, remote2);
     }
   }
 }

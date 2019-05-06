@@ -52,12 +52,12 @@ export class Sync {
   async connect() {
     await this.db.initialize();
     await this.syncState.init();
-    this.engine = new SyncEngine();
+    this.engine = new SyncEngine(this.socket, this.db, this.syncState);
     // console.log(this.syncState);
     const { collections } = this.db.dispatcher as DebeBackend;
     const isDelta = (key: string) => collections[key]['sync'] === 'delta';
     const keys = Object.keys(collections).filter(x => collections[x]['sync']);
-    this.engine.initial(keys, isDelta, this.socket, this.db, this.syncState);
+    this.engine.initial(keys, isDelta);
     this['_close'] = async () => this.engine.close();
   }
   listener() {}

@@ -38,7 +38,7 @@
     "pub": "yarn test && yarn build && yarn pub:npmb",
     "pub:npm": "foreach --no-C -g \"lib/*\" -x \"npm publish #{path} --registry=https://registry.npmjs.org/\"",
     "pub:npmb": "foreach --no-C -g \"lib/*\" -x \"npm publish #{path} --tag beta --registry=https://registry.npmjs.org/\"",
-    "test": "jest --verbose=true",
+    "test": "jest --verbose",
     "test2": "PG_CONNECTIONSTRING=postgresql://postgres@localhost:5432/test yarn test",
     "coverage": "codecov",
     "benchmark": "ts-node --project ./benchmark/tsconfig.json benchmark"
