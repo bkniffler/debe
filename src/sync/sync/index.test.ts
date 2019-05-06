@@ -66,21 +66,17 @@ function testType(
     await generateItemsInto(dbServer, count);
     expect(await dbServer.count('lorem')).toBe(count * 2);
 
-    let closing = false;
-    await base.initialDown(
-      'lorem',
-      start,
-      count,
+    const perform = await base.initialDown('lorem', start, count, {
       socket,
-      dbClient,
-      () => closing
-    );
+      db: dbClient,
+      isClosing: false
+    } as any);
+    await perform();
 
     expect(await dbClient.count('lorem')).toBe(
       (await dbServer.count('lorem')) - count
     );
 
-    closing = true;
     await socket.disconnect();
     await server.close();
     cb();
@@ -113,21 +109,16 @@ function testType(
     expect(count * 2).toBe(await dbClient.count('lorem'));
 
     // Work
-    let closing = false;
-    await base.initialUp(
-      'lorem',
-      start,
-      count,
+    await base.initialUp('lorem', start, count, {
       socket,
-      dbClient,
-      () => closing
-    );
+      db: dbClient,
+      isClosing: false
+    } as any);
 
     expect((await dbClient.count('lorem')) - count).toBe(
       await dbServer.count('lorem')
     );
 
-    closing = true;
     await socket.disconnect();
     await server.close();
     cb();
@@ -147,23 +138,18 @@ function testType(
 
     let lastLocalRev = undefined;
     let lastRemoteRev = undefined;
-    let working = false;
-    let closing = false;
-    const listener = base.listen(
+    const listener = base.listen({
       socket,
-      dbClient,
-      (x, y, z) => {
-        lastLocalRev = y;
-        lastRemoteRev = z;
-      },
-      () => {
-        working = true;
-        return () => {
-          working = false;
-        };
-      },
-      () => closing
-    );
+      db: dbClient,
+      initialSyncComplete: Promise.resolve(),
+      registerTask: () => () => {},
+      syncState: {
+        update: (x: any, y: any, z: any) => {
+          lastLocalRev = y;
+          lastRemoteRev = z;
+        }
+      }
+    } as any);
     databaseListener(server, dbServer, '123');
     await listener.wait;
 
@@ -174,7 +160,6 @@ function testType(
         (await dbClient.count('lorem')) === (await dbServer.count('lorem'))
     );
 
-    expect(working).toBe(false);
     expect(result).toBe(true);
     expect(lastLocalRev).toBe(
       await dbClient.all('lorem', { orderBy: 'rev DESC' }).then(x => x[0].rev)
@@ -182,7 +167,6 @@ function testType(
     expect(lastRemoteRev).toBe(
       await dbServer.all('lorem', { orderBy: 'rev DESC' }).then(x => x[0].rev)
     );
-    closing = true;
     await socket.disconnect();
     await server.close();
     cb();
