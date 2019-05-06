@@ -69,7 +69,7 @@ test('sync:init:1000x10', async cb => {
 test('sync:init:multimaster', async cb => {
   const port0 = getNextPort();
   const port1 = getNextPort();
-  const count = 10;
+  const count = 100;
   const server0 = await spawnServer(port0);
   const server1 = await spawnServer(port1, port0);
   const clients0 = await generateClients(port0, 3);
@@ -77,11 +77,6 @@ test('sync:init:multimaster', async cb => {
   const all = [server0, server1, ...clients0, ...clients1];
   await Promise.all(
     all.map((x, i) => generateItemsInto(x.db, count, `${alphabet[i]}.`))
-  );
-  console.log(
-    (await Promise.all(all.map(({ db }) => db.count('lorem'))))
-      .map(x => `${x}`)
-      .join(', ')
   );
   await Promise.all(
     all.map(async ({ db }) => expect(await db.count('lorem')).toBe(count))
