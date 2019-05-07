@@ -99,5 +99,12 @@ export function createSimpleServer(port: number) {
   const httpServer = http.createServer();
   const agServer = attach(httpServer);
   httpServer.listen(port);
-  return agServer;
+  return {
+    server: agServer,
+    close: async () => {
+      agServer.closeAllListeners();
+      await agServer.close();
+      httpServer.close();
+    }
+  };
 }

@@ -46,5 +46,12 @@ declare module 'asyngular-client' {
   export interface ISocket extends ISocketBase {
     state: IConnectionState;
     subscribe: <T>(channel: string) => IChannel<T>;
+    closeAllListeners: () => void;
+    killAllListeners: () => void;
+    closeAllReceivers: () => void;
+    killAllReceivers: () => void;
+    killAllChannelListeners: () => void;
+    killAllChannelOutputs: () => void;
+    killAllChannels: () => void;
   }
 }

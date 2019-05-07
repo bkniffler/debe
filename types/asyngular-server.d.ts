@@ -75,5 +75,7 @@ declare module 'asyngular-server' {
     close: () => Promise<void>;
     closeAllListeners: () => void;
     killAllListeners: () => void;
+    closeAllReceivers: () => void;
+    killAllReceivers: () => void;
   }
 }

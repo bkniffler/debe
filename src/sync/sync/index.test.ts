@@ -46,12 +46,12 @@ function testType(
   test(`sync:type:${name}:initialDown`, async cb => {
     const count = 10;
     const port = getNextPort(1);
-    const server = createSimpleServer(port);
+    const s = createSimpleServer(port);
     const dbServer = await new SyncMemoryDebe(schema).initialize();
 
     (async () => {
-      for await (let { socket } of server.listener('connection')) {
-        procedures(dbServer, socket, server);
+      for await (let { socket } of s.server.listener('connection')) {
+        procedures(dbServer, socket, s.server);
       }
     })();
 
@@ -66,31 +66,35 @@ function testType(
     await generateItemsInto(dbServer, count);
     expect(await dbServer.count('lorem')).toBe(count * 2);
 
-    const perform = await base.initialDown('lorem', start, count, {
+    const srv = {
       socket,
       db: dbClient,
       isClosing: false
-    } as any);
+    };
+    const perform = await base.initialDown('lorem', start, count, srv as any);
     await perform();
 
     expect(await dbClient.count('lorem')).toBe(
       (await dbServer.count('lorem')) - count
     );
 
+    srv.isClosing = true;
+    await dbClient.close();
+    await dbServer.close();
     await socket.disconnect();
-    await server.close();
+    await s.close();
     cb();
   }, 10000);
 
   test(`sync:type:${name}:initialUp`, async cb => {
     const count = 10;
     const port = getNextPort(2);
-    const server = createSimpleServer(port);
+    const s = createSimpleServer(port);
     const dbServer = await new SyncMemoryDebe(schema).initialize();
 
     (async () => {
-      for await (let { socket } of server.listener('connection')) {
-        procedures(dbServer, socket, server);
+      for await (let { socket } of s.server.listener('connection')) {
+        procedures(dbServer, socket, s.server);
       }
     })();
 
@@ -120,16 +124,18 @@ function testType(
     );
 
     await socket.disconnect();
-    await server.close();
+    await s.close();
+    await dbClient.close();
+    await dbServer.close();
     cb();
   }, 10000);
 
   test(`sync:type:${name}:listen`, async cb => {
     const count = 10;
     const port = getNextPort(3);
-    const server = createSimpleServer(port);
+    const s = createSimpleServer(port);
     const dbServer = await new SyncMemoryDebe(schema).initialize();
-    addFilterMiddleware(server);
+    addFilterMiddleware(s.server);
 
     const socket = createSimpleSocket(port);
     const dbClient = await new SyncMemoryDebe(schema).initialize();
@@ -150,7 +156,7 @@ function testType(
         }
       }
     } as any);
-    databaseListener(server, dbServer, '123');
+    databaseListener(s.server, dbServer, '123');
     await listener.wait;
 
     await generateItemsInto(dbServer, count);
@@ -168,7 +174,9 @@ function testType(
       await dbServer.all('lorem', { orderBy: 'rev DESC' }).then(x => x[0].rev)
     );
     await socket.disconnect();
-    await server.close();
+    await s.close();
+    await dbClient.close();
+    await dbServer.close();
     cb();
   }, 10000);
 }
