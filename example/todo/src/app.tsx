@@ -11,6 +11,8 @@ import { Sync } from 'debe-sync';
 import { Debe } from 'debe';
 import { schema } from '../shared';
 
+// setDelay(1000);
+
 interface ITodo {
   id?: string;
   title: string;
@@ -33,35 +35,24 @@ function Todo({ title }: { title: string }) {
 
 function Instance({ get, title }: { get: () => Debe; title: string }) {
   return (
-    <DebeProvider
-      value={() => {
-        const db = get();
-        const sync = new Sync(db, ['localhost', 9911]);
-        sync.initialize();
-        return db;
-      }}
-      initialize={async db => {
-        /*
-        const todo = db.use<ITodo>('todo');
-        await db.initialize();if (await todo.count()) {
-          return;
-        }
-        await todo.insert({
-          title: 'Not done :(',
-          completed: false
-        });
-        await todo.insert({
-          title: 'Done :)',
-          completed: true
-        });*/
-      }}
-      render={() => <Todo title={title} />}
-      loading={() => (
+    <React.Suspense
+      fallback={
         <div style={{ textAlign: 'center', height: 200, padding: 50 }}>
           Is loading ...
         </div>
-      )}
-    />
+      }
+    >
+      <DebeProvider
+        value={() => {
+          const db = get();
+          const sync = new Sync(db, ['localhost', 9911]);
+          sync.initialize();
+          return db;
+        }}
+      >
+        <Todo title={title} />
+      </DebeProvider>
+    </React.Suspense>
   );
 }
 

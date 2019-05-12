@@ -1,45 +1,51 @@
 import * as React from 'react';
-import { debeContext } from './context';
+import { debeContext, debeCacheContext, Cache } from './context';
 import { Debe } from 'debe';
 
 const Provider = debeContext.Provider;
+const ProviderCache = debeCacheContext.Provider;
 
-export function DebeProvider({
-  render,
+function DebeProviderInner({
   children,
-  value,
-  loading,
-  initialize = () => Promise.resolve()
+  initialize,
+  value
 }: {
   initialize?: (db: Debe) => Promise<void>;
   value: Debe | (() => Debe);
-  render?: () => React.ReactNode;
-  authError?: () => React.ReactNode;
-  loading?: () => React.ReactNode;
   children?: React.ReactNode;
 }) {
-  const [isInitialized, setState] = React.useState(false);
-  const debe = React.useMemo(
-    () => (typeof value === 'function' ? value() : value),
-    []
-  );
-  React.useEffect(() => {
-    debe
-      .initialize()
-      .then(() => initialize(debe))
-      .then(() => setState(true))
-      .catch(err => console.log(err));
-    return () => {
-      // debe.close();
-    };
-  }, []);
-  let child = null;
-  if (!isInitialized && loading) {
-    child = loading();
-  } else if (isInitialized && render) {
-    child = render();
-  } else {
-    child = children;
+  const [, update] = React.useState('');
+  const cache = React.useContext(debeCacheContext);
+  const db = cache.read('debe', async set => {
+    const db = typeof value === 'function' ? value() : value;
+    await db.initialize();
+    if (initialize) {
+      await initialize(db);
+    }
+    set(db);
+    update(new Date().getTime() + '');
+  });
+  if (db && db.then) {
+    throw db;
   }
-  return <Provider value={debe}>{child}</Provider>;
+  return <Provider value={db}>{children}</Provider>;
+}
+
+export function DebeProvider({
+  children,
+  value,
+  initialize
+}: {
+  initialize?: (db: Debe) => Promise<void>;
+  value: Debe | (() => Debe);
+  children?: React.ReactNode;
+}) {
+  const cache = React.useMemo(() => new Cache(), []);
+  return (
+    <ProviderCache value={cache}>
+      <DebeProviderInner initialize={initialize} value={value}>
+        {children}
+      </DebeProviderInner>
+    </ProviderCache>
+  );
 }
