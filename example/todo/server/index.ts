@@ -1,5 +1,6 @@
 import { BetterSqlite3Debe } from 'debe-better-sqlite3';
 import { SyncServer } from 'debe-sync-server';
+import { SocketServer } from 'debe-socket-server';
 import { resolve } from 'path';
 import { schema } from '../shared';
 
@@ -23,8 +24,11 @@ async function generateItems(db: BetterSqlite3Debe, numberOfItems: number) {
 
 async function work() {
   console.log('Start');
-  const db = new BetterSqlite3Debe(resolve(__dirname, 'data.db'), schema);
+  const db = new BetterSqlite3Debe(resolve(__dirname, 'data.db'), schema, {
+    softDelete: true
+  });
   const server = await new SyncServer(db, 9911).initialize();
+  new SocketServer(db, 9912);
   await generateItems(server.db, 10);
   console.log('Ready');
 }

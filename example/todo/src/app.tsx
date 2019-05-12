@@ -6,6 +6,7 @@ import {
   useConnectionState
 } from 'debe-react';
 import App from './components/app';
+import { SocketDebe } from 'debe-socket';
 import { IDBDebe } from 'debe-idb';
 import { Sync } from 'debe-sync';
 import { Debe } from 'debe';
@@ -24,6 +25,7 @@ function Todo({ title }: { title: string }) {
   const [all] = useAll<ITodo>('todo', { orderBy: 'title' });
   const collection = useCollection<ITodo>('todo');
   if (typeof document !== 'undefined') {
+    console.log(all);
     const clean = document.title.split('(')[0].trim();
     const num = all.filter(x => !x.completed).length;
     document.title = num ? `${clean} (${num})` : clean;
@@ -33,7 +35,15 @@ function Todo({ title }: { title: string }) {
   );
 }
 
-function Instance({ get, title }: { get: () => Debe; title: string }) {
+function Instance({
+  get,
+  title,
+  sync
+}: {
+  sync?: [string, number];
+  get: () => Debe;
+  title: string;
+}) {
   return (
     <React.Suspense
       fallback={
@@ -45,8 +55,10 @@ function Instance({ get, title }: { get: () => Debe; title: string }) {
       <DebeProvider
         value={() => {
           const db = get();
-          const sync = new Sync(db, ['localhost', 9911]);
-          sync.initialize();
+          if (sync) {
+            const s = new Sync(db, sync);
+            s.initialize();
+          }
           return db;
         }}
       >
@@ -62,11 +74,16 @@ export default function() {
     <div style={{ display: 'flex', flexDirection: 'row' }}>
       <Instance
         title="IndexedDebe"
+        sync={['localhost', 9911]}
         get={() =>
           new IDBDebe(schema, `todo${hash}`, {
             softDelete: true
           })
         }
+      />
+      <Instance
+        title="SocketDebe"
+        get={() => new SocketDebe(['localhost', 9912])}
       />
       {/*<Instance
         title="IndexedDebe #2"
