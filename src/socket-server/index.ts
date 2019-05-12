@@ -49,8 +49,8 @@ export class SocketServer {
     options: IListenerOptions,
     socket: ISocketBase
   ) {
-    const handleSub = (data: any) => {
-      socket.transmit(id, data);
+    const handleSub = (error: any, data: any) => {
+      socket.transmit(id, [error ? error.message : undefined, data]);
     };
     this.db.dispatcher.listen(action, handleSub, options);
   }

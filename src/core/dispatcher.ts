@@ -22,7 +22,7 @@ export abstract class DebeDispatcher<TBase = IItem> {
   ): Promise<T>;
   abstract listen<T = TBase>(
     action: listenTypes,
-    callback: (value: T) => void,
+    callback: (error: any, value: T) => void,
     options: IListenerOptions
   ): () => void;
 }

@@ -44,11 +44,11 @@ export function changeListenerPlugin(
         try {
           const newValue = await (adapter.db[method] as any)(collection, query);
           if (!isEqual(lastResult, newValue as any, revField)) {
-            callback((newValue === null ? undefined : newValue) as any);
+            callback(null, (newValue === null ? undefined : newValue) as any);
           }
           lastResult = newValue || null;
         } catch (err) {
-          callback(err);
+          callback(err, undefined as any);
         }
       };
       listener();

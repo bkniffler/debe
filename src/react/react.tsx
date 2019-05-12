@@ -38,7 +38,7 @@ export function useAll<T>(collection: string, query?: IQueryInput | string[]) {
   return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
     (proxy, cb) =>
-      proxy.all(query, res => {
+      proxy.all(query, (err, res) => {
         cb(res);
       }),
     query,

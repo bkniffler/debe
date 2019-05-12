@@ -37,6 +37,7 @@ export class SocketAdapter extends DebeDispatcher {
   }
 
   async initialize() {
+    await this.socket.listener('connect').once();
     this.start();
   }
 
@@ -75,7 +76,7 @@ export class SocketAdapter extends DebeDispatcher {
       .substr(2, 9)}`;
     const listen = async () => {
       for await (let data of this.socket.receiver(channelId)) {
-        callback(data);
+        callback(data[0], data[1]);
       }
     };
     listen();

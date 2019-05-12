@@ -68,7 +68,7 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
   }
   listen<T>(
     action: listenTypes,
-    callback: (value: T) => void,
+    callback: (error: any, value: T) => void,
     options: IListenerOptions
   ) {
     return this.listener(action, callback, options);

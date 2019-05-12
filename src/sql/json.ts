@@ -29,10 +29,9 @@ export abstract class SQLJsonCore extends SQLCore {
     if (clause) {
       for (var key in collection.index) {
         if (!collection.fields[key]) {
-          clause = clause.replace(
-            new RegExp(`${key} `, 'g'),
-            this.selectJSONField(collection, key)
-          );
+          clause = clause
+            .split(key)
+            .join(this.selectJSONField(collection, key));
         }
       }
       return [`WHERE ${clause}`, ...args];
@@ -44,10 +43,9 @@ export abstract class SQLJsonCore extends SQLCore {
     if (clause) {
       for (var key in collection.index) {
         if (!collection.fields[key]) {
-          clause = clause.replace(
-            new RegExp(`${key} `, 'g'),
-            this.selectJSONField(collection, key)
-          );
+          clause = clause
+            .split(key)
+            .join(this.selectJSONField(collection, key));
         }
       }
     }

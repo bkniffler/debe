@@ -8,7 +8,7 @@ import {
   listenTypes
 } from 'debe';
 
-export type IObserverCallback<T> = (value: T) => void;
+export type IObserverCallback<T> = (error: any, value: T) => void;
 export type IUnlisten = () => void;
 
 export interface IListenerOptions {
