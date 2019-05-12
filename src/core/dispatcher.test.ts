@@ -61,9 +61,14 @@ export function createAdapterTest(
       name: 'Hallo'
     });
     const queryResult = await client.all<any>(table);
+    const queryResult2 = await client.all<any>(table, {
+      where: ['name = ?', new Date().getTime()]
+    });
     expect(insertResult.id).toBe('asd0');
     expect(insertResult.name).toBe('Hallo');
     expect(Array.isArray(queryResult)).toBe(true);
+    expect(Array.isArray(queryResult2)).toBe(true);
+    expect(queryResult2.length).toBe(0);
     expect(queryResult.length).toBe(1);
     expect(queryResult[0].id).toBe(insertResult.id);
     expect(queryResult[0].name).toBe(insertResult.name);

@@ -1,6 +1,6 @@
 import { createMemoryFilter } from './query';
 
-test('memory:filter', async () => {
+test('memory:filter:and', async () => {
   const items = [];
   for (let x = 0; x < 100; x++) {
     items.push({ goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
@@ -21,3 +21,20 @@ test('memory:filter', async () => {
     2
   );
 }, 10000);
+
+/*
+
+
+test('memory:filter:or', async () => {
+  const items = [];
+  for (let x = 0; x < 100; x++) {
+    items.push({ goa2: 1, goa: 'a' + (x < 10 ? `0${x}` : x) });
+  }
+  const { filter } = createMemoryFilter();
+  expect(
+    items.filter(filter(['goa = ? OR goa = ?', 'a50', 'a51']) as any).length
+  ).toBe(2);
+}, 10000);
+
+
+*/
