@@ -1,4 +1,4 @@
-import { Debe } from 'debe';
+import { Debe, IUnlisten } from 'debe';
 import { ISocket } from 'debe-socket';
 import { CHANNELS } from '../types';
 import { delta } from './delta';
@@ -102,7 +102,7 @@ export class SyncEngine {
     };
   }
 
-  listenToDatabase(collections: string[], isDelta: Function) {
+  listenToDatabase(collections: string[], isDelta: Function): IUnlisten {
     // this.serverCollectionListener(collection);
     return this.db.listen('*', async (error, items, options, key) => {
       if (error) {
