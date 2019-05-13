@@ -57,6 +57,7 @@ export interface IInsert {
 }
 
 export type IObserverCallback<T> = (
+  error: any,
   value: T,
   options?: any,
   collection?: string

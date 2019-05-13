@@ -12,8 +12,12 @@ export function useAllOnce<T>(
 ) {
   return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
+    'all',
     (proxy, cb) => {
-      proxy.all(query).then(x => cb(x));
+      proxy
+        .all(query)
+        .then(x => cb(undefined, x))
+        .catch(err => cb(err, undefined as any));
     },
     query,
     []
@@ -26,8 +30,12 @@ export function useGetOnce<T>(
 ) {
   return useDebeBase<(T & IGetItem) | undefined>(
     collection,
+    'get',
     (proxy, cb) => {
-      proxy.get(query).then(x => cb(x));
+      proxy
+        .get(query)
+        .then(x => cb(undefined, x))
+        .catch(err => cb(err, undefined));
     },
     query,
     undefined
@@ -37,9 +45,10 @@ export function useGetOnce<T>(
 export function useAll<T>(collection: string, query?: IQueryInput | string[]) {
   return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
+    'all',
     (proxy, cb) =>
       proxy.all(query, (err, res) => {
-        cb(res);
+        cb(err, res);
       }),
     query,
     []
@@ -49,9 +58,10 @@ export function useAll<T>(collection: string, query?: IQueryInput | string[]) {
 export function useGet<T>(collection: string, query: IQueryInput | string) {
   return useDebeBase<T & IGetItem, (T & IGetItem) | undefined>(
     collection,
+    'get',
     (proxy, cb) =>
-      proxy.get(query, res => {
-        cb(res);
+      proxy.get(query, (err, res) => {
+        cb(err, res);
       }),
     query,
     undefined
@@ -60,24 +70,28 @@ export function useGet<T>(collection: string, query: IQueryInput | string) {
 
 function useDebeBase<TBase, TResult = TBase>(
   collection: string,
+  method: string,
   handler: (
     service: IDebeUse<TBase>,
-    cb: (res: TResult) => void
+    cb: (error: any, res: TResult) => void
   ) => void | (() => void),
   arg: any,
   defaultValue: any
 ): [TResult, boolean] {
-  const [, update] = React.useState<any>(null);
+  const [, update] = React.useState<TResult | undefined>(undefined);
   const client = React.useContext(debeContext);
   const cache = React.useContext(debeCacheContext);
   const argKey = JSON.stringify(arg);
-  const key = `${collection}:${argKey}`;
+  const key = `${collection}:${method}:${argKey}`;
 
   React.useEffect(() => {
-    function listener(v: any) {
+    return cache.listen<TResult>(key, function listener(error, v) {
+      if (error) {
+        console.log(error);
+        throw error;
+      }
       update(v);
-    }
-    return cache.listen(key, listener);
+    });
   });
 
   const result =
@@ -85,9 +99,9 @@ function useDebeBase<TBase, TResult = TBase>(
       ? undefined
       : cache.read(key, set => {
           const proxy = client.use<TBase>(collection);
-          handler(proxy, res => {
+          handler(proxy, (err, res) => {
             setTimeout(() => {
-              set(res);
+              set(err, res);
             }, delay);
           });
         });

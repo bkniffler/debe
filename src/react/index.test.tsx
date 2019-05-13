@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { act } from 'react-dom/test-utils';
-import { useAll, DebeProvider } from './index';
-import { render, waitForElement } from 'react-testing-library';
+import { useAll, DebeProvider, Cache } from './index';
+import { render } from 'react-testing-library';
 import { MemoryDebe } from 'debe-memory';
 import 'jest-dom/extend-expect';
 
@@ -10,6 +10,8 @@ interface ILorem {
 }
 const collections = [{ name: 'lorem', index: ['name'] }];
 test('react:basic', async cb => {
+  const db = new MemoryDebe(collections);
+  const cache = new Cache();
   function Component() {
     const [result] = useAll<ILorem>('lorem', {});
     return (
@@ -17,13 +19,14 @@ test('react:basic', async cb => {
     );
   }
 
-  const { getByTestId, asFragment } = render(
+  const { asFragment } = render(
     <React.Suspense fallback="Loading">
       <DebeProvider
+        cache={cache}
         initialize={async db => {
           await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
         }}
-        value={() => new MemoryDebe(collections)}
+        value={() => db}
       >
         <Component />
       </DebeProvider>
@@ -31,11 +34,13 @@ test('react:basic', async cb => {
   );
 
   await (act as any)(async () => {
-    await waitForElement(() => getByTestId('result'));
+    await cache.waitPending();
   });
 
   //expect(resultNode).toHaveTextContent();
   expect(asFragment()).toMatchSnapshot();
+  cache.close();
+  await db.close();
   cb();
 });
 /*

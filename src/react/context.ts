@@ -6,35 +6,61 @@ export const debeContext = React.createContext<Debe>(undefined as any);
 export const debeCacheContext = React.createContext<Cache>(undefined as any);
 
 export class Cache {
-  private resolved = new Map();
+  private resolved = new Map<string, [any, any] | Promise<void | {}>>();
   private emitter = new Emitter();
-  listen(key: string, listener: any) {
+  listen<T = any>(key: string, listener: (error: any, v: T) => void) {
     return this.emitter.on(key, listener);
   }
-  read(key: string, fetch: (set: (value: any) => void) => void) {
-    if (!this.resolved.has(key)) {
-      const set = (v: any) => {
-        this.resolved.set(key, v);
-        this.emitter.emit(key, v);
-        if (y) {
-          y(v);
-          y = false;
-        }
-      };
-      let y: any;
-      this.resolved.set(
-        key,
-        new Promise(yay => {
-          if (y === undefined) {
-            y = yay;
-          }
-          fetch(set);
-        })
-      );
+  private awaiter = Promise.resolve(undefined as any);
+  async waitPending(timeout = 10, lastAwaiter?: any) {
+    const awaiter = this.awaiter;
+    if (awaiter === lastAwaiter) {
+      return;
     }
-    const value = this.resolved.get(key);
-    if (value && value.then) {
-      throw value;
+    await awaiter;
+    await new Promise(yay => setTimeout(yay, timeout));
+    this.waitPending(timeout, awaiter);
+  }
+  hasPending() {
+    for (var entry of this.resolved.values()) {
+      if (!Array.isArray(entry) && entry && entry.then) {
+        return true;
+      }
+    }
+    return false;
+  }
+  close() {
+    this.emitter.close();
+  }
+  read<T = any>(
+    key: string,
+    fetch: (set: (error: any, value: T) => void) => void
+  ) {
+    if (!this.resolved.has(key)) {
+      let y: any;
+      const promise = new Promise(yay => {
+        if (y === undefined) {
+          y = yay;
+        }
+        fetch((err, v) => {
+          this.resolved.set(key, [err, v]);
+          this.emitter.emit(key, err, v);
+          if (y) {
+            y(err, v);
+            y = false;
+          }
+        });
+      });
+      this.awaiter = this.awaiter.then(() => promise);
+      this.resolved.set(key, promise);
+    }
+    const entry = this.resolved.get(key);
+    if (!Array.isArray(entry) && entry && entry.then) {
+      throw entry;
+    }
+    const [err, value] = entry;
+    if (err) {
+      throw err;
     }
     return value;
   }
