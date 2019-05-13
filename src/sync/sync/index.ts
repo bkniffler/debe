@@ -104,7 +104,10 @@ export class SyncEngine {
 
   listenToDatabase(collections: string[], isDelta: Function) {
     // this.serverCollectionListener(collection);
-    return this.db.listen('*', async (items, options, key) => {
+    return this.db.listen('*', async (error, items, options, key) => {
+      if (error) {
+        throw error;
+      }
       await this.initialSyncComplete;
       if (this.socket.state !== 'open') {
         return;

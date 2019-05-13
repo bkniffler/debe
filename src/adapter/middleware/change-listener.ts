@@ -58,10 +58,10 @@ export function changeListenerPlugin(
       return addRev(item) as any;
     },
     afterInsert(collection, items, options: any = {}) {
-      emitter.emit(collection.name, items, options, collection.name);
+      emitter.emit(collection.name, null, items, options, collection.name);
     },
     afterRemove(collection, items, options: any = {}) {
-      emitter.emit(collection.name, items, options, collection.name);
+      emitter.emit(collection.name, null, items, options, collection.name);
     },
     collection(collection) {
       collection.specialFields.rev = revField;

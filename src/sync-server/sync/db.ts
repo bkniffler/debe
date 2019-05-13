@@ -10,7 +10,10 @@ export async function databaseListener(
 ) {
   const { collections } = db.dispatcher as DebeBackend;
   // this.serverCollectionListener(collection);
-  db.listen('*', (items, options, type) => {
+  db.listen('*', (error, items, options, type) => {
+    if (error) {
+      throw error;
+    }
     const collection = type ? collections[type] : undefined;
     if (!collection || !collection['sync'] || options.synced === id) {
       return;
