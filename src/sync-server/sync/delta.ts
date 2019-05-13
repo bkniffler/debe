@@ -1,5 +1,5 @@
 import { addToQuery, Debe } from 'debe';
-import { ISocketBase } from 'asyngular-client';
+import { ISocketBase } from 'debe-socket';
 import {
   ICountInitialChanges,
   batchSize,
@@ -7,7 +7,7 @@ import {
   CHANNELS
 } from 'debe-sync';
 import { DebeBackend } from 'debe-adapter';
-import { IAGServer } from 'asyngular-server';
+import { IAGServer } from 'debe-socket-server';
 import { merge } from 'debe-delta';
 const {
   SEND_DELTA,

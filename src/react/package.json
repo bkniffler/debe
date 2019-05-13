@@ -3,7 +3,9 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
-    "debe": "*"
+    "debe": "*",
+    "debe-socket": "*",
+    "debe-sync": "*"
   },
   "devDependencies": {
     "@types/react": "^16.8.17",

@@ -1,6 +1,6 @@
 import { Debe } from 'debe';
 import { DebeBackend } from 'debe-adapter';
-import { IAGServer } from 'asyngular-server';
+import { IAGServer } from 'debe-socket-server';
 import { CHANNELS } from 'debe-sync';
 
 export async function databaseListener(

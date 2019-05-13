@@ -1,6 +1,7 @@
 import { Debe, ensureCollection } from 'debe';
 import * as http from 'http';
-import { attach, ISocketBase } from 'asyngular-server';
+import { ISocketBase } from 'debe-socket';
+import { attach } from 'debe-socket-server';
 import { Sync, IAddress, syncstateTable } from 'debe-sync';
 import { DebeBackend, addMiddleware, addPlugin } from 'debe-adapter';
 import { deltaPlugin } from 'debe-delta';

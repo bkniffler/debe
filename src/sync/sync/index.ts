@@ -1,5 +1,5 @@
 import { Debe } from 'debe';
-import { ISocket } from 'asyngular-client';
+import { ISocket } from 'debe-socket';
 import { CHANNELS } from '../types';
 import { delta } from './delta';
 import { basic } from './basic';

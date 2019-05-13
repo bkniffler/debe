@@ -1,6 +1,6 @@
 import { Debe } from 'debe';
 import { IAddress } from './types';
-import { ISocket, create, IConnectionState } from 'asyngular-client';
+import { ISocket, create, IConnectionState } from 'debe-socket';
 import { DebeBackend } from 'debe-adapter';
 export * from './types';
 export * from './constants';

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "debe": "*",
+    "debe-socket": "*",
     "asyngular-client": "^5.4.1"
   }
 }

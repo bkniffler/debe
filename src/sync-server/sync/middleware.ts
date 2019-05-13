@@ -1,4 +1,4 @@
-import { IAGServer } from 'asyngular-server';
+import { IAGServer } from 'debe-socket-server';
 
 export function addFilterMiddleware(server: IAGServer) {
   server.setMiddleware(server.MIDDLEWARE_OUTBOUND, async middlewareStream => {

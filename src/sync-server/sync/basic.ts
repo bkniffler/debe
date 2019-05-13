@@ -1,5 +1,5 @@
 import { addToQuery, Debe, IItem, IGetItem } from 'debe';
-import { ISocketBase } from 'asyngular-client';
+import { ISocketBase } from 'debe-socket';
 import {
   ICountInitialChanges,
   IInitialFetchChanges,

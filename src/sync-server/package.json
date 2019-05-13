@@ -5,6 +5,8 @@
   "browser": false,
   "dependencies": {
     "debe": "*",
+    "debe-socket": "*",
+    "debe-socket-server": "*",
     "debe-sync": "*",
     "asyngular-server": "^5.4.0"
   }

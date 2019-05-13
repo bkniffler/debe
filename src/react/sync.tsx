@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { debeContext } from './context';
 import { Sync } from 'debe-sync';
-import { IConnectionState } from 'asyngular-client';
+import { IConnectionState } from 'debe-socket';
 
 export const syncContext = React.createContext<Sync>(undefined as any);
 

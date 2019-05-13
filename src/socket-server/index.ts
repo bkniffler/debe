@@ -1,7 +1,10 @@
 import { Debe, IListenerOptions, listenTypes } from 'debe';
 import * as http from 'http';
-import { allowedMethods } from 'debe-socket';
-import { attach, ISocketBase } from 'asyngular-server';
+import { allowedMethods, ISocketBase } from 'debe-socket';
+import { IAttach } from './types';
+export * from './types';
+
+export const attach = require('asyngular-server').attach as IAttach;
 
 export class SocketServer {
   httpServer = http.createServer();

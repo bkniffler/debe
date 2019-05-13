@@ -10,7 +10,9 @@ import {
   DebeDispatcher,
   Debe
 } from 'debe';
-import { create, ISocket } from 'asyngular-client';
+export * from './types';
+import { ICreate, ISocket } from './types';
+export const create = require('asyngular-client').create as ICreate;
 
 export const allowedMethods = [
   types.INSERT,
