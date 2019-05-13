@@ -219,7 +219,7 @@ export class Debe<TBase = IItem, TDispatcher = DebeDispatcher<TBase>> {
       const cb = callback;
       return this.dispatcher.listen<T[]>(
         'all',
-        result => cb(result[0] as any),
+        (error, value) => cb(error, error ? undefined : (value[0] as any)),
         {
           collection,
           query
