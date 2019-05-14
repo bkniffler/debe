@@ -7,17 +7,31 @@ export * from './types';
 export const attach = require('asyngular-server').attach as IAttach;
 
 export class SocketServer {
+  externalServer = false;
   httpServer = http.createServer();
   agServer = attach(this.httpServer);
   db: Debe;
-  constructor(db: Debe, port: number = 8000) {
-    this.httpServer.listen(port);
+  constructor(db: Debe);
+  constructor(db: Debe, port: number);
+  constructor(db: Debe, server: http.Server);
+  constructor(db: Debe, arg?: http.Server | number) {
+    if (!arg) {
+      arg = 8000;
+    }
+    if (typeof arg === 'number') {
+      this.httpServer.listen(arg);
+    } else {
+      this.httpServer = arg;
+      this.externalServer = true;
+    }
     this.db = db;
     this.connect();
   }
   async close() {
     await this.agServer.close();
-    this.httpServer.close();
+    if (!this.externalServer) {
+      this.httpServer.close();
+    }
   }
   async connect() {
     for await (let { socket } of this.agServer.listener('connection')) {

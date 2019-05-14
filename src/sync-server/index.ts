@@ -28,17 +28,32 @@ class SocketHandler {
   }
 }
 export class SyncServer {
+  externalServer = false;
   id = `${Math.random()
     .toString(36)
     .substr(2, 9)}`;
-  port: number;
   sockets: Sync[] = [];
   httpServer = http.createServer();
   agServer: IAGServer = attach(this.httpServer);
   db: Debe;
-  constructor(db: Debe, port: number = 8000, syncTo?: IAddress[] | IAddress) {
+  constructor(db: Debe, server?: http.Server, syncTo?: IAddress[] | IAddress);
+  constructor(db: Debe, port?: number, syncTo?: IAddress[] | IAddress);
+  constructor(
+    db: Debe,
+    arg?: number | http.Server,
+    syncTo?: IAddress[] | IAddress
+  ) {
+    if (!arg) {
+      arg = 8000;
+    }
+    if (typeof arg === 'number') {
+      this.httpServer.listen(arg);
+    } else {
+      this.httpServer = arg;
+      this.externalServer = true;
+    }
     this.db = db;
-    this.port = port;
+    // this.port = port;
 
     const backend = this.db.dispatcher as DebeBackend;
     if (backend.middlewares) {
@@ -102,7 +117,6 @@ export class SyncServer {
     await Promise.all(this.sockets.map(socket => socket.initialize()));
     this.listen();
     databaseListener(this.agServer, this.db, this.id);
-    setTimeout(() => this.httpServer.listen(this.port));
     return this;
   }
   clients: { [key: string]: SocketHandler } = {};
