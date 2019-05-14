@@ -50,6 +50,7 @@ export class SyncServer {
       this.httpServer.listen(arg);
     } else {
       this.httpServer = arg;
+      this.agServer = attach(this.httpServer);
       this.externalServer = true;
     }
     this.db = db;

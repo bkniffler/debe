@@ -22,6 +22,7 @@ export class SocketServer {
       this.httpServer.listen(arg);
     } else {
       this.httpServer = arg;
+      this.agServer = attach(this.httpServer);
       this.externalServer = true;
     }
     this.db = db;
