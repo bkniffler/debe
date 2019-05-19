@@ -15,12 +15,16 @@ export class Sync {
   socket: ISocket;
   db: Debe;
   where?: string[];
-  constructor(db: Debe, [hostname = 'localhost', port = 8000]: IAddress = []) {
+  constructor(
+    db: Debe,
+    [hostname = 'localhost', port = 8000, secure = undefined]: IAddress = []
+  ) {
     this.db = db;
     this.syncState = new SyncState(db);
     ensureSync(this.db);
     this.db['sync'] = this;
     this.socket = create({
+      secure: secure === true || secure === false ? secure : port === 443,
       hostname,
       port
     });

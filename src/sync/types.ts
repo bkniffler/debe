@@ -32,7 +32,11 @@ export interface IInitialFetchChanges {
   where?: [string, ...any[]];
   page?: number;
 }
-export type IAddress = [string] | [] | [string, number];
+export type IAddress =
+  | [string]
+  | []
+  | [string, number]
+  | [string, number, boolean];
 export type ISendChanges =
   | [string, IInsertItem[], any?]
   | [string, IInsertItem[]];

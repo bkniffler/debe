@@ -30,10 +30,11 @@ export class SocketDebe extends Debe {
 
 export class SocketAdapter extends DebeDispatcher {
   socket: ISocket;
-  constructor(hostname: string, port: number = 8000) {
+  constructor(hostname: string, port: number = 8000, secure?: boolean) {
     super();
     this.socket = create({
       hostname,
+      secure: secure === true || secure === false ? secure : port === 443,
       port
     });
   }

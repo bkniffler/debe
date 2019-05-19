@@ -1,5 +1,7 @@
 export interface ICreateOptions {
   hostname: string;
+  secure?: boolean;
+  rejectUnauthorized?: boolean;
   port: number;
 }
 export type ICreate = (options: ICreateOptions) => ISocket;
