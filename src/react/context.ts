@@ -5,14 +5,33 @@ import { Emitter } from 'debe-adapter';
 export const debeContext = React.createContext<Debe>(undefined as any);
 export const debeCacheContext = React.createContext<Cache>(undefined as any);
 
+export function useIsSuspense() {
+  return React.useContext(debeCacheContext).isSuspense;
+}
+
 export class Cache {
+  constructor(suspense = false) {
+    this.isSuspense = suspense;
+  }
+  public isSuspense = false;
   private resolved = new Map<string, [any, any] | Promise<void | {}>>();
   private emitter = new Emitter();
-  listen<T = any>(key: string, listener: (error: any, v: T) => void) {
-    return this.emitter.on(key, listener);
+  get listeners() {
+    return this.emitter.numberOfListeners;
+  }
+  listen<T = any>(
+    key: string,
+    listener: (error: any, v: T) => void,
+    once = false
+  ) {
+    if (once) {
+      return this.emitter.once(key, listener);
+    } else {
+      return this.emitter.on(key, listener);
+    }
   }
   private awaiter = Promise.resolve(undefined as any);
-  async waitPending(timeout = 10, lastAwaiter?: any) {
+  async waitPending(timeout = 20, lastAwaiter?: any) {
     const awaiter = this.awaiter;
     if (awaiter === lastAwaiter) {
       return;

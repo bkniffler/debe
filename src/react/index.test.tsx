@@ -1,32 +1,82 @@
 import * as React from 'react';
 import { act } from 'react-dom/test-utils';
-import { useAll, DebeProvider, Cache } from './index';
+import { useAll, DebeProvider } from './index';
 import { render } from 'react-testing-library';
 import { MemoryDebe } from 'debe-memory';
 import 'jest-dom/extend-expect';
+import { Cache } from './context';
 
 interface ILorem {
   name: string;
 }
 const collections = [{ name: 'lorem', index: ['name'] }];
 test('react:basic', async cb => {
+  let failed = false;
   const db = new MemoryDebe(collections);
-  const cache = new Cache();
   function Component() {
-    const [result] = useAll<ILorem>('lorem', {});
+    const [result, loading] = useAll<ILorem>('lorem', {});
+    if (loading) {
+      return <span>Loading</span>;
+    }
+    if (!result || result.length === 0) {
+      failed = true;
+    }
     return (
       <span data-testid="result">{result.map(x => x.name).join(', ')}</span>
     );
   }
 
-  const { asFragment } = render(
+  const cache = new Cache();
+
+  const { asFragment, getByTestId } = render(
+    <DebeProvider
+      initialize={async db => {
+        await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
+      }}
+      cache={cache}
+      value={db}
+      render={() => <Component />}
+      loading={() => <span>Loading...</span>}
+    />
+  );
+
+  console.log('LISTENERS BEFORE', cache.listeners);
+  await (act as any)(async () => {
+    await cache.waitPending();
+  });
+
+  //expect(resultNode).toHaveTextContent();
+  expect(failed).toBe(false);
+  expect(getByTestId('result')).toBeTruthy();
+  expect(asFragment()).toMatchSnapshot('basic');
+  console.log('LISTENERS AFTER', cache.listeners);
+  cache.close();
+  await db.close();
+  cb();
+});
+
+test('react:suspense', async cb => {
+  let failed = false;
+  const db = new MemoryDebe(collections);
+  const cache = new Cache(true);
+  function Component() {
+    const [result] = useAll<ILorem>('lorem', {});
+    if (!result || result.length === 0) {
+      failed = true;
+    }
+    return (
+      <span data-testid="result">{result.map(x => x.name).join(', ')}</span>
+    );
+  }
+
+  const { asFragment, getByTestId } = render(
     <React.Suspense fallback="Loading">
       <DebeProvider
         cache={cache}
         initialize={async db => {
           await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
         }}
-        value={() => db}
+        value={db}
       >
         <Component />
       </DebeProvider>
@@ -37,14 +87,17 @@ test('react:basic', async cb => {
     await cache.waitPending();
   });
 
-  //expect(resultNode).toHaveTextContent();
-  expect(asFragment()).toMatchSnapshot();
+  expect(getByTestId('result')).toBeTruthy();
+  expect(asFragment()).toMatchSnapshot('basic');
+  expect(failed).toBe(false);
+
+  console.log('LISTENERS', cache.listeners);
   cache.close();
   await db.close();
   cb();
 });
-/*
 
+/*
 test('react:many', async cb => {
   function Component() {
     const [result] = useAll<ILorem>('lorem', {
@@ -64,20 +117,18 @@ test('react:many', async cb => {
   }
 
   const { getByTestId, asFragment } = render(
-    <React.Suspense fallback="Loading">
-      <DebeProvider
-        initialize={async db => {
-          const items = [];
-          for (let x = 0; x < 1000; x++) {
-            items.push({ name: `${x}`.padStart(3, '0') });
-          }
-          await db.insert('lorem', items);
-        }}
-        value={() => new MemoryDebe(collections)}
-        render={() => <Component />}
-        loading={() => <span>Loading...</span>}
-      />
-    </React.Suspense>
+    <DebeProvider
+      initialize={async db => {
+        const items = [];
+        for (let x = 0; x < 1000; x++) {
+          items.push({ name: `${x}`.padStart(3, '0') });
+        }
+        await db.insert('lorem', items);
+      }}
+      value={() => new MemoryDebe(collections)}
+      render={() => <Component />}
+      loading={() => <span>Loading...</span>}
+    />
   );
 
   await (act as any)(async () => {
@@ -107,20 +158,18 @@ test('react:listen', async cb => {
   }
 
   const { getByTestId, asFragment } = render(
-    <React.Suspense fallback="Loading">
-      <DebeProvider
-        initialize={async db => {
-          await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
-          setTimeout(
-            () => db.insert('lorem', [{ name: 'Max' }, { name: 'Nik' }]),
-            1000
-          );
-        }}
-        value={() => new MemoryDebe(collections)}
-        render={() => <Component />}
-        loading={() => <span>Loading...</span>}
-      />
-    </React.Suspense>
+    <DebeProvider
+      initialize={async db => {
+        await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
+        setTimeout(
+          () => db.insert('lorem', [{ name: 'Max' }, { name: 'Nik' }]),
+          1000
+        );
+      }}
+      value={() => new MemoryDebe(collections)}
+      render={() => <Component />}
+      loading={() => <span>Loading...</span>}
+    />
   );
 
   await (act as any)(async () => {
@@ -157,16 +206,14 @@ test('react:interact', async cb => {
   }
 
   const { getByTestId, asFragment } = render(
-    <React.Suspense fallback="Loading">
-      <DebeProvider
-        initialize={async db => {
-          await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
-        }}
-        value={() => new MemoryDebe(collections)}
-        render={() => <Component />}
-        loading={() => <span>Loading...</span>}
-      />
-    </React.Suspense>
+    <DebeProvider
+      initialize={async db => {
+        await db.insert('lorem', [{ name: 'Beni' }, { name: 'Alex' }]);
+      }}
+      value={() => new MemoryDebe(collections)}
+      render={() => <Component />}
+      loading={() => <span>Loading...</span>}
+    />
   );
 
   await (act as any)(async () => {

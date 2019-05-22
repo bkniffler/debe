@@ -13,6 +13,7 @@ export function useAllOnce<T>(
   return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
     'all',
+    false,
     (proxy, cb) => {
       proxy
         .all(query)
@@ -31,6 +32,7 @@ export function useGetOnce<T>(
   return useDebeBase<(T & IGetItem) | undefined>(
     collection,
     'get',
+    false,
     (proxy, cb) => {
       proxy
         .get(query)
@@ -46,6 +48,7 @@ export function useAll<T>(collection: string, query?: IQueryInput | string[]) {
   return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
     'all',
+    true,
     (proxy, cb) =>
       proxy.all(query, (err, res) => {
         cb(err, res);
@@ -59,6 +62,7 @@ export function useGet<T>(collection: string, query: IQueryInput | string) {
   return useDebeBase<T & IGetItem, (T & IGetItem) | undefined>(
     collection,
     'get',
+    true,
     (proxy, cb) =>
       proxy.get(query, (err, res) => {
         cb(err, res);
@@ -71,42 +75,55 @@ export function useGet<T>(collection: string, query: IQueryInput | string) {
 function useDebeBase<TBase, TResult = TBase>(
   collection: string,
   method: string,
+  listening: boolean,
   handler: (
     service: IDebeUse<TBase>,
     cb: (error: any, res: TResult) => void
   ) => void | (() => void),
   arg: any,
   defaultValue: any
-): [TResult, boolean] {
-  const [, update] = React.useState<TResult | undefined>(undefined);
+): [TResult, boolean, any] {
+  console.log('USING DEBE BASE', collection, method, listening, arg);
   const client = React.useContext(debeContext);
   const cache = React.useContext(debeCacheContext);
   const argKey = JSON.stringify(arg);
-  const key = `${collection}:${method}:${argKey}`;
+  const key = `${collection}:${method}:${argKey}:${listening ? 1 : 0}`;
+
+  const [, update] = React.useState<TResult | undefined>(undefined);
 
   React.useEffect(() => {
-    return cache.listen<TResult>(key, function listener(error, v) {
-      if (error) {
-        console.log(error);
-        throw error;
-      }
-      update(v);
-    });
-  });
+    return cache.listen<TResult>(
+      key,
+      function listener(error, v) {
+        update(v);
+      },
+      !listening
+    );
+  }, [key]);
 
-  const result =
-    arg && arg.skip
-      ? undefined
-      : cache.read(key, set => {
-          const proxy = client.use<TBase>(collection);
-          handler(proxy, (err, res) => {
-            setTimeout(() => {
-              set(err, res);
-            }, delay);
+  try {
+    const result =
+      arg && arg.skip
+        ? undefined
+        : cache.read(key, set => {
+            const proxy = client.use<TBase>(collection);
+            handler(proxy, (err, res) => {
+              setTimeout(() => {
+                set(err, res);
+              }, delay);
+            });
           });
-        });
-
-  return [result || defaultValue, false];
+    const isLoading = result && result.then;
+    return [result || defaultValue, isLoading, undefined];
+  } catch (err) {
+    if (cache.isSuspense) {
+      throw err;
+    }
+    if (err && err.then) {
+      return [defaultValue, true, undefined];
+    }
+    return [defaultValue, false, err];
+  }
 }
 
 export function useCollection<T = IItem>(service: string): IDebeUse<T> {
