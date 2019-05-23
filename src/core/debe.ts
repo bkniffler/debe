@@ -15,6 +15,7 @@ import { ensureQuery } from './sanitize';
 export class Debe<TBase = IItem, TDispatcher = DebeDispatcher<TBase>> {
   dispatcher: TDispatcher & DebeDispatcher<TBase>;
   initializing: Promise<void>;
+  isInitialized = false;
   constructor(dispatcher: TDispatcher & DebeDispatcher<TBase>) {
     this.dispatcher = dispatcher;
     dispatcher.db = this;
@@ -27,6 +28,7 @@ export class Debe<TBase = IItem, TDispatcher = DebeDispatcher<TBase>> {
       this.initializing = this.dispatcher.initialize();
     }
     await this.initializing;
+    this.isInitialized = true;
     return this;
   }
   use<T = IItem>(collection: string): IDebeUse<T> {

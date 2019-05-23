@@ -40,7 +40,7 @@ export class SocketAdapter extends DebeDispatcher {
   }
 
   async initialize() {
-    await this.socket.listener('connect').once();
+    // await this.socket.listener('connect').once();
     this.start();
   }
 

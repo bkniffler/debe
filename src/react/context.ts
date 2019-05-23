@@ -13,6 +13,29 @@ export class Cache {
   constructor(suspense = false) {
     this.isSuspense = suspense;
   }
+  public enableSuspense() {
+    this.isSuspense = true;
+  }
+  public async awaitAndExtract() {
+    await this.waitPending();
+    return this.extract();
+  }
+  public extract() {
+    const obj = {};
+    for (let [key, value] of this.resolved) {
+      if (key !== 'debe') {
+        obj[key] = value;
+      }
+    }
+    return obj;
+  }
+  public hydrate(obj: any) {
+    let strMap = new Map();
+    for (let k of Object.keys(obj)) {
+      strMap.set(k, obj[k]);
+    }
+    this.resolved = strMap;
+  }
   public isSuspense = false;
   private resolved = new Map<string, [any, any] | Promise<void | {}>>();
   private emitter = new Emitter();
@@ -41,7 +64,7 @@ export class Cache {
     this.waitPending(timeout, awaiter);
   }
   hasPending() {
-    for (var entry of this.resolved.values()) {
+    for (let entry of this.resolved.values()) {
       if (!Array.isArray(entry) && entry && entry.then) {
         return true;
       }
@@ -57,11 +80,18 @@ export class Cache {
   ) {
     if (!this.resolved.has(key)) {
       let y: any;
-      const promise = new Promise(yay => {
+      let n: any;
+      const promise = new Promise((yay, nay) => {
         if (y === undefined) {
           y = yay;
+          n = nay;
         }
         fetch((err, v) => {
+          if (!timeout) {
+            return;
+          }
+          clearTimeout(timeout);
+          timeout = undefined;
           this.resolved.set(key, [err, v]);
           this.emitter.emit(key, err, v);
           if (y) {
@@ -69,6 +99,11 @@ export class Cache {
             y = false;
           }
         });
+        let timeout: any = setTimeout(() => {
+          timeout = undefined;
+          n(new Error('Timeout! ' + key));
+          n = false;
+        }, 5000);
       });
       this.awaiter = this.awaiter.then(() => promise);
       this.resolved.set(key, promise);

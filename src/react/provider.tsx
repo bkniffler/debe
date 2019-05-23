@@ -19,7 +19,6 @@ export function DebeProvider({
   cache,
   value
 }: {
-  suspense?: boolean;
   render?: () => React.ReactNode;
   loading?: () => React.ReactNode;
   error?: () => React.ReactNode;
@@ -36,6 +35,15 @@ export function DebeProvider({
     cache = React.useMemo(() => new Cache(), []);
   }
 
+  if (value && (value as Debe).isInitialized) {
+    children = render ? render() : children;
+    return (
+      <ProviderCache value={cache}>
+        <Provider value={value as Debe}>{children}</Provider>
+      </ProviderCache>
+    );
+  }
+
   React.useEffect(() => {
     return (cache as Cache).listen<Debe>(
       'debe',
@@ -50,7 +58,9 @@ export function DebeProvider({
   try {
     db = cache.read<Debe>('debe', async set => {
       const db = typeof value === 'function' ? value() : value;
-      await db.initialize();
+      if (!db.isInitialized) {
+        await db.initialize();
+      }
       if (initialize) {
         await initialize(db);
       }

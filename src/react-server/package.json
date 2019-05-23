@@ -1,0 +1,13 @@
+{
+  "name": "debe-react-server",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "browser": false,
+  "dependencies": {
+    "debe-react": "*"
+  },
+  "devDependencies": {
+    "@types/react-dom": "^16.8.4",
+    "react-dom": "^16.9.0-alpha.0"
+  }
+}

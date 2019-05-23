@@ -8,7 +8,7 @@ export function setDelay(del: number) {
 }
 export function useAllOnce<T>(
   collection: string,
-  query: IQueryInput | string[]
+  query: (IQueryInput & { skip?: boolean }) | string[]
 ) {
   return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
@@ -27,7 +27,7 @@ export function useAllOnce<T>(
 
 export function useGetOnce<T>(
   collection: string,
-  query?: IQueryInput | string
+  query?: (IQueryInput & { skip?: boolean }) | string
 ) {
   return useDebeBase<(T & IGetItem) | undefined>(
     collection,
@@ -44,7 +44,10 @@ export function useGetOnce<T>(
   );
 }
 
-export function useAll<T>(collection: string, query?: IQueryInput | string[]) {
+export function useAll<T>(
+  collection: string,
+  query?: (IQueryInput & { skip?: boolean }) | string[]
+) {
   return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
     'all',
@@ -58,7 +61,10 @@ export function useAll<T>(collection: string, query?: IQueryInput | string[]) {
   );
 }
 
-export function useGet<T>(collection: string, query: IQueryInput | string) {
+export function useGet<T>(
+  collection: string,
+  query: (IQueryInput & { skip?: boolean }) | string
+) {
   return useDebeBase<T & IGetItem, (T & IGetItem) | undefined>(
     collection,
     'get',
@@ -83,15 +89,17 @@ function useDebeBase<TBase, TResult = TBase>(
   arg: any,
   defaultValue: any
 ): [TResult, boolean, any] {
-  console.log('USING DEBE BASE', collection, method, listening, arg);
   const client = React.useContext(debeContext);
   const cache = React.useContext(debeCacheContext);
   const argKey = JSON.stringify(arg);
-  const key = `${collection}:${method}:${argKey}:${listening ? 1 : 0}`;
+  const key = `${collection}:${method}:${argKey}`;
 
   const [, update] = React.useState<TResult | undefined>(undefined);
 
   React.useEffect(() => {
+    if (arg.skip) {
+      return;
+    }
     return cache.listen<TResult>(
       key,
       function listener(error, v) {
@@ -101,9 +109,18 @@ function useDebeBase<TBase, TResult = TBase>(
     );
   }, [key]);
 
+  if (!client) {
+    const err = new Error('Please define a client');
+    if (cache.isSuspense) {
+      throw err;
+    } else {
+      return [defaultValue, true, err];
+    }
+  }
+
   try {
     const result =
-      arg && arg.skip
+      (arg && arg.skip) || !client
         ? undefined
         : cache.read(key, set => {
             const proxy = client.use<TBase>(collection);
@@ -113,8 +130,7 @@ function useDebeBase<TBase, TResult = TBase>(
               }, delay);
             });
           });
-    const isLoading = result && result.then;
-    return [result || defaultValue, isLoading, undefined];
+    return [result || defaultValue, false, undefined];
   } catch (err) {
     if (cache.isSuspense) {
       throw err;
