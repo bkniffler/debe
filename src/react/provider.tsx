@@ -35,15 +35,6 @@ export function DebeProvider({
     cache = React.useMemo(() => new Cache(), []);
   }
 
-  if (value && (value as Debe).isInitialized) {
-    children = render ? render() : children;
-    return (
-      <ProviderCache value={cache}>
-        <Provider value={value as Debe}>{children}</Provider>
-      </ProviderCache>
-    );
-  }
-
   React.useEffect(() => {
     return (cache as Cache).listen<Debe>(
       'debe',

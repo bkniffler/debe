@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`react:basic 1`] = `
+<DocumentFragment>
+  <span>
+    Beni, Alex
+  </span>
+</DocumentFragment>
+`;
+
+exports[`react:basic 2`] = `
+Object {
+  "lorem:all:undefined": Array [
+    Object {
+      "name": "Beni",
+    },
+    Object {
+      "name": "Alex",
+    },
+  ],
+}
+`;
+
+exports[`react:basic2 1`] = `
+<DocumentFragment>
+  <span>
+    Beni, Alex
+  </span>
+</DocumentFragment>
+`;
+
+exports[`react:basic2 2`] = `
+Object {
+  "lorem:all:undefined": Array [
+    Object {
+      "name": "Beni",
+    },
+    Object {
+      "name": "Alex",
+    },
+  ],
+}
+`;
+
+exports[`react:suspense 1`] = `
+<DocumentFragment>
+  <span>
+    Beni, Alex
+  </span>
+</DocumentFragment>
+`;

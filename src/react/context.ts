@@ -53,15 +53,19 @@ export class Cache {
       return this.emitter.on(key, listener);
     }
   }
-  private awaiter = Promise.resolve(undefined as any);
-  async waitPending(timeout = 20, lastAwaiter?: any) {
-    const awaiter = this.awaiter;
-    if (awaiter === lastAwaiter) {
+  async waitPending(timeout = 20): Promise<void> {
+    const promises = [];
+    for (let entry of this.resolved.values()) {
+      if (!Array.isArray(entry) && entry && entry.then) {
+        promises.push(entry);
+      }
+    }
+    if (promises.length === 0) {
       return;
     }
-    await awaiter;
+    await Promise.all(promises);
     await new Promise(yay => setTimeout(yay, timeout));
-    this.waitPending(timeout, awaiter);
+    return this.waitPending(timeout);
   }
   hasPending() {
     for (let entry of this.resolved.values()) {
@@ -79,34 +83,36 @@ export class Cache {
     fetch: (set: (error: any, value: T) => void) => void
   ) {
     if (!this.resolved.has(key)) {
-      let y: any;
-      let n: any;
-      const promise = new Promise((yay, nay) => {
-        if (y === undefined) {
-          y = yay;
-          n = nay;
+      let yay: any = undefined;
+      let nay: any = undefined;
+      this.resolved.set(
+        key,
+        new Promise((y, n) => {
+          yay = y;
+          nay = n;
+        })
+      );
+      let timetime: any = setTimeout(() => {
+        if (!timetime) {
+          return;
         }
-        fetch((err, v) => {
-          if (!timeout) {
-            return;
-          }
-          clearTimeout(timeout);
-          timeout = undefined;
-          this.resolved.set(key, [err, v]);
+        timetime = undefined;
+        this.resolved.set(key, [err, undefined]);
+        nay(new Error('Timeout! ' + key));
+      }, 5000);
+
+      fetch((err, v) => {
+        if (!timetime) {
+          return;
+        }
+        clearTimeout(timetime);
+        timetime = undefined;
+        this.resolved.set(key, [err, v]);
+        setTimeout(() => {
           this.emitter.emit(key, err, v);
-          if (y) {
-            y(err, v);
-            y = false;
-          }
         });
-        let timeout: any = setTimeout(() => {
-          timeout = undefined;
-          n(new Error('Timeout! ' + key));
-          n = false;
-        }, 5000);
+        yay(v);
       });
-      this.awaiter = this.awaiter.then(() => promise);
-      this.resolved.set(key, promise);
     }
     const entry = this.resolved.get(key);
     if (!Array.isArray(entry) && entry && entry.then) {

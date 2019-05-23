@@ -97,7 +97,7 @@ function useDebeBase<TBase, TResult = TBase>(
   const [, update] = React.useState<TResult | undefined>(undefined);
 
   React.useEffect(() => {
-    if (arg.skip) {
+    if (arg && arg.skip) {
       return;
     }
     return cache.listen<TResult>(
