@@ -19,9 +19,9 @@ export function DebeProvider({
   cache,
   value
 }: {
-  render?: () => React.ReactNode;
+  render?: (db: Debe) => React.ReactNode;
   loading?: () => React.ReactNode;
-  error?: () => React.ReactNode;
+  error?: (err: any) => React.ReactNode;
   initialize?: (db: Debe) => Promise<void>;
   cache?: Cache;
   value: Debe | (() => Debe);
@@ -48,7 +48,7 @@ export function DebeProvider({
   let db;
   try {
     db = cache.read<Debe>('debe', async set => {
-      const db = typeof value === 'function' ? value() : value;
+      const db = value && (value as Debe).all ? value : (value as Function)();
       if (!db.isInitialized) {
         await db.initialize();
       }
@@ -57,7 +57,7 @@ export function DebeProvider({
       }
       set(undefined, db);
     });
-    children = render ? render() : children;
+    children = render ? render(db) : children;
   } catch (err) {
     if (cache.isSuspense) {
       throw err;
@@ -65,7 +65,7 @@ export function DebeProvider({
     if (err && err.then) {
       children = loading ? loading() : children;
     } else {
-      children = error ? error() : children;
+      children = error ? error(error) : children;
     }
   }
 

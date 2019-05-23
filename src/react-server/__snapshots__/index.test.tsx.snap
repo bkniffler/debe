@@ -65,19 +65,6 @@ Object {
 }
 `;
 
-exports[`react-server:basic 3`] = `
-Object {
-  "lorem:all:undefined": Array [
-    Object {
-      "name": "Beni",
-    },
-    Object {
-      "name": "Alex",
-    },
-  ],
-}
-`;
-
 exports[`react-server:basic2 1`] = `"<span>Beni<span>Alex<span>Beni</span></span></span>"`;
 
 exports[`react-server:basic2 2`] = `
