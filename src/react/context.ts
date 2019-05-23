@@ -78,6 +78,9 @@ export class Cache {
   close() {
     this.emitter.close();
   }
+  has(key: string) {
+    return this.resolved.has(key);
+  }
   read<T = any>(
     key: string,
     fetch: (set: (error: any, value: T) => void) => void

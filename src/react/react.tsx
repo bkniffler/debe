@@ -109,7 +109,7 @@ function useDebeBase<TBase, TResult = TBase>(
     );
   }, [key]);
 
-  if (!client) {
+  if (!client && !cache.has(key)) {
     const err = new Error('Please define a client');
     if (cache.isSuspense) {
       throw err;
@@ -120,7 +120,7 @@ function useDebeBase<TBase, TResult = TBase>(
 
   try {
     const result =
-      (arg && arg.skip) || !client
+      (arg && arg.skip) || (!client && !cache.has(key))
         ? undefined
         : cache.read(key, set => {
             const proxy = client.use<TBase>(collection);
