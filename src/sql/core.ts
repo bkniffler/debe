@@ -185,20 +185,40 @@ export abstract class SQLCore extends DebeAdapter {
   query<T>(
     collection: ICollection,
     queryArgs: IQuery | string | string[],
-    queryType: 'all' | 'get' | 'count'
+    queryType: 'all' | 'get' | 'count',
+    skip = false
   ): Promise<T> {
-    const [sql, ...args] = this.createQueryStatement(
-      collection,
-      queryArgs,
-      queryType
-    );
+    let [sql, ...args] =
+      skip === false
+        ? this.createQueryStatement(collection, queryArgs, queryType)
+        : queryArgs;
 
-    // Work around args being arrays
-    args.forEach((arg, i) => {
+    // Hack to expand array (like 'id IN ?', [1, 2, 3])
+    const newArgs = [];
+    const splitSQL = sql.split('?');
+    let newSQL = '';
+    if (splitSQL.length !== args.length + 1) {
+      throw new Error('Length of args != length of "?" in sql statement');
+    }
+    newSQL = splitSQL[0];
+    for (var i = 0; i < args.length; i++) {
+      let arg = args[i];
+      const splitIndex = i + 1;
       if (Array.isArray(arg)) {
-        args[i] = arg.join(', ');
+        const chunkSize = 500;
+        if (arg.length > chunkSize) {
+          arg = arg.slice(0, chunkSize);
+        }
+        const questionmarks = [...Array(arg.length).keys()].map(() => '?');
+        newSQL += questionmarks.join(', ') + splitSQL[splitIndex];
+        newArgs.push(...arg);
+      } else {
+        newArgs.push(arg);
+        newSQL += '?' + splitSQL[splitIndex];
       }
-    });
+    }
+    sql = newSQL;
+    args = newArgs;
 
     if (queryType === 'count') {
       return this.exec<any>(sql, args, queryType);

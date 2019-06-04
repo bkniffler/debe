@@ -18,6 +18,40 @@ export function createAdapterTest(
     options?: any
   ) => Promise<IServer | undefined> = () => Promise.resolve(undefined)
 ) {
+  test(`adapter:${name}:ids`, async () => {
+    const collections = [
+      { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
+    ];
+    const ini = await init(collections, 0);
+    const table = collections[0].name;
+    const client = createDB(collections, {});
+    await client.initialize();
+    for (var i = 0; i < 1500; i++) {
+      await client.insert<any>(table, {
+        id: i,
+        name: 'Hallo'
+      });
+    }
+    process['LOG_SQLITE'] = true;
+    const queryResult = await client.all<any>(table, { id: ['1', '2', '3'] });
+    expect(queryResult.length).toBe(3);
+    const queryResult2 = await client.all<any>(table, {
+      id: [...Array(300).keys()].map(x => `${x}`)
+    });
+    expect(queryResult2.length).toBe(300);
+    /*const queryResult3 = await client.all<any>(table, {
+      id: [...Array(1000).keys()].map(x => `${x}`)
+    });
+    expect(queryResult3.length).toBe(1000);*/
+    await client.close();
+    if (ini) {
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
+    }
+  });
+
   test(`adapter:${name}:basic`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
@@ -139,9 +173,13 @@ export function createAdapterTest(
       await client.initialize();
       const items = [];
       for (let x = 0; x < count; x++) {
-        items.push({ name: pad(x) });
+        items.push({ name: pad(x), id: x });
       }
       await client.insert(table, items);
+      let ids = await client.all(table, {
+        id: ['1', '2', '3', '4', '5']
+      });
+      expect(ids.length).toBe(5);
       let result = await client.all(table, {
         orderBy: ['name ASC'],
         where: ['name < ?', pad(50)]
@@ -246,14 +284,32 @@ export function createAdapterTest(
     const unlisten2 = client.count(table, () => {
       countCalls = countCalls + 1;
     });
-    await client.insert(table, { id: '0', name: 'Hallo' });
-    await client.insert(table, { id: '1', name: 'Hallo' });
+    await client.insert(table, { id: '0', name: 'Hallo', x: '1' });
+    await client.insert(table, { id: '1', name: 'Hallo', x: '1' });
+    await client.insert(table, { id: '2', name: 'Hallo', x: '1' });
+    await client.insert(table, { id: '3', name: 'Hallo', x: '1' });
     await new Promise(yay => setTimeout(yay, 100));
     unlisten();
     unlisten2();
-    await client.insert(table, { id: '2', name: 'Hallo' });
-    expect(calls).toBe(2);
-    expect(countCalls).toBe(2);
+    const res1 = await client.insert(table, { id: '1', name: 'Hallo2' });
+    const res2 = await client.insert(table, [
+      { id: '2', name: 'Hallo2' },
+      { id: '3', name: 'Hallo2' }
+    ]);
+    expect(calls).toBe(4);
+    expect(countCalls).toBe(4);
+    expect(res1.name).toBe('Hallo2');
+    expect(res2[0].name).toBe('Hallo2');
+    expect(res2[1].name).toBe('Hallo2');
+    const res3 = await client.all(table, {});
+    expect(res3[0].name).toBe('Hallo');
+    expect(res3[1].name).toBe('Hallo2');
+    expect(res3[2].name).toBe('Hallo2');
+    expect(res3[3].name).toBe('Hallo2');
+    expect(res3[0].x).toBe('1');
+    expect(res3[1].x).toBe('1');
+    expect(res3[2].x).toBe('1');
+    expect(res3[3].x).toBe('1');
     await client.close();
     if (ini) {
       if (ini.db) {
