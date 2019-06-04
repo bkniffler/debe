@@ -18,7 +18,7 @@ export function createAdapterTest(
     options?: any
   ) => Promise<IServer | undefined> = () => Promise.resolve(undefined)
 ) {
-  test(`adapter:${name}:ids`, async () => {
+  /*test(`adapter:${name}:ids`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
     ];
@@ -32,17 +32,16 @@ export function createAdapterTest(
         name: 'Hallo'
       });
     }
-    process['LOG_SQLITE'] = true;
     const queryResult = await client.all<any>(table, { id: ['1', '2', '3'] });
     expect(queryResult.length).toBe(3);
     const queryResult2 = await client.all<any>(table, {
       id: [...Array(300).keys()].map(x => `${x}`)
     });
     expect(queryResult2.length).toBe(300);
-    /*const queryResult3 = await client.all<any>(table, {
+    const queryResult3 = await client.all<any>(table, {
       id: [...Array(1000).keys()].map(x => `${x}`)
     });
-    expect(queryResult3.length).toBe(1000);*/
+    expect(queryResult3.length).toBe(1000);
     await client.close();
     if (ini) {
       if (ini.db) {
@@ -50,7 +49,7 @@ export function createAdapterTest(
       }
       await ini.close();
     }
-  });
+  });*/
 
   test(`adapter:${name}:basic`, async () => {
     const collections = [
