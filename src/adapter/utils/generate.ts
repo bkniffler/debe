@@ -8,12 +8,13 @@ export function generate(size?: number) {
   return _generate(size);
 }
 
-let me =
-  typeof window !== 'undefined'
-    ? window
-    : typeof self !== 'undefined'
-    ? self
-    : undefined;
+let me;
+if (typeof global !== 'undefined' && global['window']) {
+  me = global['window'];
+} else if (typeof global !== 'undefined' && global['self']) {
+  me = global['self'];
+}
+
 if (me && typeof _generate !== 'function') {
   const crypto = me.crypto || me['msCrypto'];
   if (crypto) {
