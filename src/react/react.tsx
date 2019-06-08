@@ -8,7 +8,7 @@ export function setDelay(del: number) {
 }
 export function useAllOnce<T>(
   collection: string,
-  query: (IQueryInput & { skip?: boolean }) | string[]
+  query?: (IQueryInput & { skip?: boolean }) | string[]
 ) {
   return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
     collection,
@@ -63,7 +63,7 @@ export function useAll<T>(
 
 export function useGet<T>(
   collection: string,
-  query: (IQueryInput & { skip?: boolean }) | string
+  query?: (IQueryInput & { skip?: boolean }) | string
 ) {
   return useDebeBase<T & IGetItem, (T & IGetItem) | undefined>(
     collection,
@@ -145,4 +145,26 @@ function useDebeBase<TBase, TResult = TBase>(
 export function useCollection<T = IItem>(service: string): IDebeUse<T> {
   const debe = React.useContext(debeContext);
   return debe.use(service);
+}
+
+export function createUse<T = IItem>(collection: string) {
+  return {
+    useAll: function(query?: (IQueryInput & { skip?: boolean }) | string[]) {
+      return useAll<T>(collection, query);
+    },
+    useAllOnce: function(
+      query?: (IQueryInput & { skip?: boolean }) | string[]
+    ) {
+      return useAllOnce<T>(collection, query);
+    },
+    useGet: function(query?: (IQueryInput & { skip?: boolean }) | string) {
+      return useGet<T>(collection, query);
+    },
+    useGetOnce: function(query?: (IQueryInput & { skip?: boolean }) | string) {
+      return useGetOnce<T>(collection, query);
+    },
+    useCollection: function() {
+      return useCollection<T>(collection);
+    }
+  };
 }
