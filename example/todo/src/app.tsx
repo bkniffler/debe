@@ -3,7 +3,8 @@ import {
   DebeProvider,
   useAll,
   useCollection,
-  useConnectionState
+  useConnectionState,
+  Cache
 } from 'debe-react';
 import App from './components/app';
 import { SocketDebe } from 'debe-socket';
@@ -25,7 +26,6 @@ function Todo({ title }: { title: string }) {
   const [all] = useAll<ITodo>('todo', { orderBy: 'title' });
   const collection = useCollection<ITodo>('todo');
   if (typeof document !== 'undefined') {
-    console.log(all);
     const clean = document.title.split('(')[0].trim();
     const num = all.filter(x => !x.completed).length;
     document.title = num ? `${clean} (${num})` : clean;

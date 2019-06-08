@@ -8,7 +8,7 @@ export const syncContext = React.createContext<Sync>(undefined as any);
 export function useConnectionState(): IConnectionState {
   const client = React.useContext(debeContext);
   const [state, setState] = React.useState<IConnectionState>(
-    client['sync'] && client['sync'].state
+    client && client['sync'] && client['sync'].state
   );
   React.useEffect(() => {
     if (!client || !client['sync'] || !client['sync'].onConnectionState) {

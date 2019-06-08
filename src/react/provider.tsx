@@ -27,7 +27,11 @@ export function DebeProvider({
   value: Debe | (() => Debe);
   children?: React.ReactNode;
 }) {
-  const [, update] = React.useState<Debe | undefined>();
+  const [{ db, err }, update] = React.useState<{
+    db: Debe | undefined;
+    err: any | undefined;
+  }>({ db: undefined, err: undefined });
+
   if (!cache) {
     cache = React.useContext(debeCacheContext);
   }
@@ -36,18 +40,7 @@ export function DebeProvider({
   }
 
   React.useEffect(() => {
-    return (cache as Cache).listen<Debe>(
-      'debe',
-      function listener(error, v) {
-        update(v);
-      },
-      true
-    );
-  }, []);
-
-  let db;
-  try {
-    db = cache.read<Debe>('debe', async set => {
+    async function g() {
       const db = value && (value as Debe).all ? value : (value as Function)();
       if (!db.isInitialized) {
         await db.initialize();
@@ -55,23 +48,22 @@ export function DebeProvider({
       if (initialize) {
         await initialize(db);
       }
-      set(undefined, db);
-    });
-    children = render ? render(db) : children;
-  } catch (err) {
-    if (cache.isSuspense) {
-      throw err;
+      update({ db, err: undefined });
     }
-    if (err && err.then) {
-      children = loading ? loading() : children;
-    } else {
-      children = error ? error(error) : children;
-    }
+    g();
+  }, []);
+
+  if (render && db) {
+    children = render(db);
+  } else if (!db && loading) {
+    children = loading();
+  } else if (err && error) {
+    children = error(err);
   }
 
   return (
     <ProviderCache value={cache}>
-      <Provider value={db}>{children}</Provider>
+      <Provider value={db as any}>{children}</Provider>
     </ProviderCache>
   );
 }
