@@ -109,7 +109,6 @@ export class Cache {
           return;
         }
         clearTimeout(timetime);
-        timetime = undefined;
         this.resolved.set(key, [err, v]);
         setTimeout(() => {
           this.emitter.emit(key, err, v);
