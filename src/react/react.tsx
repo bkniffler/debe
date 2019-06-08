@@ -144,7 +144,7 @@ function useDebeBase<TBase, TResult = TBase>(
 
 export function useCollection<T = IItem>(service: string): IDebeUse<T> {
   const debe = React.useContext(debeContext);
-  return debe.use(service);
+  return React.useMemo(() => debe && debe.use(service), [debe]);
 }
 
 export function createUse<T = IItem>(collection: string) {
