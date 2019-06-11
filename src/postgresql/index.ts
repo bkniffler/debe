@@ -6,27 +6,27 @@ import { DebeBackend } from 'debe-adapter';
 
 export class PostgreSQLDebe extends Debe {
   constructor(
-    connectionString: string,
+    connection: string | object,
     collections: ICollectionInput[],
     options?: any
   ) {
     super(
-      new DebeBackend(
-        new PostgreSQLAdapter(connectionString),
-        collections,
-        options
-      )
+      new DebeBackend(new PostgreSQLAdapter(connection), collections, options)
     );
   }
 }
 
 export class PostgreSQLAdapter extends SQLJsonCore {
   pool: Pool;
-  constructor(connectionString: string) {
+  constructor(connection: string | object) {
     super();
-    this.pool = new Pool({
-      connectionString
-    });
+    this.pool = new Pool(
+      typeof connection === 'string'
+        ? {
+            connectionString: connection
+          }
+        : connection
+    );
   }
   close() {
     return this.pool.end();
