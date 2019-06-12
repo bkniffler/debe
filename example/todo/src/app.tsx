@@ -3,15 +3,12 @@ import {
   DebeProvider,
   useAll,
   useCollection,
-  useConnectionState,
-  Cache
+  useConnectionState
 } from 'debe-react';
 import App from './components/app';
 import { SocketDebe } from 'debe-socket';
-import { IDBDebe } from 'debe-idb';
 import { Sync } from 'debe-sync';
 import { Debe } from 'debe';
-import { schema } from '../shared';
 
 // setDelay(1000);
 
@@ -24,6 +21,7 @@ interface ITodo {
 function Todo({ title }: { title: string }) {
   const state = useConnectionState();
   const [all] = useAll<ITodo>('todo', { orderBy: 'title' });
+  const [all2] = useAll<ITodo>('todo', { orderBy: 'title' });
   const collection = useCollection<ITodo>('todo');
   if (typeof document !== 'undefined') {
     const clean = document.title.split('(')[0].trim();
@@ -72,19 +70,25 @@ const hash = window.location.hash && window.location.hash.substr(1);
 export default function() {
   return (
     <div style={{ display: 'flex', flexDirection: 'row' }}>
-      <Instance
+      {/*<Instance
         title="IndexedDebe"
         sync={['localhost', 9911]}
+        cache={cache1}
         get={() =>
           new IDBDebe(schema, `todo${hash}`, {
             softDelete: true
           })
         }
-      />
+      />*/}
       <Instance
         title="SocketDebe"
         get={() => new SocketDebe(['localhost', 9912])}
       />
+      {/*<Instance
+        title="SocketDebeSuspense"
+        cache={cache3}
+        get={() => new SocketDebe(['localhost', 9912])}
+      />*/}
       {/*<Instance
         title="IndexedDebe #2"
         get={() => new IDBDebe(schema, 'todo2', { softDelete: true })}

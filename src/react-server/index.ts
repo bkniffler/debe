@@ -1,10 +1,12 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Cache } from 'debe-react';
+import { awaitLoaded, getUnloadedKeys } from 'debe-react';
 
-export async function extractCache(cache: Cache, app: any): Promise<string> {
+export async function extractCache(store: any, app: any): Promise<string> {
   const html = renderToStaticMarkup(app);
-  if (!cache.hasPending()) {
+  const keys = getUnloadedKeys(store);
+  if (keys.length === 0) {
     return html;
   }
-  return cache.waitPending(100).then(() => extractCache(cache, app));
+  await awaitLoaded(store, keys);
+  return extractCache(store, app);
 }

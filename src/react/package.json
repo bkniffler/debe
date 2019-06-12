@@ -3,9 +3,12 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
+    "@types/redux": "^3.6.0",
     "debe": "*",
     "debe-socket": "*",
-    "debe-sync": "*"
+    "debe-sync": "*",
+    "react-redux": "^7.1.0",
+    "redux": "^4.0.1"
   },
   "devDependencies": {
     "@types/react": "^16.8.17",

@@ -1,150 +1,76 @@
 import * as React from 'react';
-import { IDebeUse, IItem, IQueryInput, IGetItem } from 'debe';
-import { debeContext, debeCacheContext } from './context';
+import { IDebeUse, IItem, IQueryInput } from 'debe';
+import { useMemoOne } from './utils/memo-one';
+// @ts-ignore
+import { useDispatch, useSelector } from 'react-redux';
+import { context } from './provider';
 
-let delay = 0;
-export function setDelay(del: number) {
-  delay = del;
+const empty = {};
+function useDebeBase(
+  method: 'get' | 'all',
+  collection: string,
+  query: (IQueryInput & { skip?: boolean }) | string | undefined,
+  defaultValue: any
+) {
+  const skip = query && query['skip'];
+  if (query) {
+    delete query['skip'];
+  }
+  const dispatch = useDispatch();
+  const str = skip ? '' : JSON.stringify(query || {});
+  const key = useMemoOne<string>(() => {
+    return skip ? '' : `${collection}:${method}:${str}`;
+  }, [collection, str, skip]);
+  const { result = defaultValue, error, loading } = useSelector((store: any) =>
+    skip || !store.debe[key] ? empty : store.debe[key]
+  );
+  useMemoOne<string>(() => {
+    if (loading === true || loading === false || skip) {
+      return;
+    }
+    dispatch({
+      key,
+      type: 'DEBE_QUERY',
+      collection,
+      query,
+      method
+    });
+  }, [key]);
+  return [result, loading, error];
 }
+
 export function useAllOnce<T>(
   collection: string,
   query?: (IQueryInput & { skip?: boolean }) | string[]
 ) {
-  return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
-    collection,
-    'all',
-    false,
-    (proxy, cb) => {
-      proxy
-        .all(query)
-        .then(x => cb(undefined, x))
-        .catch(err => cb(err, undefined as any));
-    },
-    query,
-    []
-  );
+  return useAll(collection, query);
 }
 
 export function useGetOnce<T>(
   collection: string,
   query?: (IQueryInput & { skip?: boolean }) | string
 ) {
-  return useDebeBase<(T & IGetItem) | undefined>(
-    collection,
-    'get',
-    false,
-    (proxy, cb) => {
-      proxy
-        .get(query)
-        .then(x => cb(undefined, x))
-        .catch(err => cb(err, undefined));
-    },
-    query,
-    undefined
-  );
+  return useGet(collection, query);
 }
 
+const emptyArray: any[] = [];
 export function useAll<T>(
   collection: string,
   query?: (IQueryInput & { skip?: boolean }) | string[]
 ) {
-  return useDebeBase<T & IGetItem, (T & IGetItem)[]>(
-    collection,
-    'all',
-    true,
-    (proxy, cb) =>
-      proxy.all(query, (err, res) => {
-        cb(err, res);
-      }),
-    query,
-    []
-  );
+  return useDebeBase('all', collection, query as any, emptyArray);
 }
 
 export function useGet<T>(
   collection: string,
   query?: (IQueryInput & { skip?: boolean }) | string
 ) {
-  return useDebeBase<T & IGetItem, (T & IGetItem) | undefined>(
-    collection,
-    'get',
-    true,
-    (proxy, cb) =>
-      proxy.get(query, (err, res) => {
-        cb(err, res);
-      }),
-    query,
-    undefined
-  );
-}
-
-function useDebeBase<TBase, TResult = TBase>(
-  collection: string,
-  method: string,
-  listening: boolean,
-  handler: (
-    service: IDebeUse<TBase>,
-    cb: (error: any, res: TResult) => void
-  ) => void | (() => void),
-  arg: any,
-  defaultValue: any
-): [TResult, boolean, any] {
-  const client = React.useContext(debeContext);
-  const cache = React.useContext(debeCacheContext);
-  const argKey = JSON.stringify(arg);
-  const key = `${collection}:${method}:${argKey}`;
-
-  const [, update] = React.useState<TResult | undefined>(undefined);
-
-  React.useEffect(() => {
-    if (arg && arg.skip) {
-      return;
-    }
-    return cache.listen<TResult>(
-      key,
-      function listener(error, v) {
-        update(v);
-      },
-      !listening
-    );
-  }, [key]);
-
-  if (!client && !cache.has(key)) {
-    const err = new Error('Please define a client');
-    if (cache.isSuspense) {
-      throw err;
-    } else {
-      return [defaultValue, true, err];
-    }
-  }
-
-  try {
-    const result =
-      (arg && arg.skip) || (!client && !cache.has(key))
-        ? undefined
-        : cache.read(key, set => {
-            const proxy = client.use<TBase>(collection);
-            handler(proxy, (err, res) => {
-              setTimeout(() => {
-                set(err, res);
-              }, delay);
-            });
-          });
-    return [result || defaultValue, false, undefined];
-  } catch (err) {
-    if (cache.isSuspense) {
-      throw err;
-    }
-    if (err && err.then) {
-      return [defaultValue, true, undefined];
-    }
-    return [defaultValue, false, err];
-  }
+  return useDebeBase('get', collection, query, undefined);
 }
 
 export function useCollection<T = IItem>(service: string): IDebeUse<T> {
-  const debe = React.useContext(debeContext);
-  return React.useMemo(() => debe && debe.use(service), [debe]);
+  const db = React.useContext(context);
+  return useMemoOne(() => (db && db.use(service)) as any, [db]);
 }
 
 export function createUse<T = IItem>(collection: string) {

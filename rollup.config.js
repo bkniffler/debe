@@ -122,6 +122,11 @@ Object.keys(paths).forEach(key => {
         commonjs({
           include: [/node_modules/],
           namedExports: {
+            'node_modules/react-is/index.js': [
+              'isValidElementType',
+              'isContextConsumer'
+            ],
+            'node_modules/react-dom/index.js': ['unstable_batchedUpdates'],
             'node_modules/idb/with-async-ittr-cjs.js': ['openDB'],
             'node_modules/automerge/dist/automerge.js': [
               'init',

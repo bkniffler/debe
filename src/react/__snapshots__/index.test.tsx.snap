@@ -10,7 +10,7 @@ exports[`react:basic 1`] = `
 
 exports[`react:basic 2`] = `
 Object {
-  "lorem:all:undefined": Array [
+  "lorem:all:{}": Array [
     Object {
       "name": "Beni",
     },
@@ -19,33 +19,4 @@ Object {
     },
   ],
 }
-`;
-
-exports[`react:basic2 1`] = `
-<DocumentFragment>
-  <span>
-    Beni, Alex
-  </span>
-</DocumentFragment>
-`;
-
-exports[`react:basic2 2`] = `
-Object {
-  "lorem:all:undefined": Array [
-    Object {
-      "name": "Beni",
-    },
-    Object {
-      "name": "Alex",
-    },
-  ],
-}
-`;
-
-exports[`react:suspense 1`] = `
-<DocumentFragment>
-  <span>
-    Beni, Alex
-  </span>
-</DocumentFragment>
 `;

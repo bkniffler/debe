@@ -1,22 +1,22 @@
 import * as React from 'react';
-import { debeContext } from './context';
+import { context } from './provider';
 import { Sync } from 'debe-sync';
 import { IConnectionState } from 'debe-socket';
 
 export const syncContext = React.createContext<Sync>(undefined as any);
 
 export function useConnectionState(): IConnectionState {
-  const client = React.useContext(debeContext);
+  const db = React.useContext(context);
   const [state, setState] = React.useState<IConnectionState>(
-    client && client['sync'] && client['sync'].state
+    db && db['sync'] && db['sync'].state
   );
   React.useEffect(() => {
-    if (!client || !client['sync'] || !client['sync'].onConnectionState) {
+    if (!db || !db['sync'] || !db['sync'].onConnectionState) {
       return;
     }
-    return client['sync'].onConnectionState((con: IConnectionState) =>
+    return db['sync'].onConnectionState((con: IConnectionState) =>
       setState(con)
     );
-  }, [client]);
+  }, [db]);
   return state;
 }
