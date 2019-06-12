@@ -94,7 +94,7 @@ export const reducer: Reducer = (state, action) => {
   return state;
 };
 
-const middleware = (db: Debe): Middleware => store => next => action => {
+export const middleware = (db: Debe): Middleware => store => next => action => {
   if (action.type === 'DEBE_QUERY') {
     const { key, collection, query, method } = action;
     const stop = db[method as 'all'](collection, query, (error, result) => {
