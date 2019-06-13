@@ -23,11 +23,11 @@ function useDebeBase(
     return skip ? '' : `${collection}:${method}:${str}`;
   }, [collection, str, skip]);
   const { result = defaultValue, error, loading } = useSelector((store: any) =>
-    skip || !store.debe[key] ? empty : store.debe[key]
+    !key || !store.debe[key] ? empty : store.debe[key]
   );
   const id = useMemoOne(() => fastGuid());
   useMemoOne<string>(() => {
-    if (skip) {
+    if (!key) {
       return;
     }
     dispatch({
@@ -40,16 +40,18 @@ function useDebeBase(
       once
     });
   }, [key]);
-  React.useEffect(
-    () => () => {
-      dispatch({
-        id,
-        key,
-        type: 'DEBE_QUERY_UNLISTEN'
-      });
-    },
-    [key]
-  );
+  React.useEffect(() => {
+    if (!once && !key) {
+      return () => {
+        dispatch({
+          id,
+          key,
+          type: 'DEBE_QUERY_UNLISTEN'
+        });
+      };
+    }
+    return undefined;
+  }, [key]);
   return [result, loading, error];
 }
 
