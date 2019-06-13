@@ -75,57 +75,109 @@ export function DebeProvider({
 
 export const reducer: Reducer = (state, action) => {
   if (!state) {
-    return {};
+    return {
+      listeners: {}
+    };
   }
-  switch (action.type) {
-    case 'DEBE_QUERY_LOADING':
-      return { ...state, [action.key]: { loading: true } };
-    case 'DEBE_QUERY_SUCCESS':
-      return {
-        ...state,
-        [action.key]: { loading: false, result: action.result }
-      };
-    case 'DEBE_QUERY_ERROR':
-      return {
-        ...state,
-        [action.key]: { loading: false, error: action.error }
-      };
+  if (action.type === 'DEBE_QUERY_UNLISTEN') {
+    const listeners = { ...state.listeners };
+    const currentListeners = state.listeners[action.key]
+      ? [...state.listeners[action.key]]
+      : [];
+    const index = currentListeners.indexOf(action.id);
+    if (index >= 0) {
+      currentListeners.splice(index, 1);
+    }
+    if (currentListeners.length === 0) {
+      delete listeners[action.key];
+    } else {
+      listeners[action.key] = currentListeners;
+    }
+    return {
+      ...state,
+      listeners
+    };
+  } else if (action.type === 'DEBE_QUERY_LISTEN') {
+    const listeners = state.listeners[action.key]
+      ? [...state.listeners[action.key]]
+      : [];
+    listeners.push(action.id);
+    return {
+      ...state,
+      listeners: { ...listeners, [action.key]: listeners }
+    };
+  } else if (action.type === 'DEBE_QUERY_LOADING') {
+    return {
+      ...state,
+      [action.key]: { loading: true }
+    };
+  } else if (action.type === 'DEBE_QUERY_SUCCESS') {
+    return {
+      ...state,
+      [action.key]: { loading: false, result: action.result }
+    };
+  } else if (action.type === 'DEBE_QUERY_ERROR') {
+    return {
+      ...state,
+      [action.key]: { loading: false, error: action.error }
+    };
   }
   return state;
 };
 
-export const middleware = (db: Debe): Middleware => store => next => action => {
-  if (action.type === 'DEBE_QUERY') {
-    const { key, collection, query, method } = action;
-    const stop = db[method as 'all'](collection, query, (error, result) => {
-      if (timeout) {
-        clearTimeout(timeout);
+export const middleware = (
+  db: Debe,
+  isServer = false,
+  storeKey: string = STOREKEY,
+  listeners = {}
+): Middleware => store => next => action => {
+  if (action.type === 'DEBE_QUERY_UNLISTEN') {
+    const { key } = action;
+    next(action);
+    const state = store.getState()[storeKey];
+    if (!state.listeners[key] || state.listeners[key].length === 0) {
+      if (listeners[key]) {
+        listeners[key]();
+        listeners[key] = undefined;
       }
-      if (error) {
-        next({ type: 'DEBE_QUERY_ERROR', error, key });
-      } else {
-        next({ type: 'DEBE_QUERY_SUCCESS', result, key });
-      }
-    });
-    let timeout = setTimeout(() => {
-      stop();
-      next({
-        type: 'DEBE_QUERY_ERROR',
-        error: new Error('Query ' + key + ' timed out'),
-        key
-      });
-    }, TIMEOUT);
-    return next({ type: 'DEBE_QUERY_LOADING', key });
+    }
   } else if (action.type === 'DEBE_QUERY') {
-    const { key, collection, query, method } = action;
-    db[method as 'all'](collection, query)
-      .then(result => {
-        next({ type: 'DEBE_QUERY_SUCCESS', result, key });
-      })
-      .catch(error => {
-        next({ type: 'DEBE_QUERY_ERROR', error, key });
+    const { key, collection, query, method, id, once } = action;
+    if (!listeners[key]) {
+      const stop = db[method as 'all'](collection, query, (error, result) => {
+        if (timeout) {
+          clearTimeout(timeout);
+        }
+        // Dont keep listening on server
+        if (isServer) {
+          stop();
+          listeners[key] = undefined;
+        }
+        if (error) {
+          next({ type: 'DEBE_QUERY_ERROR', error, key });
+        } else {
+          next({ type: 'DEBE_QUERY_SUCCESS', result, key });
+        }
       });
-    return next({ type: 'DEBE_QUERY_LOADING', key });
+      listeners[key] = stop;
+      let timeout = setTimeout(() => {
+        stop();
+        listeners[key] = undefined;
+        next({
+          type: 'DEBE_QUERY_ERROR',
+          error: new Error('Query ' + key + ' timed out'),
+          key
+        });
+      }, TIMEOUT || (isServer ? 1000 : 5000));
+      if (!store.getState()[storeKey]) {
+        next({ type: 'DEBE_QUERY_LOADING', key });
+      }
+    }
+    store.dispatch({ type: 'DEBE_QUERY_LISTEN', key, id });
+    if (once) {
+      store.dispatch({ type: 'DEBE_QUERY_UNLISTEN', key, id });
+    }
+    return;
   }
   return next(action);
 };

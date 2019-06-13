@@ -10,6 +10,9 @@ exports[`react:basic 1`] = `
 
 exports[`react:basic 2`] = `
 Object {
+  "listeners": Object {
+    "0": "b02156f7-c5ef-42f0-b320-e173fe18c5ff",
+  },
   "lorem:all:{}": Array [
     Object {
       "name": "Beni",
