@@ -79,6 +79,26 @@ export function createAdapterTest(
     }
   });
 
+  test(`adapter:${name}:empty`, async () => {
+    const collections = [
+      { name: 'lorem' + generate().substr(0, 4), index: ['name'] }
+    ];
+    const ini = await init(collections, 0);
+    const table = collections[0].name;
+    const client = createDB(collections, {});
+    await client.initialize();
+    const queryResult = await client.all<any>(table);
+    expect(Array.isArray(queryResult)).toBe(true);
+    expect(queryResult.length).toBe(0);
+    await client.close();
+    if (ini) {
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
+    }
+  });
+
   test(`adapter:${name}:nochange`, async () => {
     const collections = [
       { name: 'lorem' + generate().substr(0, 4), index: ['name'] }

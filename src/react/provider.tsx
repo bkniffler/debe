@@ -154,7 +154,6 @@ export function getUnloadedKeys(store: any, storeKey: string = STOREKEY) {
       promises.push(entry);
     }
   }
-  console.log(promises);
   return promises;
 }
 
