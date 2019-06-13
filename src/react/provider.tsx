@@ -98,13 +98,15 @@ export const reducer: Reducer = (state, action) => {
       listeners
     };
   } else if (action.type === 'DEBE_QUERY_LISTEN') {
-    const listeners = state.listeners[action.key]
+    const listeners = { ...state.listeners };
+    const currentListeners = state.listeners[action.key]
       ? [...state.listeners[action.key]]
       : [];
-    listeners.push(action.id);
+    currentListeners.push(action.id);
+    listeners[action.key] = currentListeners;
     return {
       ...state,
-      listeners: { ...listeners, [action.key]: listeners }
+      listeners
     };
   } else if (action.type === 'DEBE_QUERY_LOADING') {
     return {
