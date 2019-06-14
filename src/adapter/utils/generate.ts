@@ -1,4 +1,4 @@
-import * as id from 'nanoid';
+import id from 'nanoid';
 
 let _generate = id;
 export function setIdGenerator(generator: (size?: number) => string) {
