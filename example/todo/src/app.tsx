@@ -7,6 +7,7 @@ import {
 } from 'debe-react';
 import App from './components/app';
 import { SocketDebe } from 'debe-socket';
+import { HttpDebe } from 'debe-http';
 import { Sync } from 'debe-sync';
 import { Debe } from 'debe';
 
@@ -83,6 +84,10 @@ export default function() {
       <Instance
         title="SocketDebe"
         get={() => new SocketDebe(['localhost', 9912])}
+      />
+      <Instance
+        title="HttpDebe"
+        get={() => new HttpDebe('http://localhost:9999')}
       />
       {/*<Instance
         title="SocketDebeSuspense"

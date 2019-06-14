@@ -1,0 +1,8 @@
+{
+  "name": "debe-http",
+  "main": "index.ts",
+  "version": "1.0.0",
+  "dependencies": {
+    "debe": "*"
+  }
+}

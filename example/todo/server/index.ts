@@ -1,6 +1,7 @@
 import { BetterSqlite3Debe } from 'debe-better-sqlite3';
 import { SyncServer } from 'debe-sync-server';
 import { SocketServer } from 'debe-socket-server';
+import { HttpServer } from 'debe-http-server';
 import { resolve } from 'path';
 import { schema } from '../shared';
 
@@ -29,6 +30,7 @@ async function work() {
   });
   const server = await new SyncServer(db, 9911).initialize();
   new SocketServer(db, 9912);
+  new HttpServer(db, 9999);
   await generateItems(server.db, 10);
   console.log('Ready');
 }
