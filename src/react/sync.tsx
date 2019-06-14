@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { context } from './provider';
 import { Sync } from 'debe-sync';
 import { IConnectionState } from 'debe-socket';

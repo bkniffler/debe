@@ -5,7 +5,7 @@ import { BetterSqlite3Debe } from 'debe-better-sqlite3';
 import { join } from 'path';
 import { removeSync, ensureDirSync } from 'fs-extra';
 import { MemoryDebe } from 'debe-memory';
-import * as Automerge from 'automerge';
+import Automerge from 'automerge';
 import { generate, DebeBackend } from 'debe-adapter';
 
 const schema = [

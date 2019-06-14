@@ -1,11 +1,11 @@
-import * as React from 'react';
+import React from 'react';
 import { act } from 'react-dom/test-utils';
 import { DebeProvider, makeStore, awaitLoaded } from './index';
 import { render } from 'react-testing-library';
 import { MemoryDebe } from 'debe-memory';
 import 'jest-dom/extend-expect';
 import { IQueryInput } from 'debe';
-import * as use from './react';
+import use from './react';
 import { STOREKEY } from './provider';
 
 export const collections = [{ name: 'lorem', index: ['name'] }];

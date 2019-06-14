@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { IDebeUse, IItem, IQueryInput } from 'debe';
 import { useMemoOne } from './utils/memo-one';
 // @ts-ignore

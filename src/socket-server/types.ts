@@ -1,4 +1,4 @@
-import * as http from 'http';
+import http from 'http';
 import { ISocketBase } from 'debe-socket';
 
 export type IAttach = (server: http.Server) => IAGServer;

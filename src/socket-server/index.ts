@@ -1,5 +1,5 @@
 import { Debe, IListenerOptions, listenTypes } from 'debe';
-import * as http from 'http';
+import http from 'http';
 import { allowedMethods, ISocketBase } from 'debe-socket';
 import { IAttach } from './types';
 export * from './types';

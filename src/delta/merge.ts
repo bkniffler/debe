@@ -1,4 +1,4 @@
-import * as Automerge from 'automerge';
+import Automerge from 'automerge';
 import { generate, DebeBackend } from 'debe-adapter';
 import { Debe } from 'debe';
 import { IDelta } from 'debe-delta';

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 export const useMemoOne = <T>(compute: any, deps?: any[] | any) => {
   const value = React.useRef('UNLOADED');
   const previousDeps = React.useRef(deps);

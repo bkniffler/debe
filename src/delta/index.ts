@@ -1,4 +1,4 @@
-import * as Automerge from 'automerge';
+import Automerge from 'automerge';
 import { generate, addMiddleware, DebeBackend, hasPlugin } from 'debe-adapter';
 export * from './merge';
 

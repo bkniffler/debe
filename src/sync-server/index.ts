@@ -1,5 +1,5 @@
 import { Debe, ensureCollection } from 'debe';
-import * as http from 'http';
+import http from 'http';
 import { ISocketBase } from 'debe-socket';
 import { attach, IAGServer } from 'debe-socket-server';
 import { Sync, IAddress, syncstateTable } from 'debe-sync';

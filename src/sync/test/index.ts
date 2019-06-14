@@ -3,7 +3,7 @@ import { Sync } from 'debe-sync';
 import { MemoryDebe } from 'debe-memory';
 import { SyncServer } from 'debe-sync-server';
 import { create } from 'debe-socket';
-import * as http from 'http';
+import http from 'http';
 import { attach } from 'debe-socket-server';
 
 export const schema = [
