@@ -1,9 +1,8 @@
 import { SQLJsonCore } from 'debe-sql';
 //@ts-ignore
-import * as _sql from 'better-sqlite3';
+import sql from 'better-sqlite3';
 import { ICollection, Debe, ICollectionInput } from 'debe';
 import { DebeBackend } from 'debe-adapter';
-const sql = _sql;
 
 export class BetterSqlite3Debe extends Debe {
   constructor(dbPath: string, collections: ICollectionInput[], options?: any) {
