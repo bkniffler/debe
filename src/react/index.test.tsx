@@ -5,7 +5,7 @@ import { render } from 'react-testing-library';
 import { MemoryDebe } from 'debe-memory';
 import 'jest-dom/extend-expect';
 import { IQueryInput } from 'debe';
-import use from './react';
+import * as use from './react';
 import { STOREKEY } from './provider';
 
 export const collections = [{ name: 'lorem', index: ['name'] }];
