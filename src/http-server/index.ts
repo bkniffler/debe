@@ -1,9 +1,9 @@
 import { Debe } from 'debe';
 import { allowedMethods } from 'debe-http';
-import * as express from 'express';
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
 import { Server } from 'http';
-import * as cors from 'cors';
-import * as bodyParser from 'body-parser';
 
 export class HttpServer {
   express: express.Express;

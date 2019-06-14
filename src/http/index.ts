@@ -10,6 +10,7 @@ import {
   DebeDispatcher,
   Debe
 } from 'debe';
+import fetch from 'cross-fetch';
 
 export const allowedMethods = [
   types.INSERT,
