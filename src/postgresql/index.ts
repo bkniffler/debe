@@ -18,6 +18,8 @@ export class PostgreSQLDebe extends Debe {
 
 export class PostgreSQLAdapter extends SQLJsonCore {
   pool: Pool;
+  chunks = 50 * 1000;
+  chunkMode = 'sequencial';
   constructor(connection: string | object) {
     super();
     this.pool = new Pool(
