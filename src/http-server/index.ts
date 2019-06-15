@@ -34,14 +34,16 @@ export class HttpServer {
   }
   async handleMethods(method: string) {
     this.express.post(`/:collection/${method}`, (req, res, next) => {
+      const collection = req.params['collection'];
       const { query, options }: { query: any; options: any } = req.body || {};
+      console.log(collection, query);
       if (method === 'insert') {
         return this.db
-          .insert(req.params['collection'], query, options)
+          .insert(collection, query, options)
           .then((result: any) => res.json(result))
           .catch((err: any) => res.json({ err }));
       }
-      return this.db[method as 'all'](req.params['collection'], query)
+      return this.db[method as 'all'](collection, query)
         .then((result: any) => res.json(result))
         .catch((err: any) => res.json({ err }));
     });

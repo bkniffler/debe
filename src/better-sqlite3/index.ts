@@ -42,6 +42,8 @@ export class BetterSqlite3Adapter extends SQLJsonCore {
     args: any[],
     type?: 'all' | 'get' | 'count' | 'insert'
   ): Promise<T> {
+    console.log(sql);
+
     return new Promise((yay, nay) => {
       try {
         this.db

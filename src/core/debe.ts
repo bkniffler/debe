@@ -80,7 +80,7 @@ export class Debe<TBase = IItem, TDispatcher = DebeDispatcher<TBase>> {
     }
     return this.dispatcher
       .run<(T & IGetItem)[]>('insert', collection, [value], options)
-      .then(([x]) => x);
+      .then(x => (Array.isArray(x) ? x[0] : x));
   }
   // remove
   remove<T = any>(

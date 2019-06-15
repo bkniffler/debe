@@ -21,8 +21,10 @@ interface ITodo {
 
 function Todo({ title }: { title: string }) {
   const state = useConnectionState();
-  const [all] = useAll<ITodo>('todo', { orderBy: 'title' });
-  const [all2] = useAll<ITodo>('todo', { orderBy: 'title' });
+  const [all] = useAll<ITodo>('todo', {
+    orderBy: 'title',
+    where: ['completed = ?', 0]
+  });
   const collection = useCollection<ITodo>('todo');
   if (typeof document !== 'undefined') {
     const clean = document.title.split('(')[0].trim();
