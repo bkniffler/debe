@@ -3,7 +3,7 @@ import { MemoryDebe } from 'debe-memory';
 import { HttpServer } from 'debe-http-server';
 import { HttpDebe } from './index';
 
-let port = 5560;
+let port = 5590;
 createAdapterTest(
   'http',
   () => new HttpDebe(`http://localhost:${port}`),

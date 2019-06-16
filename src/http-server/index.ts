@@ -20,7 +20,12 @@ export class HttpServer {
       this.express = express();
       this.app = this.express.listen(arg);
       this.express.use(cors());
-      this.express.use(bodyParser());
+      this.express.use(
+        bodyParser.urlencoded({
+          extended: true
+        })
+      );
+      this.express.use(bodyParser.json());
     } else {
       this.express = arg;
     }
@@ -36,7 +41,6 @@ export class HttpServer {
     this.express.post(`/:collection/${method}`, (req, res, next) => {
       const collection = req.params['collection'];
       const { query, options }: { query: any; options: any } = req.body || {};
-      console.log(collection, query);
       if (method === 'insert') {
         return this.db
           .insert(collection, query, options)

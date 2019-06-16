@@ -67,10 +67,11 @@ export class HttpAdapter extends DebeDispatcher {
         payload,
         [250000, 10000],
         items => this._run('insert', collection, items, options)
-      ).then(() => {
+      ).then(x => {
         if (this.queries[collection]) {
           this.queries[collection].forEach(x => x());
         }
+        return x;
       });
     }
     return this._run(action, collection, payload, options);
