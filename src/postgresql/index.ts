@@ -4,14 +4,21 @@ import { Pool, Client } from 'pg';
 import { ICollection, Debe, ICollectionInput } from 'debe';
 import { DebeBackend } from 'debe-adapter';
 
+interface IOptions {
+  pooling?: number | boolean;
+}
 export class PostgreSQLDebe extends Debe {
   constructor(
     connection: string | object,
     collections: ICollectionInput[],
-    options?: any
+    options: IOptions = { pooling: true }
   ) {
     super(
-      new DebeBackend(new PostgreSQLAdapter(connection), collections, options)
+      new DebeBackend(
+        new PostgreSQLAdapter(connection, options.pooling),
+        collections,
+        options
+      )
     );
   }
 }
@@ -21,17 +28,21 @@ export class PostgreSQLAdapter extends SQLJsonCore {
   chunks = 50 * 1000;
   chunkMode = 'sequencial';
   connection: any;
-  constructor(connection: string | object, pooling = true) {
+  constructor(connection: string | any, pooling: number | boolean = true) {
     super();
     this.connection = connection;
     if (pooling) {
-      this.pool = new Pool(
+      const opt: { connectionString: string; min?: number; max?: number } =
         typeof connection === 'string'
           ? {
               connectionString: connection
             }
-          : connection
-      );
+          : { ...connection };
+      if (typeof pooling === 'number') {
+        opt.min = 1;
+        opt.max = 1;
+      }
+      this.pool = new Pool(opt);
     }
   }
   close() {
