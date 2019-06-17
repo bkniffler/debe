@@ -60,7 +60,14 @@ export class HttpAdapter extends DebeDispatcher {
         query,
         options
       })
-    }).then(response => response.json());
+    })
+      .then(response => response.json())
+      .then(x => {
+        if (x.err) {
+          throw x.err;
+        }
+        return x;
+      });
   }
   queries: { [s: string]: Function[] } = {};
   run<T>(action: actionTypes, collection: string, payload: any, options: any) {
