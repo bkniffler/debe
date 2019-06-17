@@ -56,13 +56,13 @@ export class PostgreSQLAdapter extends SQLJsonCore {
     let result;
     try {
       if (type === 'count') {
-        const x = await this.pool.query(sql, args);
+        const x = await client.query(sql, args);
         result = parseInt(x.rows[0].count) as any;
       } else if (type === 'get') {
-        const x = await this.pool.query(sql, args);
+        const x = await client.query(sql, args);
         result = x.rows[0];
       } else if (type === 'all') {
-        const x = await this.pool.query(sql, args);
+        const x = await client.query(sql, args);
         result = x.rows;
       } else if (type === 'insert') {
         result = await Promise.all(args.map(arg => client.query(sql, arg)));
