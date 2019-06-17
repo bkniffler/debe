@@ -52,41 +52,28 @@ export class PostgreSQLAdapter extends SQLJsonCore {
     sql = sql
       .split('?')
       .reduce((state, part, i) => (i === 0 ? part : `${state}$${i}${part}`));
-    if (type === 'count') {
-      const client = await this.pool.connect();
-      const x = await this.pool.query(sql, args);
-      client.release(true);
-      return parseInt(x.rows[0].count) as any;
-    } else if (type === 'get') {
-      const client = await this.pool.connect();
-      const x = await this.pool.query(sql, args);
-      client.release(true);
-      return x.rows[0];
-    } else if (type === 'all') {
-      const client = await this.pool.connect();
-      const x = await this.pool.query(sql, args);
-      client.release(true);
-      return x.rows;
-    } else if (type === 'insert') {
-      const client = await this.pool.connect();
-      try {
-        await Promise.all(args.map(arg => client.query(sql, arg)));
-        client.release(true);
-      } catch (err) {
-        client.release(true);
-        throw err;
+    const client = await this.pool.connect();
+    let result;
+    try {
+      if (type === 'count') {
+        const x = await this.pool.query(sql, args);
+        result = parseInt(x.rows[0].count) as any;
+      } else if (type === 'get') {
+        const x = await this.pool.query(sql, args);
+        result = x.rows[0];
+      } else if (type === 'all') {
+        const x = await this.pool.query(sql, args);
+        result = x.rows;
+      } else if (type === 'insert') {
+        result = await Promise.all(args.map(arg => client.query(sql, arg)));
+      } else {
+        result = await Promise.all(args.map(arg => client.query(arg)));
       }
-      return {} as T;
-    } else {
-      const client = await this.pool.connect();
-      try {
-        await Promise.all(args.map(arg => client.query(arg)));
-        client.release(true);
-      } catch (err) {
-        client.release(true);
-        throw err;
-      }
-      return {} as T;
+    } catch (err) {
+      client.release(true);
+      throw err;
     }
+    client.release(true);
+    return result as any;
   }
 }
