@@ -43,19 +43,21 @@ export class HttpAdapter extends DebeDispatcher {
   async start() {}
 
   private _run<T>(
-    action: actionTypes,
+    method: actionTypes,
     collection: string,
-    payload: any,
+    query: any,
     options: any
   ) {
-    return fetch(`${this.uri}/${collection}/${action}`, {
+    return fetch(this.uri, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        query: payload,
+        collection,
+        method,
+        query,
         options
       })
     }).then(response => response.json());

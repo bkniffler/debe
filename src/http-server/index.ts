@@ -1,5 +1,4 @@
 import { Debe } from 'debe';
-import { allowedMethods } from 'debe-http';
 import express from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -26,30 +25,37 @@ export class HttpServer {
         })
       );
       this.express.use(bodyParser.json());
+      this.express.post(`/`, (req, res, next) => {
+        const {
+          query,
+          options,
+          collection,
+          method
+        }: { query: any; options: any; collection: string; method: string } =
+          req.body || {};
+        this.handleRequest(collection, method, query, options)
+          .then((result: any) => res.json(result))
+          .catch((err: any) => res.json({ err }));
+      });
     } else {
       this.express = arg;
     }
     this.db = db;
-    allowedMethods.forEach(method => this.handleMethods(method));
   }
   async close() {
     if (this.app) {
       this.app.close();
     }
   }
-  async handleMethods(method: string) {
-    this.express.post(`/:collection/${method}`, (req, res, next) => {
-      const collection = req.params['collection'];
-      const { query, options }: { query: any; options: any } = req.body || {};
-      if (method === 'insert') {
-        return this.db
-          .insert(collection, query, options)
-          .then((result: any) => res.json(result))
-          .catch((err: any) => res.json({ err }));
-      }
-      return this.db[method as 'all'](collection, query)
-        .then((result: any) => res.json(result))
-        .catch((err: any) => res.json({ err }));
-    });
+  async handleRequest(
+    collection: string,
+    method: string,
+    query: any,
+    options: any
+  ) {
+    if (method === 'insert') {
+      return this.db.insert(collection, query, options);
+    }
+    return this.db[method as 'all'](collection, query);
   }
 }
