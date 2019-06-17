@@ -53,20 +53,27 @@ export class PostgreSQLAdapter extends SQLJsonCore {
       .split('?')
       .reduce((state, part, i) => (i === 0 ? part : `${state}$${i}${part}`));
     if (type === 'count') {
-      return this.pool
-        .query(sql, args)
-        .then((x: any) => parseInt(x.rows[0].count));
+      const client = await this.pool.connect();
+      const x = await this.pool.query(sql, args);
+      client.release(true);
+      return parseInt(x.rows[0].count) as any;
     } else if (type === 'get') {
-      return this.pool.query(sql, args).then((x: any) => x.rows[0]);
+      const client = await this.pool.connect();
+      const x = await this.pool.query(sql, args);
+      client.release(true);
+      return x.rows[0];
     } else if (type === 'all') {
-      return this.pool.query(sql, args).then((x: any) => x.rows);
+      const client = await this.pool.connect();
+      const x = await this.pool.query(sql, args);
+      client.release(true);
+      return x.rows;
     } else if (type === 'insert') {
       const client = await this.pool.connect();
       try {
         await Promise.all(args.map(arg => client.query(sql, arg)));
-        client.release();
+        client.release(true);
       } catch (err) {
-        client.release();
+        client.release(true);
         throw err;
       }
       return {} as T;
@@ -74,9 +81,9 @@ export class PostgreSQLAdapter extends SQLJsonCore {
       const client = await this.pool.connect();
       try {
         await Promise.all(args.map(arg => client.query(arg)));
-        client.release();
+        client.release(true);
       } catch (err) {
-        client.release();
+        client.release(true);
         throw err;
       }
       return {} as T;
