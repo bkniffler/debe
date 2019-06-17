@@ -1,6 +1,6 @@
 import { SQLJsonCore } from 'debe-sql';
 //@ts-ignore
-import { Pool } from 'pg';
+import { Pool, Client } from 'pg';
 import { ICollection, Debe, ICollectionInput } from 'debe';
 import { DebeBackend } from 'debe-adapter';
 
@@ -17,21 +17,27 @@ export class PostgreSQLDebe extends Debe {
 }
 
 export class PostgreSQLAdapter extends SQLJsonCore {
-  pool: Pool;
+  pool?: Pool;
   chunks = 50 * 1000;
   chunkMode = 'sequencial';
-  constructor(connection: string | object) {
+  connection: any;
+  constructor(connection: string | object, pooling = true) {
     super();
-    this.pool = new Pool(
-      typeof connection === 'string'
-        ? {
-            connectionString: connection
-          }
-        : connection
-    );
+    this.connection = connection;
+    if (pooling) {
+      this.pool = new Pool(
+        typeof connection === 'string'
+          ? {
+              connectionString: connection
+            }
+          : connection
+      );
+    }
   }
   close() {
-    return this.pool.end();
+    if (this.pool) {
+      return this.pool.end();
+    }
   }
   selectJSONField(collection: ICollection, field: string) {
     return `${this.getCollectionBodyField(collection)} ->> '${field}' `;
@@ -52,8 +58,9 @@ export class PostgreSQLAdapter extends SQLJsonCore {
     sql = sql
       .split('?')
       .reduce((state, part, i) => (i === 0 ? part : `${state}$${i}${part}`));
-    const client = this.pool; // await this.pool.connect();
+    const client = this.pool || new Client(this.connection); // await this.pool.connect();
     let result;
+    let error;
     try {
       if (type === 'count') {
         const x = await client.query(sql, args);
@@ -71,7 +78,13 @@ export class PostgreSQLAdapter extends SQLJsonCore {
       }
     } catch (err) {
       // client.release(true);
-      throw err;
+      error = err;
+    }
+    if (!this.pool) {
+      client.end();
+    }
+    if (error) {
+      throw error;
     }
     // client.release(true);
     return result as any;
