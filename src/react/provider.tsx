@@ -119,9 +119,10 @@ export const reducer: Reducer = (state, action) => {
       [action.key]: { loading: false, result: action.result }
     };
   } else if (action.type === 'DEBE_QUERY_ERROR') {
+    const result = state[action.key] &&state[action.key].result;
     return {
       ...state,
-      [action.key]: { loading: false, error: action.error }
+      [action.key]: { result, loading: false, error: action.error }
     };
   }
   return state;
