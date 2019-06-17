@@ -52,7 +52,7 @@ export class PostgreSQLAdapter extends SQLJsonCore {
     sql = sql
       .split('?')
       .reduce((state, part, i) => (i === 0 ? part : `${state}$${i}${part}`));
-    const client = await this.pool.connect();
+    const client = this.pool; // await this.pool.connect();
     let result;
     try {
       if (type === 'count') {
@@ -70,10 +70,10 @@ export class PostgreSQLAdapter extends SQLJsonCore {
         result = await Promise.all(args.map(arg => client.query(arg)));
       }
     } catch (err) {
-      client.release(true);
+      // client.release(true);
       throw err;
     }
-    client.release(true);
+    // client.release(true);
     return result as any;
   }
 }
