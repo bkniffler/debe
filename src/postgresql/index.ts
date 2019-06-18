@@ -6,16 +6,17 @@ import { DebeBackend } from 'debe-adapter';
 
 interface IOptions {
   pooling?: number | boolean;
+  types: any;
 }
 export class PostgreSQLDebe extends Debe {
   constructor(
     connection: string | object,
     collections: ICollectionInput[],
-    options: IOptions = { pooling: true }
+    options: IOptions = { pooling: true, types: {} }
   ) {
     super(
       new DebeBackend(
-        new PostgreSQLAdapter(connection, options.pooling),
+        new PostgreSQLAdapter(connection, options.pooling, options.types),
         collections,
         options
       )
@@ -28,8 +29,14 @@ export class PostgreSQLAdapter extends SQLJsonCore {
   chunks = 50 * 1000;
   chunkMode = 'sequencial';
   connection: any;
-  constructor(connection: string | any, pooling: number | boolean = true) {
+  types: any;
+  constructor(
+    connection: string | any,
+    pooling: number | boolean = true,
+    types: any = {}
+  ) {
     super();
+    this.types = types;
     this.connection = connection;
     if (pooling) {
       const opt: { connectionString: string; min?: number; max?: number } =
@@ -51,6 +58,11 @@ export class PostgreSQLAdapter extends SQLJsonCore {
     }
   }
   selectJSONField(collection: ICollection, field: string) {
+    if (this.types && this.types[`${collection.name}.${field}`]) {
+      return `(${this.getCollectionBodyField(collection)} ->> '${field}')::${
+        this.types[`${collection.name}.${field}`]
+      } `;
+    }
     return `${this.getCollectionBodyField(collection)} ->> '${field}' `;
   }
   createTableIndex(collection: ICollection, field: string, type?: string) {
