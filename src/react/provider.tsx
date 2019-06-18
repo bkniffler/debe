@@ -191,7 +191,6 @@ export const middleware = (
     if (!once && !isServer) {
       if (!listeners[key]) {
         const stop = db[method as 'all'](collection, query, (error, result) => {
-          console.log('RESPONSE TO', key);
           if (error) {
             store.dispatch({
               type: 'DEBE_QUERY_ERROR',
