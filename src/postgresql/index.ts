@@ -9,18 +9,22 @@ interface IOptions {
   types: any;
 }
 export class PostgreSQLDebe extends Debe {
+  adapter: PostgreSQLAdapter;
+  raw<T>(sql: string, args: any[], type?: 'all' | 'get' | 'count' | 'insert') {
+    this.adapter.exec<T>(sql, args, type);
+  }
   constructor(
     connection: string | object,
     collections: ICollectionInput[],
     options: IOptions = { pooling: true, types: {} }
   ) {
-    super(
-      new DebeBackend(
-        new PostgreSQLAdapter(connection, options.pooling, options.types),
-        collections,
-        options
-      )
+    const adapter = new PostgreSQLAdapter(
+      connection,
+      options.pooling,
+      options.types
     );
+    super(new DebeBackend(adapter, collections, options));
+    this.adapter = adapter;
   }
 }
 
