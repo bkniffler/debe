@@ -118,7 +118,10 @@ export class HttpAdapter extends DebeDispatcher {
         this.run(action, collection || '', query, {})
           .then(x => callback(undefined, x))
           .catch(x => callback(x, undefined as any));
-      const interval = setInterval(fetch, 5000);
+      const interval = setInterval(
+        fetch,
+        process.env.NODE_ENV === 'test' ? 10 : 5000
+      );
       fetch();
       if (!this.queries[collection]) {
         this.queries[collection] = [];
