@@ -20,35 +20,26 @@ export const allowedMethods = [
   types.COUNT
 ];
 
+export type IHttpDebeHandler = (
+  method: actionTypes,
+  collection: string,
+  query: any,
+  options: any
+) => Promise<any>;
 export class HttpDebe extends Debe {
-  constructor(uri: string) {
-    super(new HttpAdapter(uri));
+  constructor(handler: IHttpDebeHandler | string) {
+    super(new HttpAdapter(handler));
   }
 }
 
-export class HttpAdapter extends DebeDispatcher {
-  uri = '';
-  constructor(uri: string) {
-    super();
-    this.uri = uri;
-  }
-
-  async initialize() {
-    // await this.socket.listener('connect').once();
-    this.start();
-  }
-
-  async close() {}
-
-  async start() {}
-
-  private _run<T>(
+export function createDefaultHandler(uri: string) {
+  return (
     method: actionTypes,
     collection: string,
     query: any,
     options: any
-  ) {
-    return fetch(this.uri, {
+  ) => {
+    return fetch(uri, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -68,6 +59,37 @@ export class HttpAdapter extends DebeDispatcher {
         }
         return x;
       });
+  };
+}
+
+export class HttpAdapter extends DebeDispatcher {
+  uri = '';
+  handler: IHttpDebeHandler;
+  constructor(handler: IHttpDebeHandler | string) {
+    super();
+    if (typeof handler === 'string') {
+      this.handler = createDefaultHandler(handler);
+    } else {
+      this.handler = handler;
+    }
+  }
+
+  async initialize() {
+    // await this.socket.listener('connect').once();
+    this.start();
+  }
+
+  async close() {}
+
+  async start() {}
+
+  private _run<T>(
+    method: actionTypes,
+    collection: string,
+    query: any,
+    options: any
+  ) {
+    return this.handler(method, collection, query, options);
   }
   queries: { [s: string]: Function[] } = {};
   run<T>(action: actionTypes, collection: string, payload: any, options: any) {

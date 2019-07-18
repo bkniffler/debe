@@ -12,9 +12,6 @@ export class HttpServer {
   constructor(db: Debe, port: number);
   constructor(db: Debe, express: express.Express);
   constructor(db: Debe, arg?: express.Express | number) {
-    if (!arg) {
-      arg = 8000;
-    }
     if (typeof arg === 'number') {
       this.express = express();
       this.app = this.express.listen(arg);
@@ -37,7 +34,7 @@ export class HttpServer {
           .then((result: any) => res.json(result))
           .catch((err: any) => res.json({ err }));
       });
-    } else {
+    } else if (arg) {
       this.express = arg;
     }
     this.db = db;
