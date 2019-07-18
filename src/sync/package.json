@@ -3,8 +3,8 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
+    "asyngular-client": "^6.1.0",
     "debe": "*",
-    "debe-socket": "*",
-    "asyngular-client": "^5.4.1"
+    "debe-socket": "*"
   }
 }

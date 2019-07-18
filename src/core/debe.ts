@@ -18,7 +18,7 @@ export class Debe<TBase = IItem, TDispatcher = DebeDispatcher<TBase>> {
   isInitialized = false;
   constructor(dispatcher: TDispatcher & DebeDispatcher<TBase>) {
     this.dispatcher = dispatcher;
-    dispatcher.db = this;
+    dispatcher.db = this as any;
   }
   async close() {
     await this.dispatcher.close();

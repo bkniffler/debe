@@ -1,9 +1,9 @@
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 import { DebeProvider, makeStore, awaitLoaded } from './index';
-import { render } from 'react-testing-library';
+import { render } from '@testing-library/react';
 import { MemoryDebe } from 'debe-memory';
-import 'jest-dom/extend-expect';
+import '@testing-library/jest-dom/extend-expect';
 import { IQueryInput } from 'debe';
 import * as use from './react';
 import { STOREKEY } from './provider';

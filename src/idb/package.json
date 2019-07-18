@@ -4,11 +4,11 @@
   "version": "1.0.0",
   "dependencies": {
     "debe": "*",
-    "debe-memory": "*",
     "debe-adapter": "*",
-    "idb": "^4.0.3"
+    "debe-memory": "*",
+    "idb": "^4.0.4"
   },
   "devDependencies": {
-    "fake-indexeddb": "^2.1.0"
+    "fake-indexeddb": "^2.1.1"
   }
 }
