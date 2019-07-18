@@ -119,7 +119,7 @@ export const reducer: Reducer = (state, action) => {
       [action.key]: { loading: false, result: action.result }
     };
   } else if (action.type === 'DEBE_QUERY_ERROR') {
-    const result = state[action.key] &&state[action.key].result;
+    const result = state[action.key] && state[action.key].result;
     return {
       ...state,
       [action.key]: { result, loading: false, error: action.error }
@@ -156,7 +156,7 @@ export const middleware = (
           error: 'Query ' + key + ' timed out',
           key
         });
-      }, TIMEOUT || (isServer ? 1000 : 5000));
+      }, TIMEOUT || (isServer ? 5000 : 10000));
 
       store.dispatch({
         type: 'DEBE_QUERY_LOADING',
