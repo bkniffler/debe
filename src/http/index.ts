@@ -2,16 +2,31 @@ import {
   types,
   IListenerOptions,
   IObserverCallback,
-  IGetItem,
-  chunkWork,
-  IInsertItem,
   actionTypes,
   listenTypes,
   DebeDispatcher,
   Debe
 } from 'debe';
+import { generate } from 'debe-adapter';
 import fetch from 'cross-fetch';
 
+/*
+
+Listen
+  => Manual query
+  => Query every x ms
+Manual Query
+
+Query
+Attach to queue
+Wait x ms for closing batch
+Refresh
+Send
+Respond
+
+*/
+
+export const batchTimeout = 100;
 export const allowedMethods = [
   types.INSERT,
   types.REMOVE,
@@ -20,37 +35,29 @@ export const allowedMethods = [
   types.COUNT
 ];
 
-export type IHttpDebeHandler = (
-  method: actionTypes,
-  collection: string,
-  query: any,
-  options: any
-) => Promise<any>;
+export type IHttpDebeHandler = (args: IHandlerArgs[]) => Promise<any[]>;
 export class HttpDebe extends Debe {
   constructor(handler: IHttpDebeHandler | string) {
-    super(new HttpAdapter(handler));
+    super(new HttpAdapter(handler) as any);
   }
 }
 
+export interface IHandlerArgs {
+  method: actionTypes;
+  collection: string;
+  query: any;
+  options: any;
+}
+
 export function createDefaultHandler(uri: string) {
-  return (
-    method: actionTypes,
-    collection: string,
-    query: any,
-    options: any
-  ) => {
+  return (args: IHandlerArgs[]) => {
     return fetch(uri, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        collection,
-        method,
-        query,
-        options
-      })
+      body: JSON.stringify(args)
     })
       .then(response => response.json())
       .then(x => {
@@ -83,29 +90,103 @@ export class HttpAdapter extends DebeDispatcher {
 
   async start() {}
 
-  private _run<T>(
-    method: actionTypes,
+  queries: { [s: string]: { [s: string]: Function } } = {};
+  queue?: {
+    args: {
+      [key: string]: {
+        args: IHandlerArgs;
+        resolvers: ((result: any) => void)[];
+      };
+    };
+    timeout: any;
+    refetchers: { [key: string]: boolean };
+  };
+  run<T>(
+    action: actionTypes,
     collection: string,
-    query: any,
-    options: any
+    payload: any,
+    options: any,
+    queryId?: string
   ) {
-    return this.handler(method, collection, query, options);
-  }
-  queries: { [s: string]: Function[] } = {};
-  run<T>(action: actionTypes, collection: string, payload: any, options: any) {
-    if (action === 'insert') {
+    const queryKey =
+      action === 'insert'
+        ? generate()
+        : `${collection}${action}${JSON.stringify(payload)}`;
+    /*if (action === 'insert' && payload.length > 10000) {
+      console.log('LENGTH', payload.length);
       return chunkWork<T & IInsertItem, T & IGetItem>(
         payload,
         [250000, 10000],
-        items => this._run('insert', collection, items, options)
+        items => this.run(action, collection, items, options)
       ).then(x => {
         if (this.queries[collection]) {
           this.queries[collection].forEach(x => x());
         }
-        return x;
+        return x[0];
       });
+    }*/
+    if (!this.queue) {
+      this.queue = {
+        args: {},
+        timeout: undefined,
+        refetchers: {}
+      };
     }
-    return this._run(action, collection, payload, options);
+    let y: (result: any) => void;
+    let n: (err: any) => any;
+    if (!this.queue.args[queryKey]) {
+      this.queue.args[queryKey] = {
+        args: {
+          method: action,
+          collection,
+          query: payload,
+          options
+        },
+        resolvers: []
+      };
+    }
+    // Add query id to refetchers so it doesnt get refetched again (listener)
+    if (queryId) {
+      this.queue.refetchers[queryId] = true;
+    }
+    if (action === 'insert') {
+      // Refetch inserted collections
+      if (this.queries[collection]) {
+        const { refetchers } = this.queue;
+        Object.keys(this.queries[collection]).forEach(key => {
+          // Has already been queued? Then skip
+          if (refetchers[key]) {
+            return;
+          }
+          refetchers[key] = true;
+          const func = this.queries[collection][key];
+          func();
+        });
+      }
+    }
+    this.queue.args[queryKey].resolvers.push(result => {
+      if (result.error) {
+        n(result);
+      } else {
+        y(result);
+      }
+    });
+    clearTimeout(this.queue.timeout);
+    const { args } = this.queue;
+    this.queue.timeout = setTimeout(() => {
+      this.queue = undefined;
+      const keys = Object.keys(args);
+      this.handler(keys.map(key => args[key].args)).then(results => {
+        results.forEach((result, index) => {
+          const key = keys[index];
+          args[key].resolvers.forEach(resolver => resolver(result));
+        });
+      });
+    }, batchTimeout);
+    return new Promise<T>((yay, nay) => {
+      y = yay;
+      n = nay;
+    });
   }
   listen<T>(
     action: listenTypes,
@@ -114,24 +195,24 @@ export class HttpAdapter extends DebeDispatcher {
   ) {
     const { collection, query } = options;
     if (collection) {
-      const fetch = () =>
-        this.run(action, collection || '', query, {})
-          .then(x => callback(undefined, x))
+      const queryId = generate();
+      const fetch = () => {
+        return this.run(action, collection || '', query, {}, queryId)
+          .then(x => callback(undefined, x as any))
           .catch(x => callback(x, undefined as any));
+      };
       const interval = setInterval(
         fetch,
-        process.env.NODE_ENV === 'test' ? 10 : 5000
+        // Higher rate in tests
+        process.env.NODE_ENV === 'test' ? 200 : 5000
       );
       fetch();
       if (!this.queries[collection]) {
-        this.queries[collection] = [];
+        this.queries[collection] = {};
       }
-      this.queries[collection].push(fetch);
+      this.queries[collection][queryId] = fetch;
       return () => {
-        const index = this.queries[collection].indexOf(fetch);
-        if (index >= 0) {
-          this.queries[collection].splice(index, 1);
-        }
+        delete this.queries[collection][queryId];
         clearInterval(interval);
       };
     }
