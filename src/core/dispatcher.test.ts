@@ -311,7 +311,6 @@ export function createAdapterTest(
     unlisten();
     unlisten2();
     const res1 = await client.insert(table, { id: '1', name: 'Hallo2' });
-    console.log(res1);
     const res2 = await client.insert(table, [
       { id: '2', name: 'Hallo2' },
       { id: '3', name: 'Hallo2' }

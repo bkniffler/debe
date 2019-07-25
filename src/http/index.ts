@@ -27,6 +27,7 @@ Respond
 */
 
 export const batchTimeout = 100;
+export const refetchInterval = 5000;
 export const allowedMethods = [
   types.INSERT,
   types.REMOVE,
@@ -80,15 +81,28 @@ export class HttpAdapter extends DebeDispatcher {
       this.handler = handler;
     }
   }
+  refetchInterval: NodeJS.Timeout;
+  // Refetch listeners
+  refetcher() {
+    Object.keys(this.queries).forEach(key => {
+      Object.keys(this.queries[key]).forEach(id => {
+        this.queries[key][id]();
+      });
+    });
+  }
 
   async initialize() {
     // await this.socket.listener('connect').once();
     this.start();
   }
 
-  async close() {}
+  async start() {
+    this.refetchInterval = setInterval(this.refetcher, refetchInterval);
+  }
 
-  async start() {}
+  async close() {
+    clearInterval(this.refetchInterval);
+  }
 
   queries: { [s: string]: { [s: string]: Function } } = {};
   queue?: {
@@ -188,6 +202,7 @@ export class HttpAdapter extends DebeDispatcher {
       n = nay;
     });
   }
+
   listen<T>(
     action: listenTypes,
     callback: IObserverCallback<T>,
@@ -201,11 +216,6 @@ export class HttpAdapter extends DebeDispatcher {
           .then(x => callback(undefined, x as any))
           .catch(x => callback(x, undefined as any));
       };
-      const interval = setInterval(
-        fetch,
-        // Higher rate in tests
-        process.env.NODE_ENV === 'test' ? 200 : 5000
-      );
       fetch();
       if (!this.queries[collection]) {
         this.queries[collection] = {};
@@ -213,7 +223,6 @@ export class HttpAdapter extends DebeDispatcher {
       this.queries[collection][queryId] = fetch;
       return () => {
         delete this.queries[collection][queryId];
-        clearInterval(interval);
       };
     }
     return () => {};
