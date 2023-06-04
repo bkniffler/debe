@@ -3,7 +3,7 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
-    "automerge": "^0.11.0",
+    "@automerge/automerge": "^2.0.3",
     "debe": "*",
     "debe-adapter": "*"
   }

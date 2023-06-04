@@ -4,10 +4,10 @@
   "version": "1.0.0",
   "browser": false,
   "dependencies": {
-    "asyngular-server": "^6.1.0",
     "debe": "*",
     "debe-socket": "*",
     "debe-socket-server": "*",
-    "debe-sync": "*"
+    "debe-sync": "*",
+    "socketcluster-server": "^17.3.1"
   }
 }

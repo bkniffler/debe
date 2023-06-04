@@ -10,9 +10,12 @@ import {
   DebeDispatcher,
   Debe
 } from 'debe';
-export * from './types';
-import { ICreate, ISocket } from './types';
-export const create = require('asyngular-client').create as ICreate;
+
+import { AGClientSocket, create }  from 'socketcluster-client';
+
+export { AGClientSocket, create }  from 'socketcluster-client';
+
+ export { type IConnectionState } from './types';
 
 export const allowedMethods = [
   types.INSERT,
@@ -29,13 +32,14 @@ export class SocketDebe extends Debe {
 }
 
 export class SocketAdapter extends DebeDispatcher {
-  socket: ISocket;
+  socket: AGClientSocket;
   constructor(hostname: string, port: number = 8000, secure?: boolean) {
     super();
     this.socket = create({
       hostname,
       secure: secure === true || secure === false ? secure : port === 443,
-      port
+      port,
+      pingTimeoutDisabled: true,
     });
   }
 
@@ -50,7 +54,7 @@ export class SocketAdapter extends DebeDispatcher {
       this.socket.listener('connectAbort')['once']()
     ]);
     this.socket.disconnect();
-    return promise;
+    await promise;
   }
 
   async start() {
@@ -84,8 +88,8 @@ export class SocketAdapter extends DebeDispatcher {
     };
     listen();
     this.socket.transmit('subscribe', [channelId, action, options]);
-    const close = () => {
-      setTimeout(() => this.socket.closeReceiver(channelId));
+    const close = async () => {
+      return this.socket.closeReceiver(channelId);
     };
     return close;
   }

@@ -9,13 +9,13 @@ exports[`react:basic 1`] = `
 `;
 
 exports[`react:basic 2`] = `
-Object {
-  "listeners": Object {},
-  "lorem:all:{}": Array [
-    Object {
+{
+  "listeners": {},
+  "lorem:all:{}": [
+    {
       "name": "Beni",
     },
-    Object {
+    {
       "name": "Alex",
     },
   ],

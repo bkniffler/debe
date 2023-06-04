@@ -1,7 +1,6 @@
 import React from 'react';
 import { IDebeUse, IItem, IQueryInput } from 'debe';
 import { useMemoOne } from './utils/memo-one';
-// @ts-ignore
 import { useDispatch, useSelector } from 'react-redux';
 import { context } from './provider';
 

@@ -1,4 +1,4 @@
-require('fake-indexeddb/auto');
+import 'fake-indexeddb/auto';
 import { generate } from 'debe-adapter';
 import { IDBDebe } from './index';
 import { createAdapterTest } from 'debe/dispatcher.test';

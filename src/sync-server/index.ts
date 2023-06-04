@@ -1,7 +1,7 @@
 import { Debe, ensureCollection } from 'debe';
 import http from 'http';
-import { ISocketBase } from 'debe-socket';
-import { attach, IAGServer } from 'debe-socket-server';
+import { attach, AGServer } from 'debe-socket-server';
+import { AGServerSocket } from 'socketcluster-server';
 import { Sync, IAddress, syncstateTable } from 'debe-sync';
 import { DebeBackend, addMiddleware, addPlugin } from 'debe-adapter';
 import { deltaPlugin } from 'debe-delta';
@@ -14,10 +14,10 @@ import {
 
 class SocketHandler {
   handlers: any[];
-  constructor(db: Debe, socket: ISocketBase, agServer: IAGServer) {
+  constructor(db: Debe, socket: AGServerSocket, agServer: AGServer) {
     this.start(db, socket, agServer);
   }
-  async start(db: Debe, socket: ISocketBase, agServer: IAGServer) {
+  async start(db: Debe, socket: AGServerSocket, agServer: AGServer) {
     this.handlers = [
       createDeltaProcedures(db, socket, agServer),
       createBasicProcedures(db, socket)
@@ -34,7 +34,7 @@ export class SyncServer {
     .substr(2, 9)}`;
   sockets: Sync[] = [];
   httpServer = http.createServer();
-  agServer: IAGServer = attach(this.httpServer);
+  agServer: AGServer = attach(this.httpServer);
   db: Debe;
   constructor(db: Debe, server?: http.Server, syncTo?: IAddress[] | IAddress);
   constructor(db: Debe, port?: number, syncTo?: IAddress[] | IAddress);

@@ -133,7 +133,7 @@ export abstract class SQLCore extends DebeAdapter {
     if (typeof queryArgs === 'string' || Array.isArray(queryArgs)) {
       const [whereStatement, ...args] = this.createWhereId(queryArgs);
       const sql = `
-          ${this.createSelect(collection)}
+          ${ queryType === 'remove' ? 'DELETE ' : this.createSelect(collection)}
           FROM "${collection.name}" 
           ${whereStatement}
         `.trim();
@@ -184,8 +184,8 @@ export abstract class SQLCore extends DebeAdapter {
   }
   query<T>(
     collection: ICollection,
-    queryArgs: IQuery | string | string[],
-    queryType: 'all' | 'get' | 'count',
+    queryArgs: any,
+    queryType: 'all' | 'get' | 'count' | 'remove',
     skip = false
   ): Promise<T> {
     let [sql, ...args] =
@@ -246,7 +246,7 @@ export abstract class SQLCore extends DebeAdapter {
   ): Promise<(T & IGetItem)[]> {
     collection;
     value;
-    return null as any;
+    return this.query(collection, value, 'remove');
   }
   count(collection: ICollection, query: IQuery) {
     return this.query<number>(collection, query, 'count');

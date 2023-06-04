@@ -1,6 +1,6 @@
 import { Debe } from 'debe';
 import { IAddress } from './types';
-import { ISocket, create, IConnectionState } from 'debe-socket';
+import { AGClientSocket, create, IConnectionState } from 'debe-socket';
 import { DebeBackend } from 'debe-adapter';
 export * from './types';
 export * from './constants';
@@ -12,7 +12,7 @@ import { ensureSync } from './ensure-sync';
 export class Sync {
   syncState: SyncState;
   engine: SyncEngine;
-  socket: ISocket;
+  socket: AGClientSocket;
   db: Debe;
   where?: string[];
   constructor(

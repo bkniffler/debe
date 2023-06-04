@@ -7,3 +7,6 @@ yarn-error.log
 .old
 .temp
 benchmark/chart.html
+.history/
+.rollup.cache/
+.vscode/

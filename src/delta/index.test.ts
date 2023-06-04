@@ -3,9 +3,10 @@ import { PostgreSQLDebe } from 'debe-postgresql';
 import { deltaPlugin } from './index';
 import { BetterSqlite3Debe } from 'debe-better-sqlite3';
 import { join } from 'path';
-import { removeSync, ensureDirSync } from 'fs-extra';
+import { removeSync, ensureDirSync } from 'fs-extra-unified';
 import { MemoryDebe } from 'debe-memory';
-import Automerge from 'automerge';
+import * as Automerge from '@automerge/automerge';
+
 import { generate, DebeBackend } from 'debe-adapter';
 
 const schema = [
@@ -79,7 +80,8 @@ async function t(getDebe: (schema: any[], options: any) => Debe) {
 
   expect(Object.keys(merged).length).toBe(2);
   for (var key in merged) {
-    const doc = Automerge.applyChanges(Automerge.init(), merged[key]);
+    const doc = Automerge.init<ILorem>();
+    Automerge.applyChanges(doc, merged[key]);
     const history = Automerge.getHistory(doc);
     const item = history[history.length - 1].snapshot;
     const compare = final.find(x => x.id === key);
@@ -91,18 +93,18 @@ async function t(getDebe: (schema: any[], options: any) => Debe) {
   await db.close();
 }
 
-test('delta:simple:memory', async cb => {
+test('delta:simple:memory', async () => {
   await t((col, opt) => new MemoryDebe(col, opt));
-  cb();
+  return;
 });
 
 if (process.env.PG_CONNECTIONSTRING) {
-  test('delta:simple:postgresql', async cb => {
+  test('delta:simple:postgresql', async () => {
     await t(
       (col, opt) =>
         new PostgreSQLDebe(process.env.PG_CONNECTIONSTRING + '', col, opt)
     );
-    cb();
+    return;
   });
 }
 
@@ -110,7 +112,7 @@ const dbDir = join(process.cwd(), '.temp/better-sqlite3-delta');
 removeSync(dbDir);
 ensureDirSync(dbDir);
 const getDBDir = () => join(dbDir, generate() + '.db');
-test('delta:simple:better-sqlite3', async cb => {
+test('delta:simple:better-sqlite3', async () => {
   await t((col, opt) => new BetterSqlite3Debe(getDBDir(), col, opt));
-  cb();
+  return;
 });

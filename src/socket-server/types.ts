@@ -1,8 +1,7 @@
-import http from 'http';
-import { ISocketBase } from 'debe-socket';
+//import http from 'http';
+//import { ISocketBase } from 'debe-socket';
 
-export type IAttach = (server: http.Server) => IAGServer;
-// export let attach: IAttach;
+import { AGServerSocket } from "socketcluster-server";
 
 export interface IExchange {
   subscribe: <T>(channel: string) => Promise<T>[];
@@ -12,7 +11,7 @@ export interface IExchange {
 }
 
 export interface IAGServerSocket {
-  socket: ISocketBase;
+  socket: AGServerSocket;
 }
 
 export type IMiddlewareActionType =
@@ -38,7 +37,7 @@ export interface IMiddlewareAction {
   allow: () => void;
   block: (error?: any) => void;
   type: IMiddlewareActionType;
-  socket: ISocketBase;
+  socket: AGServerSocket;
   data: any;
   outcome: 'allowed' | 'blocked' | null;
   // AUTHENTICATE
@@ -57,22 +56,4 @@ export type IMiddlewareType =
   | 'inbound'
   | 'inboundRaw'
   | 'handshake';
-export interface IAGServer {
-  MIDDLEWARE_OUTBOUND: 'outbound';
-  MIDDLEWARE_INBOUND: 'inbound';
-  MIDDLEWARE_INBOUND_RAW: 'inboundRaw';
-  MIDDLEWARE_HANDSHAKE: 'handshake';
-  exchange: IExchange;
-  listener: (type: string) => Promise<IAGServerSocket>[];
-  closeListener: (event: string) => void;
-  killListener: (event: string) => void;
-  setMiddleware: (
-    type: IMiddlewareType,
-    callback: (stream: IMiddlewareStream) => void | Promise<void>
-  ) => void;
-  close: () => Promise<void>;
-  closeAllListeners: () => void;
-  killAllListeners: () => void;
-  closeAllReceivers: () => void;
-  killAllReceivers: () => void;
-}
+

@@ -64,12 +64,6 @@ export function createAdapterTest(
       name: 'Hallo'
     });
     const queryResult = await client.all<any>(table);
-    expect(insertResult.id).toBe('asd0');
-    expect(insertResult.name).toBe('Hallo');
-    expect(Array.isArray(queryResult)).toBe(true);
-    expect(queryResult.length).toBe(1);
-    expect(queryResult[0].id).toBe(insertResult.id);
-    expect(queryResult[0].name).toBe(insertResult.name);
     await client.close();
     if (ini) {
       if (ini.db) {
@@ -77,6 +71,12 @@ export function createAdapterTest(
       }
       await ini.close();
     }
+    expect(insertResult.id).toBe('asd0');
+    expect(insertResult.name).toBe('Hallo');
+    expect(Array.isArray(queryResult)).toBe(true);
+    expect(queryResult.length).toBe(1);
+    expect(queryResult[0].id).toBe(insertResult.id);
+    expect(queryResult[0].name).toBe(insertResult.name);
   });
 
   test(`adapter:${name}:empty`, async () => {
@@ -88,15 +88,14 @@ export function createAdapterTest(
     const client = createDB(collections, {});
     await client.initialize();
     const queryResult = await client.all<any>(table);
-    expect(Array.isArray(queryResult)).toBe(true);
-    expect(queryResult.length).toBe(0);
     await client.close();
     if (ini) {
       if (ini.db) {
         await ini.db.close();
       }
       await ini.close();
-    }
+    }    expect(Array.isArray(queryResult)).toBe(true);
+    expect(queryResult.length).toBe(0);
   });
 
   test(`adapter:${name}:nochange`, async () => {
@@ -117,6 +116,13 @@ export function createAdapterTest(
     const queryResult2 = await client.all<any>(table, {
       where: ['name = ?', new Date().getTime()]
     });
+    await client.close();
+    if (ini) {
+      if (ini.db) {
+        await ini.db.close();
+      }
+      await ini.close();
+    }
     expect(insertResult.id).toBe('asd0');
     expect(insertResult.name).toBe('Hallo');
     expect(Array.isArray(queryResult)).toBe(true);
@@ -125,13 +131,6 @@ export function createAdapterTest(
     expect(queryResult.length).toBe(1);
     expect(queryResult[0].id).toBe(insertResult.id);
     expect(queryResult[0].name).toBe(insertResult.name);
-    await client.close();
-    if (ini) {
-      if (ini.db) {
-        await ini.db.close();
-      }
-      await ini.close();
-    }
   });
 
   test(`adapter:${name}:select`, async () => {
@@ -151,22 +150,7 @@ export function createAdapterTest(
       lastName: 'Kniffi'
     });
     let queryResult = await client.all<any>(table, { select: 'id' });
-    expect(insertResult.id).toBe('asd0');
-    expect(insertResult.firstName).toBe('Beni');
-    expect(Array.isArray(queryResult)).toBe(true);
-    expect(queryResult.length).toBe(1);
-    expect(queryResult[0].id).toBe(insertResult.id);
-    expect(queryResult[0].firstName).toBe(undefined);
-    expect(queryResult[0].lastName).toBe(undefined);
-
-    queryResult = await client.all<any>(table, { select: ['id', 'firstName'] });
-    expect(insertResult.id).toBe('asd0');
-    expect(insertResult.firstName).toBe('Beni');
-    expect(Array.isArray(queryResult)).toBe(true);
-    expect(queryResult.length).toBe(1);
-    expect(queryResult[0].id).toBe(insertResult.id);
-    expect(queryResult[0].firstName).toBe('Beni');
-    expect(queryResult[0].lastName).toBe(undefined);
+    let queryResult2 = await client.all<any>(table, { select: ['id', 'firstName'] });
 
     await client.close();
     if (ini) {
@@ -175,6 +159,19 @@ export function createAdapterTest(
       }
       await ini.close();
     }
+
+    expect(insertResult.id).toBe('asd0');
+    expect(insertResult.firstName).toBe('Beni');
+    expect(Array.isArray(queryResult)).toBe(true);
+    expect(queryResult.length).toBe(1);
+    expect(queryResult[0].id).toBe(insertResult.id);
+    expect(queryResult[0].firstName).toBe(undefined);
+    expect(queryResult[0].lastName).toBe(undefined);
+    expect(Array.isArray(queryResult2)).toBe(true);
+    expect(queryResult2.length).toBe(1);
+    expect(queryResult2[0].id).toBe(insertResult.id);
+    expect(queryResult2[0].firstName).toBe('Beni');
+    expect(queryResult2[0].lastName).toBe(undefined);
   });
 
   const isQualified = false; //name !== 'idb' && name !== 'postgresql';
@@ -308,8 +305,8 @@ export function createAdapterTest(
     await client.insert(table, { id: '2', name: 'Hallo', x: '1' });
     await client.insert(table, { id: '3', name: 'Hallo', x: '1' });
     await new Promise(yay => setTimeout(yay, 100));
-    unlisten();
-    unlisten2();
+    await unlisten();
+    await unlisten2();
     const res1 = await client.insert(table, { id: '1', name: 'Hallo2' });
     const res2 = await client.insert(table, [
       { id: '2', name: 'Hallo2' },

@@ -6,9 +6,9 @@
     "debe": "*",
     "debe-adapter": "*",
     "debe-memory": "*",
-    "idb": "^4.0.4"
+    "idb": "^7.1.1"
   },
   "devDependencies": {
-    "fake-indexeddb": "^2.1.1"
+    "fake-indexeddb": "^4.0.1"
   }
 }

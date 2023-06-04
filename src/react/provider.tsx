@@ -8,7 +8,6 @@ import {
   Middleware,
   Reducer
 } from 'redux';
-// @ts-ignore
 import { Provider } from 'react-redux';
 import { useMemoOne } from './utils/memo-one';
 

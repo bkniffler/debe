@@ -1,7 +1,7 @@
 import { generate } from 'debe-adapter';
 import { BetterSqlite3Debe } from './index';
 import { join } from 'path';
-import { removeSync, ensureDirSync } from 'fs-extra';
+import { removeSync, ensureDirSync } from 'fs-extra-unified';
 import { createAdapterTest } from 'debe/dispatcher.test';
 
 const dbDir = join(process.cwd(), '.temp/better-sqlite3');

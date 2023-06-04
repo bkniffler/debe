@@ -1,6 +1,6 @@
 import { batchSize } from '../constants';
 import { CHANNELS } from '../types';
-import { IChange, merge, IChanges } from 'debe-delta';
+import { merge } from 'debe-delta';
 import { batchTransfer } from '../utils';
 import { ISyncType } from './type';
 const { SEND_DELTA, FETCH_MISSING_DELTA } = CHANNELS;
@@ -10,7 +10,7 @@ export const delta: ISyncType = {
     const [remoteChanges] = await batchTransfer({
       fetchCount: () => count,
       fetchItems: async page =>
-        sync.socket.invoke<any, any[]>(CHANNELS.FETCH_INITIAL_DELTA, {
+        sync.socket.invoke(CHANNELS.FETCH_INITIAL_DELTA, {
           type: collection,
           since,
           page
@@ -77,7 +77,7 @@ export const delta: ISyncType = {
     }
   },
   listen(sync) {
-    const channel = sync.socket.subscribe<[string, [string, IChanges][], any?]>(
+    const channel = sync.socket.subscribe(
       CHANNELS.SUBSCRIBE_DELTA_CHANGES
     );
     (async () => {
@@ -119,10 +119,7 @@ export const delta: ISyncType = {
     if (sync.isClosing) {
       return;
     }
-    let { failed = [], latestRev } = await sync.socket.invoke<
-      [string, IChange],
-      any
-    >(SEND_DELTA, [collection, options['delta']]);
+    let { failed = [], latestRev } = await sync.socket.invoke(SEND_DELTA, [collection, options['delta']]);
     if (sync.isClosing) {
       return;
     }

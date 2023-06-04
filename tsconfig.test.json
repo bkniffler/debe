@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "ESNext",
+    "sourceMap": true,
+    "allowJs": false,
+    "rootDir": "src",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "types": ["@types/jest", "node"]
+  },
+  "exclude": ["node_modules"],
+}

@@ -1,6 +1,6 @@
-import { IAGServer } from 'debe-socket-server';
+import { AGServer } from 'debe-socket-server';
 
-export function addFilterMiddleware(server: IAGServer) {
+export function addFilterMiddleware(server: AGServer) {
   server.setMiddleware(server.MIDDLEWARE_OUTBOUND, async middlewareStream => {
     for await (let action of middlewareStream) {
       // Don't publish back to origin socket

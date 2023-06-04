@@ -163,7 +163,7 @@ export class HttpAdapter extends DebeDispatcher {
     if (queryId) {
       this.queue.refetchers[queryId] = true;
     }
-    if (action === 'insert') {
+    if (action === 'insert' || action === 'remove') {
       // Refetch inserted collections
       if (this.queries[collection]) {
         const { refetchers } = this.queue;

@@ -1,5 +1,4 @@
 import { SQLJsonCore } from 'debe-sql';
-//@ts-ignore
 import sql from 'better-sqlite3';
 import { ICollection, Debe, ICollectionInput } from 'debe';
 import { DebeBackend } from 'debe-adapter';
@@ -40,7 +39,7 @@ export class BetterSqlite3Adapter extends SQLJsonCore {
   exec<T>(
     sql: string,
     args: any[],
-    type?: 'all' | 'get' | 'count' | 'insert'
+    type?: 'all' | 'get' | 'count' | 'insert' | 'remove'
   ): Promise<T> {
     return new Promise((yay, nay) => {
       try {
@@ -55,12 +54,14 @@ export class BetterSqlite3Adapter extends SQLJsonCore {
             } else if (type === 'insert') {
               const prepare = this.db.prepare(sql);
               yay(args.map(arg => prepare.run(arg)) as any);
+            } else if (type === 'remove') {
+                this.db.prepare(sql).run(args);
+                yay(args as any);
             } else {
               if (sql) {
                 this.db.prepare(sql).run();
               }
-              args.forEach(arg => this.db.prepare(arg).run());
-              yay();
+              yay(args.map(arg => this.db.prepare(arg).run()) as any);
             }
           })
           .immediate();

@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import React from 'react';
 import { act } from 'react-dom/test-utils';
 import { DebeProvider, makeStore, awaitLoaded } from './index';
@@ -53,7 +57,7 @@ export function Component({
   );
 }
 
-test('react:basic', async cb => {
+test('react:basic', async () => {
   let failed = false;
   const db = new MemoryDebe(collections);
   await db.initialize();
@@ -82,7 +86,6 @@ test('react:basic', async cb => {
   expect(asFragment()).toMatchSnapshot();
   expect(clean(store.getState()[STOREKEY])).toMatchSnapshot();
   await db.close();
-  cb();
 });
 
 /*

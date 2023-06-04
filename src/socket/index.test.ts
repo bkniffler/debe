@@ -4,6 +4,7 @@ import { SocketServer } from 'debe-socket-server';
 import { SocketDebe } from './index';
 
 let port = 5560;
+
 createAdapterTest(
   'socket',
   () => new SocketDebe(['localhost', port]),

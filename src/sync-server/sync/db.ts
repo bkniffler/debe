@@ -1,10 +1,10 @@
 import { Debe } from 'debe';
 import { DebeBackend } from 'debe-adapter';
-import { IAGServer } from 'debe-socket-server';
+import { AGServer } from 'debe-socket-server';
 import { CHANNELS } from 'debe-sync';
 
 export async function databaseListener(
-  server: IAGServer,
+  server: AGServer,
   db: Debe,
   id: string
 ) {

@@ -1,8 +1,9 @@
-import { SQLJsonCore } from 'debe-sql';
+import { SQLJsonCore } from "debe-sql";
 //@ts-ignore
-import { Pool, Client } from 'pg';
-import { ICollection, Debe, ICollectionInput } from 'debe';
-import { DebeBackend } from 'debe-adapter';
+import pg from "pg";
+const { Pool: Pool, Client: Client } = pg;
+import { ICollection, Debe, ICollectionInput } from "debe";
+import { DebeBackend } from "debe-adapter";
 
 interface IOptions {
   pooling?: number | boolean;
@@ -10,7 +11,7 @@ interface IOptions {
 }
 export class PostgreSQLDebe extends Debe {
   adapter: PostgreSQLAdapter;
-  raw<T>(sql: string, args: any[], type?: 'all' | 'get' | 'count' | 'insert') {
+  raw<T>(sql: string, args: any[], type?: "all" | "get" | "count" | "insert") {
     return this.adapter.exec<T>(sql, args, type);
   }
   constructor(
@@ -29,9 +30,9 @@ export class PostgreSQLDebe extends Debe {
 }
 
 export class PostgreSQLAdapter extends SQLJsonCore {
-  pool?: Pool;
+  pool?:  InstanceType<typeof Pool>;
   chunks = 50 * 1000;
-  chunkMode = 'sequencial';
+  chunkMode = "sequencial";
   connection: any;
   types: any;
   constructor(
@@ -44,12 +45,12 @@ export class PostgreSQLAdapter extends SQLJsonCore {
     this.connection = connection;
     if (pooling) {
       const opt: { connectionString: string; min?: number; max?: number } =
-        typeof connection === 'string'
+        typeof connection === "string"
           ? {
-              connectionString: connection
+              connectionString: connection,
             }
           : { ...connection };
-      if (typeof pooling === 'number') {
+      if (typeof pooling === "number") {
         opt.min = 1;
         opt.max = 1;
       }
@@ -58,7 +59,7 @@ export class PostgreSQLAdapter extends SQLJsonCore {
   }
   close() {
     if (this.pool) {
-      return this.pool.end();
+      this.pool.end();
     }
   }
   selectJSONField(collection: ICollection, field: string) {
@@ -80,28 +81,28 @@ export class PostgreSQLAdapter extends SQLJsonCore {
   async exec<T>(
     sql: string,
     args: any[],
-    type?: 'all' | 'get' | 'count' | 'insert'
+    type?: "all" | "get" | "count" | "insert"
   ): Promise<T> {
     sql = sql
-      .split('?')
+      .split("?")
       .reduce((state, part, i) => (i === 0 ? part : `${state}$${i}${part}`));
     const client = this.pool || new Client(this.connection); // await this.pool.connect();
     let result;
     let error;
     try {
-      if (type === 'count') {
+      if (type === "count") {
         const x = await client.query(sql, args);
         result = parseInt(x.rows[0].count) as any;
-      } else if (type === 'get') {
+      } else if (type === "get") {
         const x = await client.query(sql, args);
         result = x.rows[0];
-      } else if (type === 'all') {
+      } else if (type === "all") {
         const x = await client.query(sql, args);
         result = x.rows;
-      } else if (type === 'insert') {
-        result = await Promise.all(args.map(arg => client.query(sql, arg)));
+      } else if (type === "insert") {
+        result = await Promise.all(args.map((arg) => client.query(sql, arg)));
       } else {
-        result = await Promise.all(args.map(arg => client.query(arg)));
+        result = await Promise.all(args.map((arg) => client.query(arg)));
       }
     } catch (err) {
       // client.release(true);
