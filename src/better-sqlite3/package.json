@@ -4,8 +4,9 @@
   "version": "1.0.0",
   "browser": false,
   "dependencies": {
-    "better-sqlite3": "^5.4.0",
+    "better-sqlite3": "^8.4.0",
     "debe": "*",
     "debe-sql": "*"
-  }
+  },
+  "devDependencies": {}
 }

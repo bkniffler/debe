@@ -1,5 +1,5 @@
 import { Debe, IUnlisten } from 'debe';
-import { ISocket } from 'debe-socket';
+import { AGClientSocket } from 'debe-socket';
 import { CHANNELS } from '../types';
 import { delta } from './delta';
 import { basic } from './basic';
@@ -8,9 +8,9 @@ import { IListenReturn } from './type';
 
 export class SyncEngine {
   syncState: SyncState;
-  socket: ISocket;
+  socket: AGClientSocket;
   db: Debe;
-  constructor(socket: ISocket, db: Debe, state: SyncState) {
+  constructor(socket: AGClientSocket, db: Debe, state: SyncState) {
     this.socket = socket;
     this.db = db;
     this.syncState = state;
@@ -52,7 +52,7 @@ export class SyncEngine {
   }
 
   async getRemoteChangeCount(
-    socket: ISocket,
+    socket: AGClientSocket,
     collections: string[],
     syncState: SyncState
   ) {
@@ -60,7 +60,7 @@ export class SyncEngine {
     await Promise.all(
       collections.map(key => {
         return socket
-          .invoke<any, number>(CHANNELS.COUNT_INITIAL_DELTA, {
+          .invoke(CHANNELS.COUNT_INITIAL_DELTA, {
             type: key,
             since: syncState.remote(key)
           })

@@ -1,4 +1,5 @@
-import Automerge from 'automerge';
+import * as Automerge from '@automerge/automerge';
+
 import { generate, addMiddleware, DebeBackend, hasPlugin } from 'debe-adapter';
 export * from './merge';
 
@@ -43,6 +44,7 @@ export function deltaPlugin(
       let { message } = options;
       if (!message && getMessage && typeof getMessage === 'function') {
         message = getMessage();
+        
       }
 
       const delta: IDelta[] = [];
@@ -74,14 +76,14 @@ export function deltaPlugin(
           ...item
         } = i;
         const doc = automerge ? Automerge.load(automerge) : Automerge.init();
-        const newDoc = Automerge.change(doc, message, (change: any) => {
+        const newDoc = Automerge.change(doc, message ?? '', (change: any) => {
           for (var key in item) {
             change[key] = item[key];
           }
         });
         const changes = Automerge.getChanges(doc, newDoc);
         const latestActor = changes.length
-          ? changes[changes.length - 1].actor
+          ? Automerge.decodeChange(changes[changes.length - 1]).actor
           : actor;
         delta.push([id, changes, rev]);
         return {

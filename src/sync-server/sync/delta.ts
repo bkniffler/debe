@@ -1,13 +1,11 @@
 import { addToQuery, Debe } from 'debe';
-import { ISocketBase } from 'debe-socket';
 import {
-  ICountInitialChanges,
   batchSize,
-  ISendDelta,
   CHANNELS
 } from 'debe-sync';
 import { DebeBackend } from 'debe-adapter';
-import { IAGServer } from 'debe-socket-server';
+import { AGServer } from 'debe-socket-server';
+import { AGServerSocket } from 'socketcluster-server';
 import { merge } from 'debe-delta';
 const {
   SEND_DELTA,
@@ -18,8 +16,8 @@ const {
 
 export function createDeltaProcedures(
   client: Debe,
-  socket: ISocketBase,
-  server: IAGServer
+  socket: AGServerSocket,
+  server: AGServer
 ) {
   let stop = false;
   const collections = (client.dispatcher as DebeBackend).collections;
@@ -27,7 +25,7 @@ export function createDeltaProcedures(
 
   // Get a count of all items that need to be synced with client
   (async () => {
-    for await (let req of socket.procedure<ICountInitialChanges, number>(
+    for await (let req of socket.procedure(
       COUNT_INITIAL_DELTA
     )) {
       if (stop) {
@@ -53,7 +51,7 @@ export function createDeltaProcedures(
 
   // Fetch all changes and send back
   (async () => {
-    for await (let req of socket.procedure<any, any[]>(FETCH_INITIAL_DELTA)) {
+    for await (let req of socket.procedure(FETCH_INITIAL_DELTA)) {
       if (stop) {
         return;
       }
@@ -84,7 +82,7 @@ export function createDeltaProcedures(
 
   // Receive change
   (async () => {
-    for await (let req of socket.procedure<ISendDelta>(SEND_DELTA)) {
+    for await (let req of socket.procedure(SEND_DELTA)) {
       if (stop) {
         return;
       }

@@ -14,7 +14,7 @@ import {
   DebeBackend
 } from 'debe-adapter';
 import { IDBPDatabase } from 'idb';
-const idb = require('idb/with-async-ittr-cjs');
+import * as idb from 'idb/with-async-ittr';
 
 export class IDBDebe extends Debe {
   constructor(collections: ICollectionInput[], name: string, options?: any) {

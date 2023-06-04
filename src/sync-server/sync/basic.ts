@@ -1,22 +1,19 @@
-import { addToQuery, Debe, IItem, IGetItem } from 'debe';
-import { ISocketBase } from 'debe-socket';
+import { addToQuery, Debe } from 'debe';
+import { AGServerSocket } from 'socketcluster-server';
 import {
-  ICountInitialChanges,
-  IInitialFetchChanges,
   batchSize,
-  ISendChanges,
   CHANNELS
 } from 'debe-sync';
 import { DebeBackend } from 'debe-adapter';
 const { COUNT_INITIAL, FETCH_INITIAL, SEND } = CHANNELS;
 
-export function createBasicProcedures(client: Debe, socket: ISocketBase) {
+export function createBasicProcedures(client: Debe, socket: AGServerSocket) {
   let stop = false;
   const collections = (client.dispatcher as DebeBackend).collections;
 
   // Get a count of all items that need to be synced with client
   (async () => {
-    for await (let req of socket.procedure<ICountInitialChanges, number>(
+    for await (let req of socket.procedure(
       COUNT_INITIAL
     )) {
       if (stop) {
@@ -43,10 +40,7 @@ export function createBasicProcedures(client: Debe, socket: ISocketBase) {
 
   // Fetch all changes and send back
   (async () => {
-    for await (let req of socket.procedure<
-      IInitialFetchChanges,
-      (IItem & IGetItem)[]
-    >(FETCH_INITIAL)) {
+    for await (let req of socket.procedure(FETCH_INITIAL)) {
       if (stop) {
         return;
       }
@@ -76,7 +70,7 @@ export function createBasicProcedures(client: Debe, socket: ISocketBase) {
 
   // Receive changes
   (async () => {
-    for await (let req of socket.procedure<ISendChanges>(SEND)) {
+    for await (let req of socket.procedure(SEND)) {
       if (stop) {
         return;
       }

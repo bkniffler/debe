@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "browser": false,
   "dependencies": {
-    "asyngular-server": "^6.1.0",
     "debe": "*",
-    "debe-socket": "*"
+    "debe-socket": "*",
+    "socketcluster-server": "^17.3.1"
   }
 }

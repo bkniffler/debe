@@ -1,7 +1,6 @@
 import { IListenerOptions, IObserverCallback, IMiddleware } from './types';
 import { IObject, generate, objectify } from './utils';
 import {
-  Debe,
   DebeDispatcher,
   IItem,
   ICollection,
@@ -32,7 +31,6 @@ export class DebeBackend<TBase = IItem> extends DebeDispatcher {
   options: IBackendOptions;
   collections: IObject<ICollection> = {};
   middlewares: IMiddleware[] = [];
-  db: Debe;
   adapter: DebeAdapter;
   constructor(
     adapter: DebeAdapter,

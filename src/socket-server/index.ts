@@ -1,10 +1,14 @@
 import { Debe, IListenerOptions, listenTypes } from 'debe';
 import http from 'http';
-import { allowedMethods, ISocketBase } from 'debe-socket';
-import { IAttach } from './types';
+import { allowedMethods } from 'debe-socket';
+//import { IAttach } from './types';
 export * from './types';
 
-export const attach = require('asyngular-server').attach as IAttach;
+//@ts-ignore
+import {attach, AGServer, AGServerSocket} from 'socketcluster-server';
+export {attach, AGServer} from 'socketcluster-server';
+
+//export const attach = ac.attach as IAttach;
 
 export class SocketServer {
   externalServer = false;
@@ -22,7 +26,7 @@ export class SocketServer {
       this.httpServer.listen(arg);
     } else {
       this.httpServer = arg;
-      this.agServer = attach(this.httpServer);
+      this.agServer = attach(this.httpServer,{pingTimeout: 20000});
       this.externalServer = true;
     }
     this.db = db;
@@ -40,7 +44,7 @@ export class SocketServer {
       this.handleSubscriptions(socket);
     }
   }
-  async handleMethods(socket: ISocketBase, method: string) {
+  async handleMethods(socket: AGServerSocket, method: string) {
     for await (let req of socket.procedure(method)) {
       this.db[method](req.data[0], req.data[1])
         .then((result: any) => {
@@ -49,10 +53,8 @@ export class SocketServer {
         .catch((err: any) => req.error(err));
     }
   }
-  async handleSubscriptions(socket: ISocketBase) {
-    for await (let d of socket.receiver<
-      [string, listenTypes, IListenerOptions]
-    >('subscribe')) {
+  async handleSubscriptions(socket: AGServerSocket) {
+    for await (let d of socket.receiver('subscribe')) {
       const [id, action, options] = d as [
         string,
         listenTypes,
@@ -65,10 +67,10 @@ export class SocketServer {
     id: string,
     action: listenTypes,
     options: IListenerOptions,
-    socket: ISocketBase
+    socket: AGServerSocket
   ) {
     const handleSub = (error: any, data: any) => {
-      socket.transmit(id, [error ? error.message : undefined, data]);
+      socket.transmit(id, [error ? error.message : undefined, data], {});
     };
     this.db.dispatcher.listen(action, handleSub, options);
   }

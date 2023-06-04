@@ -1,4 +1,5 @@
-import Automerge from 'automerge';
+import * as Automerge from '@automerge/automerge';
+
 import { generate, DebeBackend } from 'debe-adapter';
 import { Debe } from 'debe';
 import { IDelta } from 'debe-delta';
@@ -14,9 +15,12 @@ export async function merge(
   const map = {};
   const collection = (db.dispatcher as DebeBackend).collections[collectionName];
 
-  (await db.all(collection.name, {
+  const res = await db.all(collection.name, {
     id: delta.map(x => x[0] + '')
-  })).forEach(item => {
+  });
+
+
+  res.forEach(item => {
     map[item.id] = item;
   });
 
@@ -29,21 +33,31 @@ export async function merge(
       if (!changes) {
         return;
       }
+
+      let the_changes = Array.isArray(changes) ?
+      changes.map(x => Uint8Array.from(Object.values(x)))
+      : Uint8Array.from(Object.values(changes));
+
+
       let docOld = undefined;
       const isUpdate = map[id + ''] && map[id + ''].merge;
       if (isUpdate) {
-        docOld = Automerge.load(map[id + ''].merge);
+        docOld = Automerge.load<Object>(map[id + ''].merge);
         updated.push(id);
       } else {
-        docOld = Automerge.init();
+        docOld = Automerge.init<Object>();
       }
-      const docInt =
-        typeof changes === 'string' ? Automerge.load(changes) : undefined;
+      let docInt =
+        (the_changes instanceof Uint8Array) ? Automerge.load<Object>(the_changes) : undefined;
 
-      const docNew = docInt
-        ? Automerge.merge(docOld, docInt)
-        : Automerge.applyChanges(docOld, changes);
-      if (Object.keys(Automerge.getMissingDeps(docNew)).length) {
+      let docNew: Automerge.unstable.Doc<Object>;
+      if (docInt) {
+        docNew = Automerge.merge<Object>(docOld, docInt)
+      } else{
+          docNew = Automerge.init<Object>();
+          Automerge.applyChanges<Object>(docNew, <Uint8Array[]>the_changes)
+      }
+      if (Object.keys(Automerge.getMissingDeps(docNew,Automerge.getHeads(docOld))).length) {
         unsuccessful.push(id);
         return;
       }

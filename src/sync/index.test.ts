@@ -12,7 +12,7 @@ function getNextPort() {
   return basePort;
 }
 
-test('sync:init:10x3', async cb => {
+test('sync:init:10x3', async () => {
   const port = getNextPort();
   const count = 10;
   const server = await spawnServer(port);
@@ -27,10 +27,9 @@ test('sync:init:10x3', async cb => {
   );
   await Promise.all(clients.map(client => client.close()));
   await server.close();
-  cb();
 }, 120000);
 
-test('sync:init:10000x3', async cb => {
+test('sync:init:10000x3', async () => {
   const port = getNextPort();
   const count = 10000;
   const server = await spawnServer(port);
@@ -45,10 +44,9 @@ test('sync:init:10000x3', async cb => {
   );
   await Promise.all(clients.map(client => client.close()));
   await server.close();
-  cb();
 }, 120000);
 
-test('sync:init:1000x10', async cb => {
+test('sync:init:1000x10', async () => {
   const port = getNextPort();
   const count = 1000;
   const server = await spawnServer(port);
@@ -63,10 +61,9 @@ test('sync:init:1000x10', async cb => {
   );
   await Promise.all(clients.map(client => client.close()));
   await server.close();
-  cb();
 }, 120000);
 
-test('sync:init:multimaster', async cb => {
+test('sync:init:multimaster', async () => {
   const port0 = getNextPort();
   const port1 = getNextPort();
   const count = 100;
@@ -90,5 +87,4 @@ test('sync:init:multimaster', async cb => {
   await Promise.all(clients1.map(client => client.close()));
   await server0.close();
   await server1.close();
-  cb();
 }, 120000);

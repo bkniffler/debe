@@ -1,7 +1,6 @@
 import { batchSize } from '../constants';
 import { CHANNELS } from '../types';
 import { batchTransfer } from '../utils';
-import { IItem } from 'debe';
 import { ISyncType } from './type';
 
 export const basic: ISyncType = {
@@ -9,7 +8,7 @@ export const basic: ISyncType = {
     const [remoteChanges] = await batchTransfer({
       fetchCount: () => count,
       fetchItems: async page => {
-        return sync.socket.invoke<any, any[]>(CHANNELS.FETCH_INITIAL, {
+        return sync.socket.invoke(CHANNELS.FETCH_INITIAL, {
           type: collection,
           since,
           page
@@ -58,7 +57,7 @@ export const basic: ISyncType = {
     }
   },
   listen(sync) {
-    const channel = sync.socket.subscribe<[string, IItem[], any?]>(
+    const channel = sync.socket.subscribe(
       CHANNELS.SUBSCRIBE_CHANGES
     );
     (async () => {
@@ -88,7 +87,7 @@ export const basic: ISyncType = {
       return Promise.resolve();
     }
     return sync.socket
-      .invoke<[string, IItem[]], any>(CHANNELS.SEND, [collection, items])
+      .invoke(CHANNELS.SEND, [collection, items])
       .catch(err => {
         if (!sync.isClosing) {
           throw err;

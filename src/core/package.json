@@ -3,6 +3,6 @@
   "main": "index.ts",
   "version": "1.0.0",
   "dependencies": {
-    "tslib": "^1.10.0"
+    "tslib": "^2.5.2"
   }
 }

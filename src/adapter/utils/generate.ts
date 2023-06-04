@@ -1,6 +1,6 @@
-import id from 'nanoid';
+import { nanoid } from 'nanoid';
 
-let _generate = id;
+let _generate = nanoid;
 export function setIdGenerator(generator: (size?: number) => string) {
   _generate = generator as any;
 }

@@ -6,6 +6,6 @@
   "dependencies": {
     "debe": "*",
     "debe-sql": "*",
-    "pg": "^7.11.0"
+    "pg": "^8.10.1"
   }
 }

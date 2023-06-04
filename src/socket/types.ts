@@ -1,11 +1,4 @@
-export interface ICreateOptions {
-  hostname: string;
-  secure?: boolean;
-  rejectUnauthorized?: boolean;
-  port: number;
-}
-export type ICreate = (options: ICreateOptions) => ISocket;
-// export let create: ICreate;
+import DemuxedConsumableStream from 'stream-demux/demuxed-consumable-stream';
 
 export interface IReq<T, T2> {
   data: T;
@@ -24,8 +17,9 @@ export interface IListenerExtension<T> {
 }
 export interface ISocketBase {
   id: string;
-  procedure: <T1 = any, T2 = any>(channel: string) => Promise<IReq<T1, T2>>[];
-  transmit: <T = any>(channel: string, data: T) => void;
+//  procedure: <T1 = any, T2 = any>(channel: string) => Promise<IReq<T1, T2>>[];
+  procedure(procedureName: string): DemuxedConsumableStream<any>;
+  transmit(event: string, data: any, options?: { ackTimeout?: number | undefined }): Promise<void>;
   listener: <T = any>(channel: string) => Promise<T>[] & IListenerExtension<T>;
   receiver: <T = any>(channel: string) => Promise<T>[] & IListenerExtension<T>;
   invoke: <T = any, T2 = any>(channel: string, payload: T) => Promise<T2>;

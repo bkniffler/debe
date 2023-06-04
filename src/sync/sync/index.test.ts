@@ -43,7 +43,7 @@ function testType(
     }
   ];
 
-  test(`sync:type:${name}:initialDown`, async cb => {
+  test(`sync:type:${name}:initialDown`, async () => {
     const count = 10;
     const port = getNextPort(1);
     const s = createSimpleServer(port);
@@ -83,10 +83,9 @@ function testType(
     await dbServer.close();
     await socket.disconnect();
     await s.close();
-    cb();
   }, 10000);
 
-  test(`sync:type:${name}:initialUp`, async cb => {
+  test(`sync:type:${name}:initialUp`, async () => {
     const count = 10;
     const port = getNextPort(2);
     const s = createSimpleServer(port);
@@ -127,10 +126,9 @@ function testType(
     await s.close();
     await dbClient.close();
     await dbServer.close();
-    cb();
   }, 10000);
 
-  test(`sync:type:${name}:listen`, async cb => {
+  test(`sync:type:${name}:listen`, async () => {
     const count = 10;
     const port = getNextPort(3);
     const s = createSimpleServer(port);
@@ -177,7 +175,6 @@ function testType(
     await s.close();
     await dbClient.close();
     await dbServer.close();
-    cb();
   }, 10000);
 }
 

@@ -4,7 +4,9 @@
   "version": "1.0.0",
   "dependencies": {
     "debe": "*",
-    "nanoid": "^2.0.3",
-    "tslib": "^1.10.0"
+    "tslib": "^2.5.2"
+  },
+  "devDependencies": {
+    "nanoid": "^4.0.2"
   }
 }
